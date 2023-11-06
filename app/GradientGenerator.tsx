@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import Head from 'next/head';
+import { PiArrowCircleDownBold, PiShuffleBold } from 'react-icons/pi';
 
 const GradientGenerator = () => {
   const [backgroundColor, setBackgroundColor] = useState('#12013A');
@@ -34,27 +35,74 @@ const GradientGenerator = () => {
       if (ctx) {
         ctx.fillStyle = backgroundColor;
         ctx.fillRect(0, 0, canvas.width, canvas.height);
+  
         colorInputs.forEach((color) => {
           const x = randomize ? Math.random() * canvas.width : canvas.width / 2;
           const y = randomize ? Math.random() * canvas.height : canvas.height / 2;
-          const gradient = ctx.createRadialGradient(x, y, 0, x, y, Math.max(canvas.width, canvas.height) / 2);
+  
+          const scaleFactor = 0.8; // Adjusted scale factor as per your comment
+          const endRadius = randomize ? (Math.random() * scaleFactor + scaleFactor) * Math.min(canvas.width, canvas.height) : Math.max(canvas.width, canvas.height) * scaleFactor;
+  
+          const gradient = ctx.createRadialGradient(x, y, 0, x, y, endRadius);
           gradient.addColorStop(0, color);
           gradient.addColorStop(0.8, hexToRgba(color, 0.2));
           gradient.addColorStop(1, hexToRgba(color, 0));
           ctx.fillStyle = gradient;
-          ctx.fillRect(0, 0, canvas.width, canvas.height);
+  
+          // Create an irregular blob
+          const path = new Path2D();
+          const numPoints = 5 + Math.floor(Math.random() * 5); // fewer points for more irregularity
+          let points = [];
+  
+          // Generate random points around the center (x, y)
+          for (let i = 0; i < numPoints; i++) {
+            const angle = Math.random() * Math.PI * 2;
+            const radiusVariance = 0.3 + Math.random() * 0.7;
+            const pointRadius = endRadius * radiusVariance;
+            points.push({
+              x: x + pointRadius * Math.cos(angle),
+              y: y + pointRadius * Math.sin(angle)
+            });
+          }
+  
+          // Move to the first point
+          path.moveTo(points[0].x, points[0].y);
+  
+          // Draw the blob using Bezier curves
+          for (let i = 0; i < points.length; i++) {
+            const nextIndex = (i + 1) % points.length;
+            const nextPoint = points[nextIndex];
+            const cp1 = {
+              x: (points[i].x + nextPoint.x) / 2,
+              y: (points[i].y + nextPoint.y) / 2
+            };
+            // This control point is now chosen by a random deviation from the midpoint
+            const cp2 = {
+              x: cp1.x + (Math.random() - 0.5) * endRadius,
+              y: cp1.y + (Math.random() - 0.5) * endRadius
+            };
+            path.quadraticCurveTo(cp2.x, cp2.y, nextPoint.x, nextPoint.y);
+          }
+  
+          path.closePath();
+          ctx.fill(path);
+          ctx.filter = 'blur(60px)';
         });
-
+  
+        // Apply original filter values
         ctx.filter = 'blur(60px)';
         ctx.drawImage(canvas, 0, 0);
         ctx.filter = 'contrast(130%) saturate(110%)';
         ctx.drawImage(canvas, 0, 0);
+        ctx.filter = 'blur(30px)';
+        ctx.drawImage(canvas, 0, 0);
         ctx.filter = 'none';
-
+  
+        // Generate noise if you have this function
         generateNoise(ctx, canvas.width, canvas.height);
       }
     }
-  }, [backgroundColor, colorInputs]);
+  }, [backgroundColor, colorInputs]);  
 
   useEffect(() => {
     generateMeshGradient();
@@ -94,7 +142,7 @@ const GradientGenerator = () => {
         <title>Mesh Gradient Wallpaper Generator</title>
       </Head>
       <div className="controls flex mx-8 my-4 items-end">
-        <div className='mr-4 w-1/6'>
+        <div className='mr-4 w-1/8'>
         <label htmlFor="backgroundColorPicker" className='block mb-2 text-sm font-medium text-gray-900 dark:text-white'>Background Color</label>
         <input
           type="text"
@@ -104,7 +152,7 @@ const GradientGenerator = () => {
           onChange={handleBackgroundColorChange}
         />
         </div>
-        <div className='grid grid-cols-4 gap-6'>
+        <div className='grid grid-cols-4 gap-6 w-1/2'>
         {colorInputs.map((color, index) => (
           <div key={index}>
           <label htmlFor="backgroundColorPicker" className='block mb-2 text-sm font-medium text-gray-900 dark:text-white'>Color {index+1} </label>
@@ -119,9 +167,14 @@ const GradientGenerator = () => {
         </div>
         
         <div className='ml-8 flex gap-4 items-end'>
-        <button className='text-gray-900 bg-white border border-gray-300 focus:outline-none hover:bg-gray-100 focus:ring-4 focus:ring-gray-200 font-medium rounded-lg text-sm px-4 py-2 dark:bg-gray-800 dark:text-white dark:border-gray-600 dark:hover:bg-gray-700 dark:hover:border-gray-600 dark:focus:ring-gray-700' onClick={() => generateMeshGradient(true)}>Randomize</button>
-        {/* <button className='text-white bg-gray-800 hover:bg-gray-900 focus:outline-none focus:ring-4 focus:ring-gray-300 font-medium rounded-lg text-sm px-5 py-2.5 mr-2 mb-2 dark:bg-gray-800 dark:hover:bg-gray-700 dark:focus:ring-gray-700 dark:border-gray-700' onClick={() => generateMeshGradient()}>Generate Wallpaper</button> */}
-        <button className='text-white bg-gray-800 hover:bg-gray-900 focus:outline-none focus:ring-4 focus:ring-gray-300 font-medium rounded-lg text-sm px-4 py-2 dark:bg-gray-800 dark:hover:bg-gray-700 dark:focus:ring-gray-700 dark:border-gray-700' onClick={downloadCanvasAsImage}>Download Wallpaper</button>
+        <button className='flex gap-2 items-center text-gray-900 bg-white border border-gray-300 focus:outline-none hover:bg-gray-100 focus:ring-4 focus:ring-gray-200 font-medium rounded-lg text-sm px-4 py-2 dark:bg-gray-800 dark:text-white dark:border-gray-600 dark:hover:bg-gray-700 dark:hover:border-gray-600 dark:focus:ring-gray-700' onClick={() => generateMeshGradient(true)}>
+           <PiShuffleBold/>
+          Randomize
+        </button>
+        <button className='flex gap-2 items-center text-white bg-gray-800 hover:bg-gray-900 focus:outline-none focus:ring-4 focus:ring-gray-300 font-medium rounded-lg text-sm px-4 py-2 dark:bg-gray-800 dark:hover:bg-gray-700 dark:focus:ring-gray-700 dark:border-gray-700' onClick={downloadCanvasAsImage}>
+          <PiArrowCircleDownBold/>
+          Download
+        </button>
       
         </div>
         
