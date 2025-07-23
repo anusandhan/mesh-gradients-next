@@ -12,6 +12,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { Download, Shuffle, Palette, Settings } from "lucide-react";
+import Image from "next/image";
 
 const GradientGenerator = () => {
   const [backgroundColor, setBackgroundColor] = useState("#f8fafc");
@@ -222,7 +223,7 @@ const GradientGenerator = () => {
     },
     {
       name: "Purple Dream",
-      background: "#faf5ff",
+      background: "#0d0019",
       colors: ["#8b5cf6", "#a855f7", "#c084fc", "#d946ef"],
     },
   ];
@@ -242,6 +243,12 @@ const GradientGenerator = () => {
             <div className="w-80 flex-shrink-0 flex flex-col border-r border-gray-200">
               {/* Scrollable Controls */}
               <div className="flex-1 overflow-y-auto p-6 space-y-12">
+                <Image
+                  src="/beautiful-mesh-logo.png"
+                  alt="Beautiful Mesh Logo"
+                  height={54}
+                  width={180}
+                />
                 {/* Color Controls */}
                 <div className="space-y-4">
                   <div className="space-y-2">
@@ -249,9 +256,6 @@ const GradientGenerator = () => {
                       <Palette className="w-4 h-4" />
                       Colors
                     </h3>
-                    <p className="text-xs text-gray-500">
-                      Customize your gradient colors
-                    </p>
                   </div>
 
                   <div className="space-y-4">
@@ -307,9 +311,6 @@ const GradientGenerator = () => {
                       <Settings className="w-4 h-4" />
                       Effects
                     </h3>
-                    <p className="text-xs text-gray-500">
-                      Fine-tune the visual effects
-                    </p>
                   </div>
 
                   <div className="space-y-5">
@@ -385,9 +386,6 @@ const GradientGenerator = () => {
                     <h3 className="text-sm font-semibold text-gray-900">
                       Presets
                     </h3>
-                    <p className="text-xs text-gray-500">
-                      Quick-start with beautiful gradients
-                    </p>
                   </div>
 
                   <div className="space-y-2">
