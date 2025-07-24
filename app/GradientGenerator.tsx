@@ -5,13 +5,21 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
+import { ColorInput } from "@/components/ui/color-input";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { Download, Shuffle, Palette, Settings } from "lucide-react";
+import {
+  DownloadIcon,
+  ShuffleIcon,
+  GearIcon,
+  SwatchesIcon,
+  TabsIcon,
+  SlidersIcon,
+} from "@phosphor-icons/react";
 import Image from "next/image";
 
 const GradientGenerator = () => {
@@ -23,7 +31,7 @@ const GradientGenerator = () => {
     "#f59e0b",
   ]);
   const [blurAmount, setBlurAmount] = useState([60]);
-  const [noiseAmount, setNoiseAmount] = useState([0.03]);
+  const [noiseAmount, setNoiseAmount] = useState([0.2]);
   const [contrastAmount, setContrastAmount] = useState([130]);
   const [saturationAmount, setSaturationAmount] = useState([110]);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -175,18 +183,15 @@ const GradientGenerator = () => {
     generateMeshGradient();
   }, [generateMeshGradient]);
 
-  const handleBackgroundColorChange = (
-    event: React.ChangeEvent<HTMLInputElement>
-  ) => {
-    setBackgroundColor(event.target.value);
+  const handleBackgroundColorChange = (value: string) => {
+    setBackgroundColor(value);
   };
 
-  const handleColorInputChange =
-    (colorIndex: number) => (event: React.ChangeEvent<HTMLInputElement>) => {
-      const newColors = [...colorInputs];
-      newColors[colorIndex] = event.target.value;
-      setColorInputs(newColors);
-    };
+  const handleColorInputChange = (colorIndex: number) => (value: string) => {
+    const newColors = [...colorInputs];
+    newColors[colorIndex] = value;
+    setColorInputs(newColors);
+  };
 
   const handleRandomize = () => {
     generateMeshGradient(true);
@@ -252,15 +257,18 @@ const GradientGenerator = () => {
                 {/* Color Controls */}
                 <div className="space-y-4">
                   <div className="space-y-2">
-                    <h3 className="flex items-center gap-2 text-sm font-semibold text-gray-900">
-                      <Palette className="w-4 h-4" />
+                    <h3 className="flex items-center gap-2 text-base font-medium text-gray-800">
+                      <SwatchesIcon className="w-6 h-6" />
                       Colors
                     </h3>
                   </div>
 
                   <div className="space-y-4">
                     <div className="space-y-2">
-                      <Label htmlFor="backgroundColor" className="text-sm">
+                      <Label
+                        htmlFor="backgroundColor"
+                        className="text-sm font-medium"
+                      >
                         Background
                       </Label>
                       <div className="flex gap-2">
@@ -268,15 +276,18 @@ const GradientGenerator = () => {
                           id="backgroundColor"
                           type="text"
                           value={backgroundColor}
-                          onChange={handleBackgroundColorChange}
+                          onChange={(e) =>
+                            handleBackgroundColorChange(e.target.value)
+                          }
                           className="flex-1 text-sm"
                           placeholder="#ffffff"
                         />
-                        <input
-                          type="color"
+                        <ColorInput
                           value={normalizeHexColor(backgroundColor)}
                           onChange={handleBackgroundColorChange}
-                          className="w-10 h-9 rounded-md border cursor-pointer"
+                          previewSize="md"
+                          previewShape="circle"
+                          previewClassName="border-[1.5px] border-input shadow-sm"
                         />
                       </div>
                     </div>
@@ -288,15 +299,18 @@ const GradientGenerator = () => {
                           <Input
                             type="text"
                             value={color}
-                            onChange={handleColorInputChange(index)}
+                            onChange={(e) =>
+                              handleColorInputChange(index)(e.target.value)
+                            }
                             className="flex-1 text-sm"
                             placeholder="#000000"
                           />
-                          <input
-                            type="color"
+                          <ColorInput
                             value={normalizeHexColor(color)}
                             onChange={handleColorInputChange(index)}
-                            className="w-10 h-9 rounded-md border cursor-pointer"
+                            previewSize="md"
+                            previewShape="circle"
+                            previewClassName="border-[1.5px] border-input shadow-sm"
                           />
                         </div>
                       ))}
@@ -307,8 +321,8 @@ const GradientGenerator = () => {
                 {/* Effect Controls */}
                 <div className="space-y-4">
                   <div className="space-y-2">
-                    <h3 className="flex items-center gap-2 text-sm font-semibold text-gray-900">
-                      <Settings className="w-4 h-4" />
+                    <h3 className="flex items-center gap-2 text-base font-medium text-gray-800">
+                      <SlidersIcon className="w-6 h-6" />
                       Effects
                     </h3>
                   </div>
@@ -324,8 +338,8 @@ const GradientGenerator = () => {
                       <Slider
                         value={blurAmount}
                         onValueChange={setBlurAmount}
-                        max={100}
-                        min={10}
+                        max={200}
+                        min={60}
                         step={5}
                       />
                     </div>
@@ -340,7 +354,7 @@ const GradientGenerator = () => {
                       <Slider
                         value={noiseAmount}
                         onValueChange={setNoiseAmount}
-                        max={0.1}
+                        max={0.2}
                         min={0}
                         step={0.01}
                       />
@@ -383,7 +397,8 @@ const GradientGenerator = () => {
                 {/* Presets */}
                 <div className="space-y-4">
                   <div className="space-y-2">
-                    <h3 className="text-sm font-semibold text-gray-900">
+                    <h3 className="flex items-center gap-2 text-base font-medium text-gray-800">
+                      <TabsIcon className="w-6 h-6" />
                       Presets
                     </h3>
                   </div>
@@ -399,7 +414,7 @@ const GradientGenerator = () => {
                         <div className="flex items-center gap-2">
                           <div
                             className="w-3 h-3 rounded-full"
-                            style={{ background: preset.background }}
+                            style={{ background: preset.colors[0] }}
                           />
                           {preset.name}
                         </div>
@@ -419,7 +434,7 @@ const GradientGenerator = () => {
                         onClick={handleRandomize}
                         className="flex-1 h-9 text-sm"
                       >
-                        <Shuffle className="w-4 h-4 mr-2" />
+                        <ShuffleIcon weight="bold" className="w-4 h-4 mr-2" />
                         Randomize
                       </Button>
                     </TooltipTrigger>
@@ -434,7 +449,7 @@ const GradientGenerator = () => {
                         onClick={downloadCanvasAsImage}
                         className="flex-1 h-9 text-sm"
                       >
-                        <Download className="w-4 h-4 mr-2" />
+                        <DownloadIcon weight="bold" className="w-4 h-4 mr-2" />
                         Download
                       </Button>
                     </TooltipTrigger>

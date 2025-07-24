@@ -9,6 +9,7 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@phosphor-icons/react": "^2.1.10",
     "@radix-ui/react-label": "^2.1.7",
     "@radix-ui/react-select": "^2.2.5",
     "@radix-ui/react-separator": "^1.1.7",
@@ -18,7 +19,7 @@
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "color": "^5.0.0",
-    "lucide-react": "^0.525.0",
+    "framer-motion": "^12.23.7",
     "next": "^14.2.30",
     "radix-ui": "^1.4.2",
     "react": "^18",
