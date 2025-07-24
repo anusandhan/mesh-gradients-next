@@ -82,106 +82,96 @@ const GradientGenerator = () => {
     ctx.putImageData(imageData, 0, 0);
   };
 
-  const generateMeshGradient = useCallback(
-    (randomize: boolean = false) => {
-      const canvas = canvasRef.current;
-      if (canvas) {
-        const ctx = canvas.getContext("2d");
-        if (ctx) {
-          // Normalize background color
-          const normalizedBgColor = normalizeHexColor(backgroundColor);
-          ctx.fillStyle = normalizedBgColor;
-          ctx.fillRect(0, 0, canvas.width, canvas.height);
+  const generateMeshGradient = useCallback(() => {
+    const canvas = canvasRef.current;
+    if (canvas) {
+      const ctx = canvas.getContext("2d");
+      if (ctx) {
+        // Normalize background color
+        const normalizedBgColor = normalizeHexColor(backgroundColor);
+        ctx.fillStyle = normalizedBgColor;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-          colorInputs.forEach((color) => {
-            // Normalize each color before using
-            const normalizedColor = normalizeHexColor(color);
+        colorInputs.forEach((color) => {
+          // Normalize each color before using
+          const normalizedColor = normalizeHexColor(color);
 
-            const x = randomize
-              ? Math.random() * canvas.width
-              : canvas.width / 2;
-            const y = randomize
-              ? Math.random() * canvas.height
-              : canvas.height / 2;
+          const x = canvas.width / 2;
+          const y = canvas.height / 2;
 
-            const scaleFactor = 0.8;
-            const endRadius = randomize
-              ? (Math.random() * scaleFactor + scaleFactor) *
-                Math.min(canvas.width, canvas.height)
-              : Math.max(canvas.width, canvas.height) * scaleFactor;
+          const scaleFactor = 0.8;
+          const endRadius = Math.max(canvas.width, canvas.height) * scaleFactor;
 
-            const gradient = ctx.createRadialGradient(x, y, 0, x, y, endRadius);
-            gradient.addColorStop(0, normalizedColor);
-            gradient.addColorStop(0.8, hexToRgba(normalizedColor, 0.2));
-            gradient.addColorStop(1, hexToRgba(normalizedColor, 0));
-            ctx.fillStyle = gradient;
+          const gradient = ctx.createRadialGradient(x, y, 0, x, y, endRadius);
+          gradient.addColorStop(0, normalizedColor);
+          gradient.addColorStop(0.8, hexToRgba(normalizedColor, 0.2));
+          gradient.addColorStop(1, hexToRgba(normalizedColor, 0));
+          ctx.fillStyle = gradient;
 
-            // Create an irregular blob
-            const path = new Path2D();
-            const numPoints = 5 + Math.floor(Math.random() * 5);
-            let points = [];
+          // Create an irregular blob
+          const path = new Path2D();
+          const numPoints = 5 + Math.floor(Math.random() * 5);
+          let points = [];
 
-            // Generate random points around the center (x, y)
-            for (let i = 0; i < numPoints; i++) {
-              const angle = Math.random() * Math.PI * 2;
-              const radiusVariance = 0.3 + Math.random() * 0.7;
-              const pointRadius = endRadius * radiusVariance;
-              points.push({
-                x: x + pointRadius * Math.cos(angle),
-                y: y + pointRadius * Math.sin(angle),
-              });
-            }
+          // Generate random points around the center (x, y)
+          for (let i = 0; i < numPoints; i++) {
+            const angle = Math.random() * Math.PI * 2;
+            const radiusVariance = 0.3 + Math.random() * 0.7;
+            const pointRadius = endRadius * radiusVariance;
+            points.push({
+              x: x + pointRadius * Math.cos(angle),
+              y: y + pointRadius * Math.sin(angle),
+            });
+          }
 
-            // Move to the first point
-            path.moveTo(points[0].x, points[0].y);
+          // Move to the first point
+          path.moveTo(points[0].x, points[0].y);
 
-            // Draw the blob using Bezier curves
-            for (let i = 0; i < points.length; i++) {
-              const nextIndex = (i + 1) % points.length;
-              const nextPoint = points[nextIndex];
-              const cp1 = {
-                x: (points[i].x + nextPoint.x) / 2,
-                y: (points[i].y + nextPoint.y) / 2,
-              };
-              const cp2 = {
-                x: cp1.x + (Math.random() - 0.5) * endRadius,
-                y: cp1.y + (Math.random() - 0.5) * endRadius,
-              };
-              path.quadraticCurveTo(cp2.x, cp2.y, nextPoint.x, nextPoint.y);
-            }
+          // Draw the blob using Bezier curves
+          for (let i = 0; i < points.length; i++) {
+            const nextIndex = (i + 1) % points.length;
+            const nextPoint = points[nextIndex];
+            const cp1 = {
+              x: (points[i].x + nextPoint.x) / 2,
+              y: (points[i].y + nextPoint.y) / 2,
+            };
+            const cp2 = {
+              x: cp1.x + (Math.random() - 0.5) * endRadius,
+              y: cp1.y + (Math.random() - 0.5) * endRadius,
+            };
+            path.quadraticCurveTo(cp2.x, cp2.y, nextPoint.x, nextPoint.y);
+          }
 
-            path.closePath();
-            ctx.fill(path);
-            ctx.filter = `blur(${blurAmount[0]}px)`;
-          });
-
-          // Apply filters
+          path.closePath();
+          ctx.fill(path);
           ctx.filter = `blur(${blurAmount[0]}px)`;
-          ctx.drawImage(canvas, 0, 0);
-          ctx.filter = `contrast(${contrastAmount[0]}%) saturate(${saturationAmount[0]}%)`;
-          ctx.drawImage(canvas, 0, 0);
-          ctx.filter = `blur(${blurAmount[0] / 2}px)`;
-          ctx.drawImage(canvas, 0, 0);
-          ctx.filter = "none";
+        });
 
-          // Generate noise
-          generateNoise(ctx, canvas.width, canvas.height, noiseAmount[0]);
-        }
+        // Apply filters
+        ctx.filter = `blur(${blurAmount[0]}px)`;
+        ctx.drawImage(canvas, 0, 0);
+        ctx.filter = `contrast(${contrastAmount[0]}%) saturate(${saturationAmount[0]}%)`;
+        ctx.drawImage(canvas, 0, 0);
+        ctx.filter = `blur(${blurAmount[0] / 2}px)`;
+        ctx.drawImage(canvas, 0, 0);
+        ctx.filter = "none";
+
+        // Generate noise
+        generateNoise(ctx, canvas.width, canvas.height, noiseAmount[0]);
       }
-    },
-    [
-      backgroundColor,
-      colorInputs,
-      blurAmount,
-      noiseAmount,
-      contrastAmount,
-      saturationAmount,
-    ]
-  );
+    }
+  }, [
+    backgroundColor,
+    colorInputs,
+    blurAmount,
+    noiseAmount,
+    contrastAmount,
+    saturationAmount,
+  ]);
 
   useEffect(() => {
     generateMeshGradient();
-  }, [generateMeshGradient]);
+  }, [backgroundColor, colorInputs]);
 
   const handleBackgroundColorChange = (value: string) => {
     setBackgroundColor(value);
@@ -193,8 +183,97 @@ const GradientGenerator = () => {
     setColorInputs(newColors);
   };
 
+  const generateRandomMeshGradient = useCallback(() => {
+    const canvas = canvasRef.current;
+    if (canvas) {
+      const ctx = canvas.getContext("2d");
+      if (ctx) {
+        // Normalize background color
+        const normalizedBgColor = normalizeHexColor(backgroundColor);
+        ctx.fillStyle = normalizedBgColor;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        colorInputs.forEach((color) => {
+          // Normalize each color before using
+          const normalizedColor = normalizeHexColor(color);
+
+          const x = Math.random() * canvas.width;
+          const y = Math.random() * canvas.height;
+
+          const scaleFactor = 0.8;
+          const endRadius =
+            (Math.random() * scaleFactor + scaleFactor) *
+            Math.min(canvas.width, canvas.height);
+
+          const gradient = ctx.createRadialGradient(x, y, 0, x, y, endRadius);
+          gradient.addColorStop(0, normalizedColor);
+          gradient.addColorStop(0.8, hexToRgba(normalizedColor, 0.2));
+          gradient.addColorStop(1, hexToRgba(normalizedColor, 0));
+          ctx.fillStyle = gradient;
+
+          // Create an irregular blob
+          const path = new Path2D();
+          const numPoints = 5 + Math.floor(Math.random() * 5);
+          let points = [];
+
+          // Generate random points around the center (x, y)
+          for (let i = 0; i < numPoints; i++) {
+            const angle = Math.random() * Math.PI * 2;
+            const radiusVariance = 0.3 + Math.random() * 0.7;
+            const pointRadius = endRadius * radiusVariance;
+            points.push({
+              x: x + pointRadius * Math.cos(angle),
+              y: y + pointRadius * Math.sin(angle),
+            });
+          }
+
+          // Move to the first point
+          path.moveTo(points[0].x, points[0].y);
+
+          // Draw the blob using Bezier curves
+          for (let i = 0; i < points.length; i++) {
+            const nextIndex = (i + 1) % points.length;
+            const nextPoint = points[nextIndex];
+            const cp1 = {
+              x: (points[i].x + nextPoint.x) / 2,
+              y: (points[i].y + nextPoint.y) / 2,
+            };
+            const cp2 = {
+              x: cp1.x + (Math.random() - 0.5) * endRadius,
+              y: cp1.y + (Math.random() - 0.5) * endRadius,
+            };
+            path.quadraticCurveTo(cp2.x, cp2.y, nextPoint.x, nextPoint.y);
+          }
+
+          path.closePath();
+          ctx.fill(path);
+          ctx.filter = `blur(${blurAmount[0]}px)`;
+        });
+
+        // Apply filters
+        ctx.filter = `blur(${blurAmount[0]}px)`;
+        ctx.drawImage(canvas, 0, 0);
+        ctx.filter = `contrast(${contrastAmount[0]}%) saturate(${saturationAmount[0]}%)`;
+        ctx.drawImage(canvas, 0, 0);
+        ctx.filter = `blur(${blurAmount[0] / 2}px)`;
+        ctx.drawImage(canvas, 0, 0);
+        ctx.filter = "none";
+
+        // Generate noise
+        generateNoise(ctx, canvas.width, canvas.height, noiseAmount[0]);
+      }
+    }
+  }, [
+    backgroundColor,
+    colorInputs,
+    blurAmount,
+    noiseAmount,
+    contrastAmount,
+    saturationAmount,
+  ]);
+
   const handleRandomize = () => {
-    generateMeshGradient(true);
+    generateRandomMeshGradient();
   };
 
   const downloadCanvasAsImage = () => {
@@ -338,6 +417,7 @@ const GradientGenerator = () => {
                       <Slider
                         value={blurAmount}
                         onValueChange={setBlurAmount}
+                        onValueCommit={() => generateMeshGradient()}
                         max={200}
                         min={60}
                         step={5}
@@ -354,6 +434,7 @@ const GradientGenerator = () => {
                       <Slider
                         value={noiseAmount}
                         onValueChange={setNoiseAmount}
+                        onValueCommit={() => generateMeshGradient()}
                         max={0.2}
                         min={0}
                         step={0.01}
@@ -370,6 +451,7 @@ const GradientGenerator = () => {
                       <Slider
                         value={contrastAmount}
                         onValueChange={setContrastAmount}
+                        onValueCommit={() => generateMeshGradient()}
                         max={200}
                         min={50}
                         step={5}
@@ -386,6 +468,7 @@ const GradientGenerator = () => {
                       <Slider
                         value={saturationAmount}
                         onValueChange={setSaturationAmount}
+                        onValueCommit={() => generateMeshGradient()}
                         max={200}
                         min={50}
                         step={5}
