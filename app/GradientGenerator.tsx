@@ -34,7 +34,9 @@ const GradientGenerator = () => {
   const [noiseAmount, setNoiseAmount] = useState([0.2]);
   const [contrastAmount, setContrastAmount] = useState([130]);
   const [saturationAmount, setSaturationAmount] = useState([110]);
+  const [gradientName, setGradientName] = useState("New Gradient");
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Function to validate and normalize hex color
   const normalizeHexColor = (hex: string): string => {
@@ -169,18 +171,40 @@ const GradientGenerator = () => {
     saturationAmount,
   ]);
 
+  // Debounced version of generateMeshGradient
+  const debouncedGenerateMeshGradient = useCallback(() => {
+    if (debounceTimeoutRef.current) {
+      clearTimeout(debounceTimeoutRef.current);
+    }
+
+    debounceTimeoutRef.current = setTimeout(() => {
+      generateMeshGradient();
+    }, 500); // 500ms debounce delay
+  }, [generateMeshGradient]);
+
   useEffect(() => {
     generateMeshGradient();
   }, [backgroundColor, colorInputs]);
 
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (debounceTimeoutRef.current) {
+        clearTimeout(debounceTimeoutRef.current);
+      }
+    };
+  }, []);
+
   const handleBackgroundColorChange = (value: string) => {
     setBackgroundColor(value);
+    debouncedGenerateMeshGradient();
   };
 
   const handleColorInputChange = (colorIndex: number) => (value: string) => {
     const newColors = [...colorInputs];
     newColors[colorIndex] = value;
     setColorInputs(newColors);
+    debouncedGenerateMeshGradient();
   };
 
   const generateRandomMeshGradient = useCallback(() => {
@@ -281,7 +305,7 @@ const GradientGenerator = () => {
     if (canvas) {
       const image = canvas.toDataURL("image/png");
       const link = document.createElement("a");
-      link.download = "mesh-gradient-wallpaper.png";
+      link.download = `${gradientName}.png`;
       link.href = image;
       document.body.appendChild(link);
       link.click();
@@ -351,6 +375,13 @@ const GradientGenerator = () => {
                         Background
                       </Label>
                       <div className="flex gap-2">
+                        <ColorInput
+                          value={normalizeHexColor(backgroundColor)}
+                          onChange={handleBackgroundColorChange}
+                          previewSize="md"
+                          previewShape="square"
+                          previewClassName="border-[1.5px] border-neutral-200 shadow-sm rounded-md"
+                        />
                         <Input
                           id="backgroundColor"
                           type="text"
@@ -361,13 +392,6 @@ const GradientGenerator = () => {
                           className="flex-1 text-sm"
                           placeholder="#ffffff"
                         />
-                        <ColorInput
-                          value={normalizeHexColor(backgroundColor)}
-                          onChange={handleBackgroundColorChange}
-                          previewSize="md"
-                          previewShape="circle"
-                          previewClassName="border-[1.5px] border-input shadow-sm"
-                        />
                       </div>
                     </div>
 
@@ -375,6 +399,14 @@ const GradientGenerator = () => {
                       <Label className="text-sm">Gradient Colors</Label>
                       {colorInputs.map((color, index) => (
                         <div key={index} className="flex gap-2">
+                          <ColorInput
+                            value={normalizeHexColor(color)}
+                            onChange={handleColorInputChange(index)}
+                            previewSize="md"
+                            previewShape="square"
+                            previewClassName="border-[1.5px] border-neutral-200 shadow-sm rounded-md"
+                          />
+
                           <Input
                             type="text"
                             value={color}
@@ -383,13 +415,6 @@ const GradientGenerator = () => {
                             }
                             className="flex-1 text-sm"
                             placeholder="#000000"
-                          />
-                          <ColorInput
-                            value={normalizeHexColor(color)}
-                            onChange={handleColorInputChange(index)}
-                            previewSize="md"
-                            previewShape="circle"
-                            previewClassName="border-[1.5px] border-input shadow-sm"
                           />
                         </div>
                       ))}
@@ -417,7 +442,7 @@ const GradientGenerator = () => {
                       <Slider
                         value={blurAmount}
                         onValueChange={setBlurAmount}
-                        onValueCommit={() => generateMeshGradient()}
+                        onValueCommit={debouncedGenerateMeshGradient}
                         max={200}
                         min={60}
                         step={5}
@@ -434,7 +459,7 @@ const GradientGenerator = () => {
                       <Slider
                         value={noiseAmount}
                         onValueChange={setNoiseAmount}
-                        onValueCommit={() => generateMeshGradient()}
+                        onValueCommit={debouncedGenerateMeshGradient}
                         max={0.2}
                         min={0}
                         step={0.01}
@@ -451,7 +476,7 @@ const GradientGenerator = () => {
                       <Slider
                         value={contrastAmount}
                         onValueChange={setContrastAmount}
-                        onValueCommit={() => generateMeshGradient()}
+                        onValueCommit={debouncedGenerateMeshGradient}
                         max={200}
                         min={50}
                         step={5}
@@ -468,7 +493,7 @@ const GradientGenerator = () => {
                       <Slider
                         value={saturationAmount}
                         onValueChange={setSaturationAmount}
-                        onValueCommit={() => generateMeshGradient()}
+                        onValueCommit={debouncedGenerateMeshGradient}
                         max={200}
                         min={50}
                         step={5}
@@ -545,16 +570,46 @@ const GradientGenerator = () => {
             </div>
 
             {/* Canvas Preview - Fixed */}
-            <div className="flex-1 flex items-center justify-center p-6">
-              <div className="w-full h-auto max-w-4xl bg-white rounded-xl overflow-hidden border border-gray-200">
-                <div className="relative w-full h-full flex items-center justify-center">
-                  <canvas
-                    ref={canvasRef}
-                    width={1920}
-                    height={1080}
-                    className="max-w-full max-h-full object-contain rounded-lg"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/10 to-transparent pointer-events-none rounded-lg" />
+            <div className="flex-1 flex items-center justify-center p-6 relative">
+              <div className="relative w-full h-auto max-w-4xl bg-white rounded-xl border border-gray-200">
+                <div className="w-full h-auto rounded-xl overflow-hidden">
+                  <div className="relative w-full h-full flex items-center justify-center">
+                    <canvas
+                      ref={canvasRef}
+                      width={1920}
+                      height={1080}
+                      className="max-w-full max-h-full object-contain rounded-lg"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/10 to-transparent pointer-events-none rounded-lg" />
+                  </div>
+                </div>
+
+                {/* Gradient Name Badge */}
+                <div className="absolute top-[-38px] left-0 z-20">
+                  <div className="bg-white border border-gray-200 rounded-lg px-3 py-1.5 shadow-sm">
+                    <div
+                      contentEditable
+                      suppressContentEditableWarning
+                      onBlur={(e) =>
+                        setGradientName(
+                          e.currentTarget.textContent || "New Gradient"
+                        )
+                      }
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          e.preventDefault();
+                          e.currentTarget.blur();
+                        }
+                        if (e.key === "Escape") {
+                          e.currentTarget.textContent = gradientName;
+                          e.currentTarget.blur();
+                        }
+                      }}
+                      className="text-xs text-gray-600 hover:text-gray-800 transition-colors cursor-text outline-none w-auto"
+                    >
+                      {gradientName}
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
