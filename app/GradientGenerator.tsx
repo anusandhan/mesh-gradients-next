@@ -682,10 +682,11 @@ const GradientGenerator = () => {
               <div
                 className="flex-1 flex items-center justify-center p-6"
                 style={{
+                  maxWidth: "calc(100vw - 20rem - 3rem)", // 20rem = w-80 sidebar, 3rem = total horizontal padding (p-6)
                   height: "calc(100vh - 100px)",
                 }}
               >
-                <div className="relative mx-auto bg-white rounded-xl border border-gray-200">
+                <div className="relative mx-auto bg-white rounded-xl border border-gray-200 overflow-hidden">
                   <div
                     className="relative mx-auto"
                     style={{
@@ -697,7 +698,7 @@ const GradientGenerator = () => {
                       ref={canvasRef}
                       width={canvasDimensions.width}
                       height={canvasDimensions.height}
-                      className="absolute top-0 left-0 w-full h-full object-contain rounded-xl"
+                      className="absolute top-0 left-0 w-full h-full object-contain rounded-sm"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/10 to-transparent pointer-events-none rounded-lg" />
 
