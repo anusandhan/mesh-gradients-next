@@ -31,7 +31,7 @@ import {
   YoutubeLogoIcon,
   DeviceMobileIcon,
   InstagramLogoIcon,
-  CameraIcon,
+  DeviceTabletCameraIcon,
 } from "@phosphor-icons/react";
 import Image from "next/image";
 
@@ -379,14 +379,19 @@ const GradientGenerator = () => {
       ratio: "4:3",
       icon: YoutubeLogoIcon,
     },
-    { value: "9:16", label: "Mobile", ratio: "9:16", icon: DeviceMobileIcon },
+    { value: "9:16", label: "Story", ratio: "9:16", icon: DeviceMobileIcon },
     {
       value: "3:4",
-      label: "Insta Story/TikTok",
+      label: "Post",
       ratio: "3:4",
       icon: InstagramLogoIcon,
     },
-    { value: "4:5", label: "Insta Portrait", ratio: "4:5", icon: CameraIcon },
+    {
+      value: "4:5",
+      label: "Portrait",
+      ratio: "4:5",
+      icon: DeviceTabletCameraIcon,
+    },
   ];
 
   const canvasDimensions = useMemo(() => {
@@ -684,105 +689,106 @@ const GradientGenerator = () => {
                 style={{
                   maxWidth: "calc(100vw - 20rem - 3rem)", // 20rem = w-80 sidebar, 3rem = total horizontal padding (p-6)
                   height: "calc(100vh - 100px)",
+                  maxHeight: "calc(100vh - 500px)",
                 }}
               >
-                <div className="relative mx-auto bg-white rounded-xl border border-gray-200 overflow-hidden">
+                <div
+                  className="relative mx-auto bg-white rounded-xl border border-gray-200 overflow-hidden"
+                  style={{
+                    width: `${previewDimensions.width}px`,
+                    maxHeight: `${previewDimensions.height}px`,
+                  }}
+                >
+                  {/* Gradient Name Badge */}
+                  <div className="absolute top-2 left-2 z-20">
+                    <div className="bg-white border border-gray-200 rounded-lg px-3 py-1.5 shadow-sm">
+                      <div
+                        contentEditable
+                        suppressContentEditableWarning
+                        onBlur={(e) =>
+                          setGradientName(
+                            e.currentTarget.textContent || "New Gradient"
+                          )
+                        }
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") {
+                            e.preventDefault();
+                            e.currentTarget.blur();
+                          }
+                          if (e.key === "Escape") {
+                            e.currentTarget.textContent = gradientName;
+                            e.currentTarget.blur();
+                          }
+                        }}
+                        className="text-xs text-gray-600 hover:text-gray-800 transition-colors cursor-text outline-none w-auto"
+                      >
+                        {gradientName}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Aspect Ratio Badge */}
+                  <div className="absolute top-2 right-2 z-20">
+                    <Select value={aspectRatio} onValueChange={setAspectRatio}>
+                      <SelectTrigger className="bg-white border border-gray-200 rounded-lg px-3 py-1.5 shadow-sm h-auto text-xs text-gray-600 hover:text-gray-800 transition-colors cursor-pointer outline-none">
+                        <SelectValue>
+                          <div className="flex items-center gap-1.5">
+                            {(() => {
+                              const currentOption = aspectRatioOptions.find(
+                                (opt) => opt.value === aspectRatio
+                              );
+                              const IconComponent =
+                                currentOption?.icon || MonitorIcon;
+                              return (
+                                <>
+                                  <IconComponent className="w-3 h-3" />
+                                  <span className="text-xs text-gray-600">
+                                    {currentOption?.label}
+                                  </span>
+                                  <span className="text-xs text-gray-400">
+                                    {currentOption?.ratio}
+                                  </span>
+                                </>
+                              );
+                            })()}
+                          </div>
+                        </SelectValue>
+                      </SelectTrigger>
+                      <SelectContent className="bg-white border border-gray-200 rounded-lg shadow-sm">
+                        {aspectRatioOptions.map((option) => {
+                          const IconComponent = option.icon;
+                          return (
+                            <SelectItem key={option.value} value={option.value}>
+                              <div className="flex items-center gap-1.5">
+                                <IconComponent className="w-3 h-3" />
+                                <span className="text-xs text-gray-600">
+                                  {option.label}
+                                </span>
+                                <span className="text-xs text-gray-400">
+                                  {option.ratio}
+                                </span>
+                              </div>
+                            </SelectItem>
+                          );
+                        })}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
                   <div
                     className="relative mx-auto"
                     style={{
-                      width: `${previewDimensions.width}px`,
-                      height: `${previewDimensions.height}px`,
+                      width: `100%`,
+                      aspectRatio: aspectRatio.replace(":", "/"),
                     }}
                   >
                     <canvas
                       ref={canvasRef}
                       width={canvasDimensions.width}
                       height={canvasDimensions.height}
-                      className="absolute top-0 left-0 w-full h-full object-contain rounded-sm"
+                      className="absolute top-0 left-0 w-full h-full object-cover rounded-sm"
                     />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/10 to-transparent pointer-events-none rounded-lg" />
-
-                    {/* Gradient Name Badge */}
-                    <div className="absolute top-2 left-2 z-20">
-                      <div className="bg-white border border-gray-200 rounded-lg px-3 py-1.5 shadow-sm">
-                        <div
-                          contentEditable
-                          suppressContentEditableWarning
-                          onBlur={(e) =>
-                            setGradientName(
-                              e.currentTarget.textContent || "New Gradient"
-                            )
-                          }
-                          onKeyDown={(e) => {
-                            if (e.key === "Enter") {
-                              e.preventDefault();
-                              e.currentTarget.blur();
-                            }
-                            if (e.key === "Escape") {
-                              e.currentTarget.textContent = gradientName;
-                              e.currentTarget.blur();
-                            }
-                          }}
-                          className="text-xs text-gray-600 hover:text-gray-800 transition-colors cursor-text outline-none w-auto"
-                        >
-                          {gradientName}
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Aspect Ratio Badge */}
-                    <div className="absolute top-2 right-2 z-20">
-                      <Select
-                        value={aspectRatio}
-                        onValueChange={setAspectRatio}
-                      >
-                        <SelectTrigger className="bg-white border border-gray-200 rounded-lg px-3 py-1.5 shadow-sm h-auto text-xs text-gray-600 hover:text-gray-800 transition-colors cursor-pointer outline-none">
-                          <SelectValue>
-                            <div className="flex items-center gap-1.5">
-                              {(() => {
-                                const currentOption = aspectRatioOptions.find(
-                                  (opt) => opt.value === aspectRatio
-                                );
-                                const IconComponent =
-                                  currentOption?.icon || MonitorIcon;
-                                return (
-                                  <>
-                                    <IconComponent className="w-3 h-3" />
-                                    <span className="text-xs text-gray-600">
-                                      {currentOption?.label}
-                                    </span>
-                                    <span className="text-xs text-gray-400">
-                                      {currentOption?.ratio}
-                                    </span>
-                                  </>
-                                );
-                              })()}
-                            </div>
-                          </SelectValue>
-                        </SelectTrigger>
-                        <SelectContent className="bg-white border border-gray-200 rounded-lg shadow-sm">
-                          {aspectRatioOptions.map((option) => {
-                            const IconComponent = option.icon;
-                            return (
-                              <SelectItem
-                                key={option.value}
-                                value={option.value}
-                              >
-                                <div className="flex items-center gap-1.5">
-                                  <IconComponent className="w-3 h-3" />
-                                  <span className="text-xs text-gray-600">
-                                    {option.label}
-                                  </span>
-                                  <span className="text-xs text-gray-400">
-                                    {option.ratio}
-                                  </span>
-                                </div>
-                              </SelectItem>
-                            );
-                          })}
-                        </SelectContent>
-                      </Select>
-                    </div>
+                    {/* <div className="absolute inset-0 bg-gradient-to-t from-black/10 to-transparent pointer-events-none rounded-lg" /> */}
                   </div>
                 </div>
               </div>
