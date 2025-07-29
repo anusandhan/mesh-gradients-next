@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -13,12 +13,25 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   DownloadIcon,
   ShuffleIcon,
   GearIcon,
   SwatchesIcon,
   TabsIcon,
   SlidersIcon,
+  MonitorIcon,
+  SquareIcon,
+  YoutubeLogoIcon,
+  DeviceMobileIcon,
+  InstagramLogoIcon,
+  CameraIcon,
 } from "@phosphor-icons/react";
 import Image from "next/image";
 
@@ -30,11 +43,12 @@ const GradientGenerator = () => {
     "#ec4899",
     "#f59e0b",
   ]);
-  const [blurAmount, setBlurAmount] = useState([60]);
-  const [noiseAmount, setNoiseAmount] = useState([0.2]);
+  const [blurAmount, setBlurAmount] = useState([125]);
+  const [noiseAmount, setNoiseAmount] = useState([0.3]);
   const [contrastAmount, setContrastAmount] = useState([130]);
   const [saturationAmount, setSaturationAmount] = useState([110]);
   const [gradientName, setGradientName] = useState("New Gradient");
+  const [aspectRatio, setAspectRatio] = useState("16:9");
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -101,7 +115,7 @@ const GradientGenerator = () => {
           const x = canvas.width / 2;
           const y = canvas.height / 2;
 
-          const scaleFactor = 0.8;
+          const scaleFactor = 1.2;
           const endRadius = Math.max(canvas.width, canvas.height) * scaleFactor;
 
           const gradient = ctx.createRadialGradient(x, y, 0, x, y, endRadius);
@@ -184,7 +198,7 @@ const GradientGenerator = () => {
 
   useEffect(() => {
     generateMeshGradient();
-  }, [backgroundColor, colorInputs]);
+  }, [backgroundColor, colorInputs, aspectRatio]);
 
   // Cleanup timeout on unmount
   useEffect(() => {
@@ -224,7 +238,7 @@ const GradientGenerator = () => {
           const x = Math.random() * canvas.width;
           const y = Math.random() * canvas.height;
 
-          const scaleFactor = 0.8;
+          const scaleFactor = 1.2;
           const endRadius =
             (Math.random() * scaleFactor + scaleFactor) *
             Math.min(canvas.width, canvas.height);
@@ -315,19 +329,39 @@ const GradientGenerator = () => {
 
   const presetGradients = [
     {
-      name: "Ocean Breeze",
+      name: "Heatwaves",
+      background: "#f8fafc",
+      colors: ["#3b82f6", "#8b5cf6", "#ec4899", "#f59e0b"],
+    },
+    {
+      name: "Neon Cyberpunk",
+      background: "#0a0a0a",
+      colors: ["#ff0080", "#00ffff", "#ffff00", "#ff00ff"],
+    },
+    {
+      name: "Tropical Sunset",
+      background: "#fff5f5",
+      colors: ["#ff6b35", "#f7931e", "#ffd23f", "#ff6b9d"],
+    },
+    {
+      name: "Electric Ocean",
       background: "#f0f9ff",
-      colors: ["#0ea5e9", "#06b6d4", "#0891b2", "#0e7490"],
+      colors: ["#00d4ff", "#0099cc", "#0066ff", "#9933ff"],
     },
     {
-      name: "Sunset Glow",
-      background: "#fef7ed",
-      colors: ["#f97316", "#ea580c", "#dc2626", "#b91c1c"],
+      name: "Fire & Ice",
+      background: "#fafafa",
+      colors: ["#ff4757", "#ff3838", "#3742fa", "#2f3542"],
     },
     {
-      name: "Forest Mist",
-      background: "#f0fdf4",
-      colors: ["#16a34a", "#22c55e", "#84cc16", "#a3e635"],
+      name: "Midnight Galaxy",
+      background: "#0a0a0a",
+      colors: ["#4a90e2", "#7b68ee", "#9370db", "#8a2be2"],
+    },
+    {
+      name: "Candy Land",
+      background: "#fff0f5",
+      colors: ["#ff69b4", "#ff1493", "#ffb6c1", "#ffc0cb"],
     },
     {
       name: "Purple Dream",
@@ -336,9 +370,79 @@ const GradientGenerator = () => {
     },
   ];
 
+  const aspectRatioOptions = [
+    { value: "16:9", label: "Desktop", ratio: "16:9", icon: MonitorIcon },
+    { value: "1:1", label: "Square Post", ratio: "1:1", icon: SquareIcon },
+    {
+      value: "4:3",
+      label: "YouTube Classic",
+      ratio: "4:3",
+      icon: YoutubeLogoIcon,
+    },
+    { value: "9:16", label: "Mobile", ratio: "9:16", icon: DeviceMobileIcon },
+    {
+      value: "3:4",
+      label: "Insta Story/TikTok",
+      ratio: "3:4",
+      icon: InstagramLogoIcon,
+    },
+    { value: "4:5", label: "Insta Portrait", ratio: "4:5", icon: CameraIcon },
+  ];
+
+  const canvasDimensions = useMemo(() => {
+    const baseWidth = 3840; // 4K base width
+    const [width, height] = aspectRatio.split(":").map(Number);
+    const aspectRatioValue = width / height;
+
+    if (aspectRatioValue > 1) {
+      // Landscape
+      return {
+        width: baseWidth,
+        height: Math.round(baseWidth / aspectRatioValue),
+      };
+    } else {
+      // Portrait
+      return { height: 2160, width: Math.round(2160 * aspectRatioValue) };
+    }
+  }, [aspectRatio]);
+
+  const previewDimensions = useMemo(() => {
+    // Get parent container max dimensions
+    const maxParentWidth = 1024; // max-w-4xl equivalent
+    const maxParentHeight = 600; // Fixed height
+
+    const [width, height] = aspectRatio.split(":").map(Number);
+    const aspectRatioValue = width / height;
+
+    // Calculate dimensions that fit within parent
+    let calculatedWidth, calculatedHeight;
+
+    if (aspectRatioValue > 1) {
+      // Landscape - fit to width
+      calculatedWidth = Math.min(
+        maxParentWidth,
+        maxParentHeight * aspectRatioValue
+      );
+      calculatedHeight = calculatedWidth / aspectRatioValue;
+    } else {
+      // Portrait - fit to height
+      calculatedHeight = Math.min(
+        maxParentHeight,
+        maxParentWidth / aspectRatioValue
+      );
+      calculatedWidth = calculatedHeight * aspectRatioValue;
+    }
+
+    return {
+      width: Math.round(calculatedWidth),
+      height: Math.round(calculatedHeight),
+    };
+  }, [aspectRatio]);
+
   const applyPreset = (preset: (typeof presetGradients)[0]) => {
     setBackgroundColor(preset.background);
     setColorInputs(preset.colors);
+    setGradientName(preset.name);
   };
 
   return (
@@ -444,7 +548,7 @@ const GradientGenerator = () => {
                         onValueChange={setBlurAmount}
                         onValueCommit={debouncedGenerateMeshGradient}
                         max={200}
-                        min={60}
+                        min={125}
                         step={5}
                       />
                     </div>
@@ -460,7 +564,7 @@ const GradientGenerator = () => {
                         value={noiseAmount}
                         onValueChange={setNoiseAmount}
                         onValueCommit={debouncedGenerateMeshGradient}
-                        max={0.2}
+                        max={0.8}
                         min={0}
                         step={0.01}
                       />
@@ -522,7 +626,11 @@ const GradientGenerator = () => {
                         <div className="flex items-center gap-2">
                           <div
                             className="w-3 h-3 rounded-full"
-                            style={{ background: preset.colors[0] }}
+                            style={{
+                              background: `linear-gradient(45deg, ${preset.colors.join(
+                                ", "
+                              )})`,
+                            }}
                           />
                           {preset.name}
                         </div>
@@ -570,44 +678,109 @@ const GradientGenerator = () => {
             </div>
 
             {/* Canvas Preview - Fixed */}
-            <div className="flex-1 flex items-center justify-center p-6 relative">
-              <div className="relative w-full h-auto max-w-4xl bg-white rounded-xl border border-gray-200">
-                <div className="w-full h-auto rounded-xl overflow-hidden">
-                  <div className="relative w-full h-full flex items-center justify-center">
+            <div className="flex-1 flex items-center justify-center">
+              <div
+                className="flex-1 flex items-center justify-center p-6"
+                style={{
+                  height: "calc(100vh - 100px)",
+                }}
+              >
+                <div className="relative mx-auto bg-white rounded-xl border border-gray-200">
+                  <div
+                    className="relative mx-auto"
+                    style={{
+                      width: `${previewDimensions.width}px`,
+                      height: `${previewDimensions.height}px`,
+                    }}
+                  >
                     <canvas
                       ref={canvasRef}
-                      width={1920}
-                      height={1080}
-                      className="max-w-full max-h-full object-contain rounded-lg"
+                      width={canvasDimensions.width}
+                      height={canvasDimensions.height}
+                      className="absolute top-0 left-0 w-full h-full object-contain rounded-xl"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/10 to-transparent pointer-events-none rounded-lg" />
-                  </div>
-                </div>
 
-                {/* Gradient Name Badge */}
-                <div className="absolute top-[-38px] left-0 z-20">
-                  <div className="bg-white border border-gray-200 rounded-lg px-3 py-1.5 shadow-sm">
-                    <div
-                      contentEditable
-                      suppressContentEditableWarning
-                      onBlur={(e) =>
-                        setGradientName(
-                          e.currentTarget.textContent || "New Gradient"
-                        )
-                      }
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter") {
-                          e.preventDefault();
-                          e.currentTarget.blur();
-                        }
-                        if (e.key === "Escape") {
-                          e.currentTarget.textContent = gradientName;
-                          e.currentTarget.blur();
-                        }
-                      }}
-                      className="text-xs text-gray-600 hover:text-gray-800 transition-colors cursor-text outline-none w-auto"
-                    >
-                      {gradientName}
+                    {/* Gradient Name Badge */}
+                    <div className="absolute top-2 left-2 z-20">
+                      <div className="bg-white border border-gray-200 rounded-lg px-3 py-1.5 shadow-sm">
+                        <div
+                          contentEditable
+                          suppressContentEditableWarning
+                          onBlur={(e) =>
+                            setGradientName(
+                              e.currentTarget.textContent || "New Gradient"
+                            )
+                          }
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") {
+                              e.preventDefault();
+                              e.currentTarget.blur();
+                            }
+                            if (e.key === "Escape") {
+                              e.currentTarget.textContent = gradientName;
+                              e.currentTarget.blur();
+                            }
+                          }}
+                          className="text-xs text-gray-600 hover:text-gray-800 transition-colors cursor-text outline-none w-auto"
+                        >
+                          {gradientName}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Aspect Ratio Badge */}
+                    <div className="absolute top-2 right-2 z-20">
+                      <Select
+                        value={aspectRatio}
+                        onValueChange={setAspectRatio}
+                      >
+                        <SelectTrigger className="bg-white border border-gray-200 rounded-lg px-3 py-1.5 shadow-sm h-auto text-xs text-gray-600 hover:text-gray-800 transition-colors cursor-pointer outline-none">
+                          <SelectValue>
+                            <div className="flex items-center gap-1.5">
+                              {(() => {
+                                const currentOption = aspectRatioOptions.find(
+                                  (opt) => opt.value === aspectRatio
+                                );
+                                const IconComponent =
+                                  currentOption?.icon || MonitorIcon;
+                                return (
+                                  <>
+                                    <IconComponent className="w-3 h-3" />
+                                    <span className="text-xs text-gray-600">
+                                      {currentOption?.label}
+                                    </span>
+                                    <span className="text-xs text-gray-400">
+                                      {currentOption?.ratio}
+                                    </span>
+                                  </>
+                                );
+                              })()}
+                            </div>
+                          </SelectValue>
+                        </SelectTrigger>
+                        <SelectContent className="bg-white border border-gray-200 rounded-lg shadow-sm">
+                          {aspectRatioOptions.map((option) => {
+                            const IconComponent = option.icon;
+                            return (
+                              <SelectItem
+                                key={option.value}
+                                value={option.value}
+                              >
+                                <div className="flex items-center gap-1.5">
+                                  <IconComponent className="w-3 h-3" />
+                                  <span className="text-xs text-gray-600">
+                                    {option.label}
+                                  </span>
+                                  <span className="text-xs text-gray-400">
+                                    {option.ratio}
+                                  </span>
+                                </div>
+                              </SelectItem>
+                            );
+                          })}
+                        </SelectContent>
+                      </Select>
                     </div>
                   </div>
                 </div>
