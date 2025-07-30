@@ -44,26 +44,28 @@ const ColorInput = React.forwardRef<HTMLInputElement, ColorInputProps>(
 
     return (
       <div className={cn("relative", className)}>
-        <input
-          ref={ref}
-          type="color"
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          className={cn(
-            "absolute inset-0 opacity-0 cursor-pointer w-full h-full",
-            triggerClassName
-          )}
-          {...props}
-        />
-        <div
-          className={cn(
-            "border-1 border-neutral-200 cursor-pointer",
-            sizeClasses[previewSize],
-            shapeClasses[previewShape],
-            previewClassName
-          )}
-          style={{ backgroundColor: value }}
-        />
+        <label className="cursor-pointer">
+          <input
+            ref={ref}
+            type="color"
+            value={value}
+            onChange={(e) => onChange(e.target.value)}
+            className={cn("sr-only", triggerClassName)}
+            {...props}
+          />
+          <div
+            className={cn(
+              "border border-[1.25px] border-neutral-300 hover:border-neutral-600 transition-all duration-200 ease-out",
+              sizeClasses[previewSize],
+              shapeClasses[previewShape],
+              previewClassName
+            )}
+            style={{
+              backgroundColor: value,
+              boxShadow: "inset 0 0 0 2px rgba(255, 255, 255, 0.25)",
+            }}
+          />
+        </label>
       </div>
     );
   }

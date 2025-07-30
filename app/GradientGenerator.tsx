@@ -466,6 +466,8 @@ const GradientGenerator = () => {
                   height={54}
                   width={180}
                 />
+                {/* TO-DO: Tailwind Color Swatches Instead of Random Colors */}
+
                 {/* Color Controls */}
                 <div className="space-y-4">
                   <div className="space-y-2">
@@ -489,7 +491,7 @@ const GradientGenerator = () => {
                           onChange={handleBackgroundColorChange}
                           previewSize="md"
                           previewShape="square"
-                          previewClassName="border-[1.5px] border-neutral-200 shadow-sm rounded-md"
+                          previewClassName="shadow-sm rounded-md"
                         />
                         <Input
                           id="backgroundColor"
@@ -513,7 +515,7 @@ const GradientGenerator = () => {
                             onChange={handleColorInputChange(index)}
                             previewSize="md"
                             previewShape="square"
-                            previewClassName="border-[1.5px] border-neutral-200 shadow-sm rounded-md"
+                            previewClassName="shadow-sm rounded-md"
                           />
 
                           <Input
