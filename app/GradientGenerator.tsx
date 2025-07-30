@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
-import { ColorInput } from "@/components/ui/color-input";
+import { SwatchPicker } from "@/components/ui/swatch-picker";
 import {
   Tooltip,
   TooltipContent,
@@ -51,6 +51,7 @@ const GradientGenerator = () => {
   const [aspectRatio, setAspectRatio] = useState("16:9");
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const isInitialRender = useRef(true);
 
   // Function to validate and normalize hex color
   const normalizeHexColor = (hex: string): string => {
@@ -196,8 +197,14 @@ const GradientGenerator = () => {
     }, 500); // 500ms debounce delay
   }, [generateMeshGradient]);
 
+  // Generate once on initial mount
+  // useEffect(() => {
+  //   generateMeshGradient();
+  // }, []);
+
+  // Generate when backgroundColor or colorInputs change (after debounce)
   useEffect(() => {
-    generateMeshGradient();
+    debouncedGenerateMeshGradient();
   }, [backgroundColor, colorInputs, aspectRatio]);
 
   // Cleanup timeout on unmount
@@ -211,14 +218,12 @@ const GradientGenerator = () => {
 
   const handleBackgroundColorChange = (value: string) => {
     setBackgroundColor(value);
-    debouncedGenerateMeshGradient();
   };
 
   const handleColorInputChange = (colorIndex: number) => (value: string) => {
     const newColors = [...colorInputs];
     newColors[colorIndex] = value;
     setColorInputs(newColors);
-    debouncedGenerateMeshGradient();
   };
 
   const generateRandomMeshGradient = useCallback(() => {
@@ -486,12 +491,9 @@ const GradientGenerator = () => {
                         Background
                       </Label>
                       <div className="flex gap-2">
-                        <ColorInput
+                        <SwatchPicker
                           value={normalizeHexColor(backgroundColor)}
                           onChange={handleBackgroundColorChange}
-                          previewSize="md"
-                          previewShape="square"
-                          previewClassName="shadow-sm rounded-md"
                         />
                         <Input
                           id="backgroundColor"
@@ -510,12 +512,9 @@ const GradientGenerator = () => {
                       <Label className="text-sm">Gradient Colors</Label>
                       {colorInputs.map((color, index) => (
                         <div key={index} className="flex gap-2">
-                          <ColorInput
+                          <SwatchPicker
                             value={normalizeHexColor(color)}
                             onChange={handleColorInputChange(index)}
-                            previewSize="md"
-                            previewShape="square"
-                            previewClassName="shadow-sm rounded-md"
                           />
 
                           <Input
