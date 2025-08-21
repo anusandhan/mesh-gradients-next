@@ -329,7 +329,7 @@ const SwatchPicker = React.forwardRef<HTMLDivElement, SwatchPickerProps>(
         <div ref={containerRef}>
           <button
             onClick={toggleDropdown}
-            className="w-9 h-9 p-0 rounded-lg border border-[1.25px] border-neutral-400 hover:border-neutral-700 transition-all duration-200 ease-out cursor-pointer"
+            className="w-9 h-9 p-0 rounded-lg border border-[1.25px] border-neutral-400 hover:border-neutral-700 transition-all duration-200 ease cursor-pointer"
             style={{
               backgroundColor: value,
               boxShadow: "inset 0 0 0 2px rgba(255, 255, 255, 0.25)",

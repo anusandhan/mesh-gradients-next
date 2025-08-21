@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
 import { SwatchPicker } from "@/components/ui/swatch-picker";
+import Spinner from "@/components/ui/spinner";
 import {
   Tooltip,
   TooltipContent,
@@ -49,6 +50,7 @@ const GradientGenerator = () => {
   const [saturationAmount, setSaturationAmount] = useState([110]);
   const [gradientName, setGradientName] = useState("New Gradient");
   const [aspectRatio, setAspectRatio] = useState("16:9");
+  const [isLoading, setIsLoading] = useState(false);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const isInitialRender = useRef(true);
@@ -100,6 +102,7 @@ const GradientGenerator = () => {
   };
 
   const generateMeshGradient = useCallback(() => {
+    setIsLoading(true);
     const canvas = canvasRef.current;
     if (canvas) {
       const ctx = canvas.getContext("2d");
@@ -177,6 +180,8 @@ const GradientGenerator = () => {
         generateNoise(ctx, canvas.width, canvas.height, noiseAmount[0]);
       }
     }
+    // Add a small delay to make the loading state visible
+    setTimeout(() => setIsLoading(false), 300);
   }, [
     backgroundColor,
     colorInputs,
@@ -227,6 +232,7 @@ const GradientGenerator = () => {
   };
 
   const generateRandomMeshGradient = useCallback(() => {
+    setIsLoading(true);
     const canvas = canvasRef.current;
     if (canvas) {
       const ctx = canvas.getContext("2d");
@@ -306,6 +312,8 @@ const GradientGenerator = () => {
         generateNoise(ctx, canvas.width, canvas.height, noiseAmount[0]);
       }
     }
+    // Add a small delay to make the loading state visible
+    setTimeout(() => setIsLoading(false), 300);
   }, [
     backgroundColor,
     colorInputs,
@@ -339,6 +347,16 @@ const GradientGenerator = () => {
       colors: ["#3b82f6", "#8b5cf6", "#ec4899", "#f59e0b"],
     },
     {
+      name: "Lovable",
+      background: "#1A1B1D",
+      colors: ["#FE7A04", "#FE4F1A", "#F35CBE", "#7472FC"],
+    },
+    {
+      name: "Creem",
+      background: "#18120E",
+      colors: ["#FFC099", "#FFB68A", "#FF8E57", "#B39A8D"],
+    },
+    {
       name: "Neon Cyberpunk",
       background: "#0a0a0a",
       colors: ["#ff0080", "#00ffff", "#ffff00", "#ff00ff"],
@@ -357,11 +375,6 @@ const GradientGenerator = () => {
       name: "Fire & Ice",
       background: "#fafafa",
       colors: ["#ff4757", "#ff3838", "#3742fa", "#2f3542"],
-    },
-    {
-      name: "Midnight Galaxy",
-      background: "#0a0a0a",
-      colors: ["#4a90e2", "#7b68ee", "#9370db", "#8a2be2"],
     },
     {
       name: "Candy Land",
@@ -464,14 +477,13 @@ const GradientGenerator = () => {
             {/* Controls Panel - Fixed width with scrollable content and fixed bottom buttons */}
             <div className="w-80 flex-shrink-0 flex flex-col border-r border-gray-200">
               {/* Scrollable Controls */}
-              <div className="flex-1 overflow-y-auto p-6 space-y-12">
+              <div className="flex-1 overflow-y-auto p-6 space-y-10 mb-10">
                 <Image
                   src="/beautiful-mesh-logo.png"
                   alt="Beautiful Mesh Logo"
                   height={54}
                   width={180}
                 />
-                {/* TO-DO: Tailwind Color Swatches Instead of Random Colors */}
 
                 {/* Color Controls */}
                 <div className="space-y-4">
@@ -529,6 +541,50 @@ const GradientGenerator = () => {
                         </div>
                       ))}
                     </div>
+                  </div>
+                </div>
+
+                {/* Presets */}
+                <div className="space-y-4">
+                  <div className="space-y-1">
+                    <h3 className="flex items-center gap-2 text-base font-medium text-gray-800">
+                      <TabsIcon className="w-6 h-6" />
+                      Presets
+                    </h3>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Select
+                      onValueChange={(value) => {
+                        const preset = presetGradients.find(
+                          (p) => p.name === value
+                        );
+                        if (preset) {
+                          applyPreset(preset);
+                        }
+                      }}
+                    >
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="Choose a preset" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {presetGradients.map((preset, index) => (
+                          <SelectItem key={index} value={preset.name}>
+                            <div className="flex items-center gap-2">
+                              <div
+                                className="w-3 h-3 rounded-full"
+                                style={{
+                                  background: `linear-gradient(45deg, ${preset.colors.join(
+                                    ", "
+                                  )})`,
+                                }}
+                              />
+                              {preset.name}
+                            </div>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
                 </div>
 
@@ -609,39 +665,6 @@ const GradientGenerator = () => {
                         step={5}
                       />
                     </div>
-                  </div>
-                </div>
-
-                {/* Presets */}
-                <div className="space-y-4">
-                  <div className="space-y-2">
-                    <h3 className="flex items-center gap-2 text-base font-medium text-gray-800">
-                      <TabsIcon className="w-6 h-6" />
-                      Presets
-                    </h3>
-                  </div>
-
-                  <div className="space-y-2">
-                    {presetGradients.map((preset, index) => (
-                      <Button
-                        key={index}
-                        variant="outline"
-                        className="w-full justify-start text-sm h-9"
-                        onClick={() => applyPreset(preset)}
-                      >
-                        <div className="flex items-center gap-2">
-                          <div
-                            className="w-3 h-3 rounded-full"
-                            style={{
-                              background: `linear-gradient(45deg, ${preset.colors.join(
-                                ", "
-                              )})`,
-                            }}
-                          />
-                          {preset.name}
-                        </div>
-                      </Button>
-                    ))}
                   </div>
                 </div>
               </div>
@@ -755,7 +778,13 @@ const GradientGenerator = () => {
                           </div>
                         </SelectValue>
                       </SelectTrigger>
-                      <SelectContent className="bg-white border border-gray-200 rounded-lg shadow-sm">
+                      <SelectContent
+                        position="popper"
+                        side="top" // or "bottom" if you want it under the trigger
+                        align="end" // right edge
+                        sideOffset={2} // optional spacing from the trigger
+                        className="origin-top-right bg-white border border-gray-200 rounded-lg shadow-sm"
+                      >
                         {aspectRatioOptions.map((option) => {
                           const IconComponent = option.icon;
                           return (
@@ -789,6 +818,14 @@ const GradientGenerator = () => {
                       height={canvasDimensions.height}
                       className="absolute top-0 left-0 w-full h-full object-cover rounded-sm"
                     />
+                    {/* Loading Spinner Overlay */}
+                    {isLoading && (
+                      <div className="absolute inset-0 bg-white/80 backdrop-blur-sm flex items-center justify-center rounded-sm">
+                        <div className="text-center">
+                          <Spinner size={24} className="text-gray-600 mb-2" />
+                        </div>
+                      </div>
+                    )}
                     {/* <div className="absolute inset-0 bg-gradient-to-t from-black/10 to-transparent pointer-events-none rounded-lg" /> */}
                   </div>
                 </div>
