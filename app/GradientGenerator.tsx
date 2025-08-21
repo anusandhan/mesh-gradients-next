@@ -475,20 +475,26 @@ const GradientGenerator = () => {
           {/* Main Content - Flex container */}
           <div className="flex-1 flex gap-6 min-h-0">
             {/* Controls Panel - Fixed width with scrollable content and fixed bottom buttons */}
-            <div className="w-80 flex-shrink-0 flex flex-col border-r border-gray-200">
+            <div className="w-80 flex-shrink-0 flex flex-col border-r border-neutral-200">
               {/* Scrollable Controls */}
               <div className="flex-1 overflow-y-auto p-6 space-y-10 mb-10">
-                <Image
-                  src="/beautiful-mesh-logo.png"
-                  alt="Beautiful Mesh Logo"
-                  height={54}
-                  width={180}
-                />
+                <div className="flex items-center gap-2">
+                  <Image
+                    src="/beautiful-mesh-logo.png"
+                    alt="Beautiful Mesh Logo"
+                    width={40}
+                    height={40}
+                    className="block"
+                  />
+                  <span className="text-md font-medium text-neutral-800">
+                    {`Beautiful Mesh`}
+                  </span>
+                </div>
 
                 {/* Color Controls */}
                 <div className="space-y-4">
                   <div className="space-y-2">
-                    <h3 className="flex items-center gap-2 text-base font-medium text-gray-800">
+                    <h3 className="flex items-center gap-2 text-base font-medium text-neutral-800">
                       <SwatchesIcon className="w-6 h-6" />
                       Colors
                     </h3>
@@ -547,7 +553,7 @@ const GradientGenerator = () => {
                 {/* Presets */}
                 <div className="space-y-4">
                   <div className="space-y-1">
-                    <h3 className="flex items-center gap-2 text-base font-medium text-gray-800">
+                    <h3 className="flex items-center gap-2 text-base font-medium text-neutral-800">
                       <TabsIcon className="w-6 h-6" />
                       Presets
                     </h3>
@@ -591,7 +597,7 @@ const GradientGenerator = () => {
                 {/* Effect Controls */}
                 <div className="space-y-4">
                   <div className="space-y-2">
-                    <h3 className="flex items-center gap-2 text-base font-medium text-gray-800">
+                    <h3 className="flex items-center gap-2 text-base font-medium text-neutral-800">
                       <SlidersIcon className="w-6 h-6" />
                       Effects
                     </h3>
@@ -670,7 +676,7 @@ const GradientGenerator = () => {
               </div>
 
               {/* Fixed Action Buttons */}
-              <div className="flex-shrink-0 p-6 pt-4 border-t border-gray-200 bg-white">
+              <div className="flex-shrink-0 p-6 pt-4 border-t border-neutral-200 bg-white">
                 <div className="flex gap-2">
                   <Tooltip>
                     <TooltipTrigger asChild>
@@ -717,7 +723,7 @@ const GradientGenerator = () => {
                 }}
               >
                 <div
-                  className="relative mx-auto bg-white rounded-xl border border-gray-200 overflow-hidden"
+                  className="relative mx-auto bg-white rounded-xl border border-neutral-200 overflow-hidden"
                   style={{
                     width: `${previewDimensions.width}px`,
                     maxHeight: `${previewDimensions.height}px`,
@@ -725,7 +731,7 @@ const GradientGenerator = () => {
                 >
                   {/* Gradient Name Badge */}
                   <div className="absolute top-2 left-2 z-20">
-                    <div className="bg-white border border-gray-200 rounded-lg px-3 py-1.5 shadow-sm">
+                    <div className="bg-white border border-neutral-200 rounded-lg px-3 py-1.5 shadow-sm">
                       <div
                         contentEditable
                         suppressContentEditableWarning
@@ -744,7 +750,7 @@ const GradientGenerator = () => {
                             e.currentTarget.blur();
                           }
                         }}
-                        className="text-xs text-gray-600 hover:text-gray-800 transition-colors cursor-text outline-none w-auto"
+                        className="text-xs text-neutral-600 hover:text-neutral-800 transition-colors cursor-text outline-none w-auto"
                       >
                         {gradientName}
                       </div>
@@ -754,7 +760,7 @@ const GradientGenerator = () => {
                   {/* Aspect Ratio Badge */}
                   <div className="absolute top-2 right-2 z-20">
                     <Select value={aspectRatio} onValueChange={setAspectRatio}>
-                      <SelectTrigger className="bg-white border border-gray-200 rounded-lg px-3 py-1.5 shadow-sm h-auto text-xs text-gray-600 hover:text-gray-800 transition-colors cursor-pointer outline-none">
+                      <SelectTrigger className="bg-white border border-neutral-200 rounded-lg px-3 py-1.5 shadow-sm h-auto text-xs text-neutral-600 hover:text-neutral-800 transition-colors cursor-pointer outline-none">
                         <SelectValue>
                           <div className="flex items-center gap-1.5">
                             {(() => {
@@ -766,10 +772,10 @@ const GradientGenerator = () => {
                               return (
                                 <>
                                   <IconComponent className="w-3 h-3" />
-                                  <span className="text-xs text-gray-600">
+                                  <span className="text-xs text-neutral-600">
                                     {currentOption?.label}
                                   </span>
-                                  <span className="text-xs text-gray-400">
+                                  <span className="text-xs text-neutral-400">
                                     {currentOption?.ratio}
                                   </span>
                                 </>
@@ -783,7 +789,7 @@ const GradientGenerator = () => {
                         side="top" // or "bottom" if you want it under the trigger
                         align="end" // right edge
                         sideOffset={2} // optional spacing from the trigger
-                        className="origin-top-right bg-white border border-gray-200 rounded-lg shadow-sm"
+                        className="origin-top-right bg-white border border-neutral-200 rounded-lg shadow-sm"
                       >
                         {aspectRatioOptions.map((option) => {
                           const IconComponent = option.icon;
@@ -791,10 +797,10 @@ const GradientGenerator = () => {
                             <SelectItem key={option.value} value={option.value}>
                               <div className="flex items-center gap-1.5">
                                 <IconComponent className="w-3 h-3" />
-                                <span className="text-xs text-gray-600">
+                                <span className="text-xs text-neutral-600">
                                   {option.label}
                                 </span>
-                                <span className="text-xs text-gray-400">
+                                <span className="text-xs text-neutral-400">
                                   {option.ratio}
                                 </span>
                               </div>
@@ -822,7 +828,10 @@ const GradientGenerator = () => {
                     {isLoading && (
                       <div className="absolute inset-0 bg-white/80 backdrop-blur-sm flex items-center justify-center rounded-sm">
                         <div className="text-center">
-                          <Spinner size={24} className="text-gray-600 mb-2" />
+                          <Spinner
+                            size={24}
+                            className="text-neutral-600 mb-2"
+                          />
                         </div>
                       </div>
                     )}
