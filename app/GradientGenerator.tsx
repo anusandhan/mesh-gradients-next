@@ -23,7 +23,6 @@ import {
 import {
   DownloadIcon,
   ShuffleIcon,
-  GearIcon,
   SwatchesIcon,
   TabsIcon,
   SlidersIcon,
@@ -35,6 +34,22 @@ import {
   DeviceTabletCameraIcon,
 } from "@phosphor-icons/react";
 import Image from "next/image";
+import {
+  LovableIcon,
+  DiaIcon,
+  RaycastIcon,
+  StripeIcon,
+  ArcIcon,
+  CometIcon,
+  DevinIcon,
+} from "@/components/icons";
+
+type PresetGradient = {
+  name: string;
+  background: string;
+  colors: string[];
+  icon: React.ComponentType<{ className?: string; size?: number }>;
+};
 
 const GradientGenerator = () => {
   const [backgroundColor, setBackgroundColor] = useState("#f8fafc");
@@ -340,7 +355,7 @@ const GradientGenerator = () => {
     }
   };
 
-  const presetGradients = [
+  const presetGradients: PresetGradient[] = [
     // {
     //   name: "Heatwaves",
     //   background: "#f8fafc",
@@ -350,37 +365,43 @@ const GradientGenerator = () => {
       name: "Lovable",
       background: "#1A1B1D",
       colors: ["#FE7A04", "#FE4F1A", "#F35CBE", "#7472FC"],
+      icon: LovableIcon,
     },
     {
       name: "Dia",
       background: "#0358f7",
       colors: ["#c679c4", "#fa3d1d", "#ffb005", "#e1e1fe"],
+      icon: DiaIcon,
     },
     {
       name: "Raycast",
       background: "#07090B",
       colors: ["#CF1627", "#08243A", "#0F8B92", "#D54F63"],
+      icon: RaycastIcon,
     },
     {
       name: "Stripe",
       background: "#635BFF",
       colors: ["#F15372", "#FFCA3B", "#76E2FF", "#B5DAB9"],
+      icon: StripeIcon,
     },
     {
       name: "Arc",
       background: "#140080",
       colors: ["#0229C9", "#FF526B", "#FF9598", "#EE4A5F"],
+      icon: ArcIcon,
     },
     {
       name: "Comet",
       background: "#101013",
       colors: ["#5099A1", "#733138", "#53969F", "#C17B55"],
+      icon: CometIcon,
     },
-
     {
       name: "Devin",
-      background: "#F6F6F6",
+      background: "#11131D",
       colors: ["#2A6DCE", "#1796E2", "#1DC19C", "#3FA9DD"],
+      icon: DevinIcon,
     },
     // {
     //   name: "Creem",
@@ -463,7 +484,7 @@ const GradientGenerator = () => {
     };
   }, [aspectRatio]);
 
-  const applyPreset = (preset: (typeof presetGradients)[0]) => {
+  const applyPreset = (preset: PresetGradient) => {
     setBackgroundColor(preset.background);
     setColorInputs(preset.colors);
     setGradientName(preset.name);
@@ -556,7 +577,7 @@ const GradientGenerator = () => {
                   <div className="space-y-1">
                     <h3 className="flex items-center gap-2 text-base font-medium text-neutral-800">
                       <TabsIcon className="w-6 h-6" />
-                      Presets
+                      Preset
                     </h3>
                   </div>
 
@@ -575,21 +596,20 @@ const GradientGenerator = () => {
                         <SelectValue placeholder="Choose a preset" />
                       </SelectTrigger>
                       <SelectContent>
-                        {presetGradients.map((preset, index) => (
-                          <SelectItem key={index} value={preset.name}>
-                            <div className="flex items-center gap-2">
-                              <div
-                                className="w-3 h-3 rounded-full"
-                                style={{
-                                  background: `linear-gradient(45deg, ${preset.colors.join(
-                                    ", "
-                                  )})`,
-                                }}
-                              />
-                              {preset.name}
-                            </div>
-                          </SelectItem>
-                        ))}
+                        {presetGradients.map((preset, index) => {
+                          const IconComponent = preset.icon;
+                          return (
+                            <SelectItem key={index} value={preset.name}>
+                              <div className="flex items-center gap-2">
+                                <IconComponent
+                                  size={16}
+                                  className="text-neutral-600"
+                                />
+                                {preset.name}
+                              </div>
+                            </SelectItem>
+                          );
+                        })}
                       </SelectContent>
                     </Select>
                   </div>
