@@ -341,51 +341,52 @@ const GradientGenerator = () => {
   };
 
   const presetGradients = [
-    {
-      name: "Heatwaves",
-      background: "#f8fafc",
-      colors: ["#3b82f6", "#8b5cf6", "#ec4899", "#f59e0b"],
-    },
+    // {
+    //   name: "Heatwaves",
+    //   background: "#f8fafc",
+    //   colors: ["#3b82f6", "#8b5cf6", "#ec4899", "#f59e0b"],
+    // },
     {
       name: "Lovable",
       background: "#1A1B1D",
       colors: ["#FE7A04", "#FE4F1A", "#F35CBE", "#7472FC"],
     },
     {
-      name: "Creem",
-      background: "#18120E",
-      colors: ["#FFC099", "#FFB68A", "#FF8E57", "#B39A8D"],
+      name: "Dia",
+      background: "#0358f7",
+      colors: ["#c679c4", "#fa3d1d", "#ffb005", "#e1e1fe"],
     },
     {
-      name: "Neon Cyberpunk",
-      background: "#0a0a0a",
-      colors: ["#ff0080", "#00ffff", "#ffff00", "#ff00ff"],
+      name: "Raycast",
+      background: "#07090B",
+      colors: ["#CF1627", "#08243A", "#0F8B92", "#D54F63"],
     },
     {
-      name: "Tropical Sunset",
-      background: "#fff5f5",
-      colors: ["#ff6b35", "#f7931e", "#ffd23f", "#ff6b9d"],
+      name: "Stripe",
+      background: "#635BFF",
+      colors: ["#F15372", "#FFCA3B", "#76E2FF", "#B5DAB9"],
     },
     {
-      name: "Electric Ocean",
-      background: "#f0f9ff",
-      colors: ["#00d4ff", "#0099cc", "#0066ff", "#9933ff"],
+      name: "Arc",
+      background: "#140080",
+      colors: ["#0229C9", "#FF526B", "#FF9598", "#EE4A5F"],
     },
     {
-      name: "Fire & Ice",
-      background: "#fafafa",
-      colors: ["#ff4757", "#ff3838", "#3742fa", "#2f3542"],
+      name: "Comet",
+      background: "#101013",
+      colors: ["#5099A1", "#733138", "#53969F", "#C17B55"],
     },
+
     {
-      name: "Candy Land",
-      background: "#fff0f5",
-      colors: ["#ff69b4", "#ff1493", "#ffb6c1", "#ffc0cb"],
+      name: "Devin",
+      background: "#F6F6F6",
+      colors: ["#2A6DCE", "#1796E2", "#1DC19C", "#3FA9DD"],
     },
-    {
-      name: "Purple Dream",
-      background: "#0d0019",
-      colors: ["#8b5cf6", "#a855f7", "#c084fc", "#d946ef"],
-    },
+    // {
+    //   name: "Creem",
+    //   background: "#18120E",
+    //   colors: ["#FFC099", "#FFB68A", "#FF8E57", "#B39A8D"],
+    // },
   ];
 
   const aspectRatioOptions = [
