@@ -5,7 +5,7 @@ import "./globals.css";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Beautiful Mesh",
+  title: "Gradients Studio",
   description:
     "Create beautiful, customizable mesh gradients for wallpapers, backgrounds, and designs",
 };

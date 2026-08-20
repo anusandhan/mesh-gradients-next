@@ -5,7 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
-import { SwatchPicker } from "@/components/ui/swatch-picker";
+import { ColorPickerPopover } from "@/components/ui/color-picker-popover";
+import { cn } from "@/lib/utils";
 import Spinner from "@/components/ui/spinner";
 import {
   Tooltip,
@@ -32,6 +33,7 @@ import {
   DeviceMobileIcon,
   InstagramLogoIcon,
   DeviceTabletCameraIcon,
+  XIcon,
 } from "@phosphor-icons/react";
 import Image from "next/image";
 import {
@@ -43,6 +45,16 @@ import {
   CometIcon,
   DevinIcon,
 } from "@/components/icons";
+import {
+  formatColor,
+  parseToHex,
+  hexToChannels,
+  channelsToHex,
+  COLOR_FORMATS,
+  CHANNEL_DEFS,
+  type ColorFormat,
+} from "@/lib/color-format";
+import { ChannelNumberInput } from "@/components/ui/channel-color-picker";
 
 type PresetGradient = {
   name: string;
@@ -204,6 +216,75 @@ const renderGradient = (
   }
 };
 
+// Color value input in the selected format. Hex renders one text field that
+// accepts any CSS color string; the other formats render one number input
+// per channel. Internal value stays hex either way.
+const ColorField = ({
+  id,
+  hex,
+  format,
+  placeholder,
+  onChange,
+}: {
+  id?: string;
+  hex: string;
+  format: ColorFormat;
+  placeholder: string;
+  onChange: (hex: string) => void;
+}) => {
+  const [draft, setDraft] = useState<string | null>(null);
+
+  if (format === "hex") {
+    return (
+      <Input
+        id={id}
+        type="text"
+        value={draft ?? formatColor(hex, format)}
+        onFocus={() => setDraft(formatColor(hex, format))}
+        onChange={(e) => {
+          setDraft(e.target.value);
+          const parsed = parseToHex(e.target.value);
+          if (parsed) onChange(parsed);
+        }}
+        onBlur={() => setDraft(null)}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") e.currentTarget.blur();
+        }}
+        className="flex-1 text-sm"
+        placeholder={placeholder}
+      />
+    );
+  }
+
+  const defs = CHANNEL_DEFS[format];
+  const channels = hexToChannels(hex, format);
+
+  return (
+    <div className="flex h-9 flex-1 min-w-0 items-center rounded-lg border border-input bg-transparent shadow-sm">
+      {defs.map((def, index) => (
+        <div
+          key={def.key}
+          className={cn(
+            "flex h-full min-w-0 flex-1 items-center px-2.5",
+            index > 0 && "border-l border-neutral-200"
+          )}
+        >
+          <ChannelNumberInput
+            value={channels[index]}
+            def={def}
+            onCommit={(channelValue) => {
+              const next = [...channels];
+              next[index] = channelValue;
+              onChange(channelsToHex(next, format));
+            }}
+            className="text-center"
+          />
+        </div>
+      ))}
+    </div>
+  );
+};
+
 const GradientGenerator = () => {
   const [backgroundColor, setBackgroundColor] = useState("#f8fafc");
   const [colorInputs, setColorInputs] = useState([
@@ -220,9 +301,33 @@ const GradientGenerator = () => {
   const [aspectRatio, setAspectRatio] = useState("16:9");
   const [seed, setSeed] = useState(() => Math.floor(Math.random() * 2 ** 32));
   const [placement, setPlacement] = useState<"center" | "random">("center");
+  const [colorFormat, setColorFormat] = useState<ColorFormat>("oklch");
   const [isExporting, setIsExporting] = useState(false);
+  const [controlsOpen, setControlsOpen] = useState(false);
+  const [containerSize, setContainerSize] = useState({
+    width: 1024,
+    height: 600,
+  });
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const previewContainerRef = useRef<HTMLDivElement>(null);
   const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Track the preview container's actual size so the canvas fits any viewport
+  useEffect(() => {
+    const el = previewContainerRef.current;
+    if (!el) return;
+    const observer = new ResizeObserver((entries) => {
+      const { width, height } = entries[0].contentRect;
+      if (width > 0 && height > 0) {
+        setContainerSize({
+          width: Math.round(width),
+          height: Math.round(height),
+        });
+      }
+    });
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
 
   const handleBackgroundColorChange = (value: string) => {
     setBackgroundColor(value);
@@ -335,30 +440,18 @@ const GradientGenerator = () => {
     }
   }, [aspectRatio]);
 
+  // Fit the selected aspect ratio inside the measured container
   const previewDimensions = useMemo(() => {
-    // Get parent container max dimensions
-    const maxParentWidth = 1024; // max-w-4xl equivalent
-    const maxParentHeight = 600; // Fixed height
+    const maxWidth = Math.max(containerSize.width, 160);
+    const maxHeight = Math.max(containerSize.height, 160);
 
     const [width, height] = aspectRatio.split(":").map(Number);
     const aspectRatioValue = width / height;
 
-    // Calculate dimensions that fit within parent
-    let calculatedWidth, calculatedHeight;
-
-    if (aspectRatioValue > 1) {
-      // Landscape - fit to width
-      calculatedWidth = Math.min(
-        maxParentWidth,
-        maxParentHeight * aspectRatioValue
-      );
-      calculatedHeight = calculatedWidth / aspectRatioValue;
-    } else {
-      // Portrait - fit to height
-      calculatedHeight = Math.min(
-        maxParentHeight,
-        maxParentWidth / aspectRatioValue
-      );
+    let calculatedWidth = Math.min(maxWidth, maxHeight * aspectRatioValue);
+    let calculatedHeight = calculatedWidth / aspectRatioValue;
+    if (calculatedHeight > maxHeight) {
+      calculatedHeight = maxHeight;
       calculatedWidth = calculatedHeight * aspectRatioValue;
     }
 
@@ -366,7 +459,7 @@ const GradientGenerator = () => {
       width: Math.round(calculatedWidth),
       height: Math.round(calculatedHeight),
     };
-  }, [aspectRatio]);
+  }, [containerSize, aspectRatio]);
 
   // The on-screen canvas only needs display resolution (times DPR for sharpness);
   // full export resolution is rendered off-screen at download time
@@ -467,34 +560,80 @@ const GradientGenerator = () => {
 
   return (
     <TooltipProvider>
-      <div className="min-h-screen bg-white">
-        <div className="h-screen flex flex-col">
-          {/* Main Content - Flex container */}
-          <div className="flex-1 flex gap-6 min-h-0">
-            {/* Controls Panel - Fixed width with scrollable content and fixed bottom buttons */}
-            <div className="w-80 flex-shrink-0 flex flex-col border-r border-neutral-200">
+      <div className="bg-white">
+        <div className="flex flex-col h-screen" style={{ height: "100dvh" }}>
+          {/* Main Content - full-screen preview on mobile, sidebar + preview on lg+ */}
+          <div className="flex-1 flex lg:gap-6 min-h-0">
+            {/* Backdrop behind the mobile controls modal */}
+            {controlsOpen && (
+              <div
+                className="lg:hidden fixed inset-0 z-40 bg-black/40"
+                onClick={() => setControlsOpen(false)}
+              />
+            )}
+            {/* Controls Panel - near-full-screen modal on mobile, static sidebar on lg+ */}
+            <div
+              className={cn(
+                "flex-col bg-white",
+                controlsOpen
+                  ? "flex fixed inset-x-0 bottom-0 top-14 z-50 rounded-t-2xl border-t border-neutral-200 shadow-xl"
+                  : "hidden",
+                "lg:flex lg:static lg:inset-auto lg:z-auto lg:w-80 lg:flex-shrink-0 lg:min-h-0 lg:rounded-none lg:border-t-0 lg:border-r lg:border-neutral-200 lg:shadow-none"
+              )}
+            >
+              {/* Mobile modal header */}
+              <div className="lg:hidden flex items-center justify-between px-6 py-3 border-b border-neutral-200">
+                <span className="text-base font-medium text-neutral-800">
+                  Controls
+                </span>
+                <button
+                  onClick={() => setControlsOpen(false)}
+                  className="p-1 text-neutral-500 hover:text-neutral-800 transition-colors"
+                  aria-label="Close controls"
+                  type="button"
+                >
+                  <XIcon className="w-5 h-5" />
+                </button>
+              </div>
               {/* Scrollable Controls */}
-              <div className="flex-1 overflow-y-auto p-6 space-y-10 mb-10">
-                <div className="flex items-center gap-2">
+              <div className="flex-1 overflow-y-auto p-6 space-y-10">
+                <div className="hidden lg:flex items-center gap-2">
                   <Image
                     src="/beautiful-mesh-logo.png"
-                    alt="Beautiful Mesh Logo"
+                    alt="Gradients Studio Logo"
                     width={915}
                     height={562}
                     className="block w-10 h-auto"
                   />
                   <span className="text-md font-medium text-neutral-800">
-                    {`Beautiful Mesh`}
+                    {`Gradients Studio`}
                   </span>
                 </div>
 
                 {/* Color Controls */}
                 <div className="space-y-4">
-                  <div className="space-y-2">
+                  <div className="flex items-center justify-between gap-2">
                     <h3 className="flex items-center gap-2 text-base font-medium text-neutral-800">
                       <SwatchesIcon className="w-6 h-6" />
                       Colors
                     </h3>
+                    <Select
+                      value={colorFormat}
+                      onValueChange={(value) =>
+                        setColorFormat(value as ColorFormat)
+                      }
+                    >
+                      <SelectTrigger className="h-7 w-auto gap-1 px-2 text-xs text-neutral-600">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {COLOR_FORMATS.map((format) => (
+                          <SelectItem key={format.value} value={format.value}>
+                            {format.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
 
                   <div className="space-y-4">
@@ -506,19 +645,17 @@ const GradientGenerator = () => {
                         Background
                       </Label>
                       <div className="flex gap-2">
-                        <SwatchPicker
+                        <ColorPickerPopover
                           value={normalizeHexColor(backgroundColor)}
+                          format={colorFormat}
                           onChange={handleBackgroundColorChange}
                         />
-                        <Input
+                        <ColorField
                           id="backgroundColor"
-                          type="text"
-                          value={backgroundColor}
-                          onChange={(e) =>
-                            handleBackgroundColorChange(e.target.value)
-                          }
-                          className="flex-1 text-sm"
-                          placeholder="#ffffff"
+                          hex={normalizeHexColor(backgroundColor)}
+                          format={colorFormat}
+                          placeholder="oklch(1 0 0)"
+                          onChange={handleBackgroundColorChange}
                         />
                       </div>
                     </div>
@@ -527,19 +664,17 @@ const GradientGenerator = () => {
                       <Label className="text-sm">Gradient Colors</Label>
                       {colorInputs.map((color, index) => (
                         <div key={index} className="flex gap-2">
-                          <SwatchPicker
+                          <ColorPickerPopover
                             value={normalizeHexColor(color)}
+                            format={colorFormat}
                             onChange={handleColorInputChange(index)}
                           />
 
-                          <Input
-                            type="text"
-                            value={color}
-                            onChange={(e) =>
-                              handleColorInputChange(index)(e.target.value)
-                            }
-                            className="flex-1 text-sm"
-                            placeholder="#000000"
+                          <ColorField
+                            hex={normalizeHexColor(color)}
+                            format={colorFormat}
+                            placeholder="oklch(0 0 0)"
+                            onChange={handleColorInputChange(index)}
                           />
                         </div>
                       ))}
@@ -603,7 +738,7 @@ const GradientGenerator = () => {
                     <div className="space-y-2">
                       <div className="flex justify-between">
                         <Label className="text-sm">Blur Amount</Label>
-                        <span className="text-xs text-muted-foreground">
+                        <span className="text-xs tabular-nums text-muted-foreground">
                           {blurAmount[0]}px
                         </span>
                       </div>
@@ -618,7 +753,7 @@ const GradientGenerator = () => {
                     <div className="space-y-2">
                       <div className="flex justify-between">
                         <Label className="text-sm">Noise</Label>
-                        <span className="text-xs text-muted-foreground">
+                        <span className="text-xs tabular-nums text-muted-foreground">
                           {(noiseAmount[0] * 100).toFixed(0)}%
                         </span>
                       </div>
@@ -633,7 +768,7 @@ const GradientGenerator = () => {
                     <div className="space-y-2">
                       <div className="flex justify-between">
                         <Label className="text-sm">Contrast</Label>
-                        <span className="text-xs text-muted-foreground">
+                        <span className="text-xs tabular-nums text-muted-foreground">
                           {contrastAmount[0]}%
                         </span>
                       </div>
@@ -648,7 +783,7 @@ const GradientGenerator = () => {
                     <div className="space-y-2">
                       <div className="flex justify-between">
                         <Label className="text-sm">Saturation</Label>
-                        <span className="text-xs text-muted-foreground">
+                        <span className="text-xs tabular-nums text-muted-foreground">
                           {saturationAmount[0]}%
                         </span>
                       </div>
@@ -700,21 +835,16 @@ const GradientGenerator = () => {
               </div>
             </div>
 
-            {/* Canvas Preview - Fixed */}
-            <div className="flex-1 flex items-center justify-center">
+            {/* Canvas Preview - fills remaining space; mobile adds a bottom bar */}
+            <div className="flex-1 min-w-0 flex flex-col">
               <div
-                className="flex-1 flex items-center justify-center p-6"
-                style={{
-                  maxWidth: "calc(100vw - 20rem - 3rem)", // 20rem = w-80 sidebar, 3rem = total horizontal padding (p-6)
-                  height: "calc(100vh - 100px)",
-                  maxHeight: "calc(100vh - 500px)",
-                }}
+                ref={previewContainerRef}
+                className="flex-1 min-h-0 flex items-center justify-center p-4 lg:p-6"
               >
                 <div
                   className="relative mx-auto bg-white rounded-xl border border-neutral-200 overflow-hidden"
                   style={{
                     width: `${previewDimensions.width}px`,
-                    maxHeight: `${previewDimensions.height}px`,
                   }}
                 >
                   {/* Gradient Name Badge */}
@@ -826,6 +956,29 @@ const GradientGenerator = () => {
                     {/* <div className="absolute inset-0 bg-gradient-to-t from-black/10 to-transparent pointer-events-none rounded-lg" /> */}
                   </div>
                 </div>
+              </div>
+              {/* Mobile bottom bar */}
+              <div className="lg:hidden flex-shrink-0 flex items-center justify-between gap-3 p-4 border-t border-neutral-200 bg-white">
+                <div className="flex items-center gap-2">
+                  <Image
+                    src="/beautiful-mesh-logo.png"
+                    alt="Gradients Studio Logo"
+                    width={915}
+                    height={562}
+                    className="block w-8 h-auto"
+                  />
+                  <span className="text-sm font-medium text-neutral-800">
+                    {`Gradients Studio`}
+                  </span>
+                </div>
+                <Button
+                  variant="outline"
+                  onClick={() => setControlsOpen(true)}
+                  className="h-9 text-sm"
+                >
+                  <SlidersIcon weight="bold" className="w-4 h-4 mr-2" />
+                  Show Controls
+                </Button>
               </div>
             </div>
           </div>
