@@ -10,6 +10,7 @@
     "test:render": "tsx scripts/render-smoke-test.ts"
   },
   "dependencies": {
+    "@clerk/nextjs": "^7.8.0",
     "@napi-rs/canvas": "^1.0.7",
     "@phosphor-icons/react": "^2.1.10",
     "@radix-ui/react-label": "^2.1.7",

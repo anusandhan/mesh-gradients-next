@@ -56,6 +56,12 @@ import {
 } from "@/lib/color-format";
 import { ChannelNumberInput } from "@/components/ui/channel-color-picker";
 import { renderGradient, normalizeHexColor } from "@/lib/gradient-renderer";
+import {
+  SignedIn,
+  SignedOut,
+  SignInButton,
+  UserButton,
+} from "@clerk/nextjs";
 
 // Browser canvas factory for the renderer's blur pyramid scratch canvases
 const domCreateCanvas = (width: number, height: number) => {
@@ -452,18 +458,30 @@ const GradientGenerator = () => {
                   <XIcon className="w-5 h-5" />
                 </button>
               </div>
-              {/* Logo - desktop sidebar only */}
-              <div className="hidden lg:flex items-center gap-2 p-6 pb-0">
-                <Image
-                  src="/beautiful-mesh-logo.png"
-                  alt="Gradients Studio Logo"
-                  width={915}
-                  height={562}
-                  className="block w-10 h-auto"
-                />
-                <span className="text-md font-medium text-neutral-800">
-                  {`Gradients Studio`}
-                </span>
+              {/* Logo + account - desktop sidebar only */}
+              <div className="hidden lg:flex items-center justify-between gap-2 p-6 pb-0">
+                <div className="flex items-center gap-2 min-w-0">
+                  <Image
+                    src="/beautiful-mesh-logo.png"
+                    alt="Gradients Studio Logo"
+                    width={915}
+                    height={562}
+                    className="block w-10 h-auto shrink-0"
+                  />
+                  <span className="truncate text-md font-medium text-neutral-800">
+                    {`Gradients Studio`}
+                  </span>
+                </div>
+                <SignedOut>
+                  <SignInButton mode="modal">
+                    <Button variant="outline" className="h-8 px-3 text-xs">
+                      Sign in
+                    </Button>
+                  </SignInButton>
+                </SignedOut>
+                <SignedIn>
+                  <UserButton />
+                </SignedIn>
               </div>
               {/* Scrollable Controls */}
               <div className="flex-1 overflow-y-auto p-6 space-y-10">
@@ -852,6 +870,16 @@ const GradientGenerator = () => {
                   >
                     <SlidersIcon weight="bold" className="w-4 h-4" />
                   </Button>
+                  <SignedOut>
+                    <SignInButton mode="modal">
+                      <Button variant="outline" className="h-9 px-3 text-sm">
+                        Sign in
+                      </Button>
+                    </SignInButton>
+                  </SignedOut>
+                  <SignedIn>
+                    <UserButton />
+                  </SignedIn>
                 </div>
               </div>
             </div>

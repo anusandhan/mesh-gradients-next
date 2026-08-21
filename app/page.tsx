@@ -1,6 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
+import { Suspense } from "react";
 
 const GradientGenerator = dynamic(
   () => import("./GradientGenerator"),
@@ -8,5 +9,11 @@ const GradientGenerator = dynamic(
 );
 
 export default function Page() {
-  return <GradientGenerator />;
+  // Suspense catches the ssr:false bailout now that ClerkProvider makes
+  // the route dynamically rendered (without it the SSR stream 500s)
+  return (
+    <Suspense fallback={null}>
+      <GradientGenerator />
+    </Suspense>
+  );
 }
