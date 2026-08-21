@@ -22,6 +22,17 @@ export type UserRecord = {
   email: string;
 };
 
+export const findUser = async (
+  clerkUserId: string
+): Promise<UserRecord | null> => {
+  const sql = getSql();
+  const rows = await sql`
+    SELECT id, clerk_user_id, email FROM users
+    WHERE clerk_user_id = ${clerkUserId}
+  `;
+  return rows.length > 0 ? (rows[0] as UserRecord) : null;
+};
+
 export const getOrCreateUser = async (
   clerkUserId: string,
   email: string

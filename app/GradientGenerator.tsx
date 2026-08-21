@@ -163,6 +163,12 @@ const GradientGenerator = () => {
   const [colorFormat, setColorFormat] = useState<ColorFormat>("oklch");
   const [isExporting, setIsExporting] = useState(false);
   const [controlsOpen, setControlsOpen] = useState(false);
+  const [upgradeOpen, setUpgradeOpen] = useState(false);
+  const [quota, setQuota] = useState<{
+    plan: "free" | "pro";
+    remaining: number | null;
+    resetsAt: string;
+  } | null>(null);
   const [containerSize, setContainerSize] = useState({
     width: 1024,
     height: 600,
@@ -187,6 +193,25 @@ const GradientGenerator = () => {
     observer.observe(el);
     return () => observer.disconnect();
   }, []);
+
+  // Display-only quota status; the server is the source of truth and
+  // re-checks on every export regardless of what this shows
+  const refreshQuota = useCallback(async () => {
+    if (!isSignedIn) {
+      setQuota(null);
+      return;
+    }
+    try {
+      const res = await fetch("/api/quota");
+      if (res.ok) setQuota(await res.json());
+    } catch {
+      // badge is cosmetic; ignore fetch failures
+    }
+  }, [isSignedIn]);
+
+  useEffect(() => {
+    refreshQuota();
+  }, [refreshQuota]);
 
   const handleBackgroundColorChange = (value: string) => {
     setBackgroundColor(value);
@@ -410,10 +435,8 @@ const GradientGenerator = () => {
         return;
       }
       if (res.status === 402) {
-        // Upgrade dialog lands with the quota UI (UNF-214)
-        alert(
-          "You've used all your free exports this month. Pro upgrade coming soon."
-        );
+        setQuota((prev) => (prev ? { ...prev, remaining: 0 } : prev));
+        setUpgradeOpen(true);
         return;
       }
       if (res.status === 429) {
@@ -423,6 +446,21 @@ const GradientGenerator = () => {
       if (!res.ok) {
         alert("Export failed. Please try again.");
         return;
+      }
+
+      const remainingHeader = res.headers.get("X-Exports-Remaining");
+      if (remainingHeader !== null) {
+        setQuota((prev) =>
+          prev
+            ? {
+                ...prev,
+                remaining:
+                  remainingHeader === "unlimited"
+                    ? null
+                    : Number(remainingHeader),
+              }
+            : prev
+        );
       }
 
       const blob = await res.blob();
@@ -439,6 +477,15 @@ const GradientGenerator = () => {
     }
   };
 
+  const quotaBadge =
+    isSignedIn && quota ? (
+      <p className="text-center text-xs tabular-nums text-neutral-500">
+        {quota.plan === "pro"
+          ? "Pro — unlimited exports"
+          : `${quota.remaining} of 5 free exports left this month`}
+      </p>
+    ) : null;
+
   const applyPreset = (preset: PresetGradient) => {
     setBackgroundColor(preset.background);
     setColorInputs(preset.colors);
@@ -451,6 +498,62 @@ const GradientGenerator = () => {
         <div className="flex flex-col h-screen" style={{ height: "100dvh" }}>
           {/* Main Content - full-screen preview on mobile, sidebar + preview on lg+ */}
           <div className="flex-1 flex lg:gap-6 min-h-0">
+            {/* Upgrade dialog - shown when the free export quota is spent */}
+            {upgradeOpen && (
+              <>
+                <div
+                  className="fixed inset-0 z-[60] bg-black/50"
+                  onClick={() => setUpgradeOpen(false)}
+                />
+                <div className="fixed left-1/2 top-1/2 z-[70] w-[90vw] max-w-sm -translate-x-1/2 -translate-y-1/2 rounded-2xl bg-white p-6 shadow-xl">
+                  <h2 className="text-lg font-semibold text-neutral-900">
+                    You&apos;re out of free exports
+                  </h2>
+                  <p className="mt-2 text-sm text-neutral-600">
+                    You&apos;ve used all 5 free exports this month. Go Pro for
+                    a year of unlimited 4K exports.
+                  </p>
+                  <div className="mt-4 rounded-xl border border-neutral-200 p-4">
+                    <div className="flex items-baseline gap-1">
+                      <span className="text-2xl font-semibold text-neutral-900">
+                        $29
+                      </span>
+                      <span className="text-sm text-neutral-500">/ year</span>
+                    </div>
+                    <ul className="mt-2 space-y-1 text-sm text-neutral-600">
+                      <li>Unlimited 4K exports</li>
+                      <li>All aspect ratios</li>
+                      <li>One-time payment — no subscription</li>
+                    </ul>
+                  </div>
+                  <div className="mt-4 flex gap-2">
+                    <Button
+                      variant="outline"
+                      className="flex-1"
+                      onClick={() => setUpgradeOpen(false)}
+                    >
+                      Maybe later
+                    </Button>
+                    <Button
+                      className="flex-1"
+                      onClick={() => {
+                        // Wired to Stripe Checkout in UNF-215/217
+                        alert("Checkout is coming soon.");
+                      }}
+                    >
+                      Upgrade
+                    </Button>
+                  </div>
+                  {quota?.resetsAt && (
+                    <p className="mt-3 text-center text-xs text-neutral-400">
+                      Free exports reset on{" "}
+                      {new Date(quota.resetsAt).toLocaleDateString()}
+                    </p>
+                  )}
+                </div>
+              </>
+            )}
+
             {/* Backdrop behind the mobile controls modal */}
             {controlsOpen && (
               <div
@@ -693,6 +796,9 @@ const GradientGenerator = () => {
                     </div>
                   </div>
                 </div>
+
+                {/* Quota status - mobile sheet (desktop shows it under the action buttons) */}
+                {quotaBadge && <div className="lg:hidden">{quotaBadge}</div>}
               </div>
 
               {/* Fixed Action Buttons - desktop sidebar only; mobile has icon buttons in the bottom bar */}
@@ -729,6 +835,7 @@ const GradientGenerator = () => {
                     </TooltipContent>
                   </Tooltip>
                 </div>
+                {quotaBadge && <div className="mt-3">{quotaBadge}</div>}
               </div>
             </div>
 
