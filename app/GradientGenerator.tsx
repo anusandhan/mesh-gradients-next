@@ -164,6 +164,7 @@ const GradientGenerator = () => {
   const [isExporting, setIsExporting] = useState(false);
   const [controlsOpen, setControlsOpen] = useState(false);
   const [upgradeOpen, setUpgradeOpen] = useState(false);
+  const [checkoutLoading, setCheckoutLoading] = useState(false);
   const [quota, setQuota] = useState<{
     plan: "free" | "pro";
     remaining: number | null;
@@ -212,6 +213,34 @@ const GradientGenerator = () => {
   useEffect(() => {
     refreshQuota();
   }, [refreshQuota]);
+
+  // Returning from Stripe Checkout: the webhook may lag a moment, so poll
+  // the quota a few times until the Pro badge shows up
+  useEffect(() => {
+    if (!new URLSearchParams(window.location.search).has("upgraded")) return;
+    window.history.replaceState(null, "", window.location.pathname);
+    const timers = [1000, 3000, 7000].map((ms) =>
+      setTimeout(refreshQuota, ms)
+    );
+    return () => timers.forEach(clearTimeout);
+  }, [refreshQuota]);
+
+  const startCheckout = async () => {
+    setCheckoutLoading(true);
+    try {
+      const res = await fetch("/api/checkout", { method: "POST" });
+      const data = await res.json().catch(() => null);
+      if (res.ok && data?.url) {
+        window.location.href = data.url;
+        return;
+      }
+      alert(data?.error ?? "Could not start checkout. Please try again.");
+    } catch {
+      alert("Could not start checkout. Please check your connection.");
+    } finally {
+      setCheckoutLoading(false);
+    }
+  };
 
   const handleBackgroundColorChange = (value: string) => {
     setBackgroundColor(value);
@@ -536,12 +565,10 @@ const GradientGenerator = () => {
                     </Button>
                     <Button
                       className="flex-1"
-                      onClick={() => {
-                        // Wired to Stripe Checkout in UNF-215/217
-                        alert("Checkout is coming soon.");
-                      }}
+                      onClick={startCheckout}
+                      disabled={checkoutLoading}
                     >
-                      Upgrade
+                      {checkoutLoading ? "Redirecting…" : "Upgrade"}
                     </Button>
                   </div>
                   {quota?.resetsAt && (

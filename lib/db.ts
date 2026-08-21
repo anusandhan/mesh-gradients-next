@@ -75,6 +75,35 @@ export const tryConsumeExport = async (
   return FREE_EXPORTS_PER_MONTH - (rows[0] as { count: number }).count;
 };
 
+// Record a Stripe webhook event id. Returns false if we've already
+// processed it (replay or retry) — callers must then skip side effects.
+export const recordStripeEvent = async (eventId: string): Promise<boolean> => {
+  const sql = getSql();
+  const rows = await sql`
+    INSERT INTO stripe_events (event_id) VALUES (${eventId})
+    ON CONFLICT (event_id) DO NOTHING
+    RETURNING event_id
+  `;
+  return rows.length > 0;
+};
+
+// Grant or extend Pro: 365 days on top of the current expiry (if still
+// active) or from now. Called ONLY from the Stripe webhook handler.
+export const grantPro = async (
+  userId: number,
+  stripePaymentId: string | null
+): Promise<void> => {
+  const sql = getSql();
+  await sql`
+    INSERT INTO entitlements (user_id, pro_until, stripe_payment_id)
+    VALUES (${userId}, now() + interval '365 days', ${stripePaymentId})
+    ON CONFLICT (user_id) DO UPDATE SET
+      pro_until = GREATEST(entitlements.pro_until, now()) + interval '365 days',
+      stripe_payment_id = EXCLUDED.stripe_payment_id,
+      updated_at = now()
+  `;
+};
+
 export type QuotaStatus = {
   plan: "pro" | "free";
   remaining: number | null; // null = unlimited
