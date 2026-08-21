@@ -105,19 +105,82 @@ const mulberry32 = (seed: number) => {
   };
 };
 
-const generateNoise = (
+// Approximate a heavy Gaussian blur by downscaling the canvas in halving
+// steps and scaling back up with bilinear smoothing. Unlike ctx.filter
+// (which iOS Safari < 18 silently ignores), drawImage resampling works in
+// every browser — and is faster than filter-based blur at these radii.
+const applyBlur = (
   ctx: CanvasRenderingContext2D,
   width: number,
   height: number,
-  alpha: number = 0.03
+  radius: number
 ) => {
+  if (radius < 1) return;
+  const steps = Math.max(
+    1,
+    Math.min(8, Math.round(Math.log2(Math.max(2, radius / 2))))
+  );
+
+  const levels: HTMLCanvasElement[] = [];
+  let src: HTMLCanvasElement = ctx.canvas as HTMLCanvasElement;
+  let w = width;
+  let h = height;
+  for (let i = 0; i < steps; i++) {
+    w = Math.max(1, Math.round(w / 2));
+    h = Math.max(1, Math.round(h / 2));
+    const level = document.createElement("canvas");
+    level.width = w;
+    level.height = h;
+    const levelCtx = level.getContext("2d")!;
+    levelCtx.imageSmoothingEnabled = true;
+    levelCtx.imageSmoothingQuality = "high";
+    levelCtx.drawImage(src, 0, 0, w, h);
+    levels.push(level);
+    src = level;
+  }
+  // Upscale back through the intermediate sizes to keep the result smooth
+  for (let i = levels.length - 2; i >= 0; i--) {
+    const levelCtx = levels[i].getContext("2d")!;
+    levelCtx.imageSmoothingEnabled = true;
+    levelCtx.imageSmoothingQuality = "high";
+    levelCtx.drawImage(src, 0, 0, levels[i].width, levels[i].height);
+    src = levels[i];
+  }
+  ctx.imageSmoothingEnabled = true;
+  ctx.imageSmoothingQuality = "high";
+  ctx.drawImage(src, 0, 0, width, height);
+};
+
+// Contrast, saturation, and film-grain noise in one per-pixel pass,
+// matching the CSS filter definitions of contrast() and saturate()
+const applyAdjustments = (
+  ctx: CanvasRenderingContext2D,
+  width: number,
+  height: number,
+  contrast: number,
+  saturation: number,
+  noise: number
+) => {
+  const contrastK = contrast / 100;
+  const saturationK = saturation / 100;
+  if (contrastK === 1 && saturationK === 1 && noise <= 0) return;
+
   const imageData = ctx.getImageData(0, 0, width, height);
   const data = imageData.data;
   for (let i = 0; i < data.length; i += 4) {
-    const noise = Math.random() * 255 * alpha;
-    data[i] += noise;
-    data[i + 1] += noise;
-    data[i + 2] += noise;
+    let r = (data[i] - 128) * contrastK + 128;
+    let g = (data[i + 1] - 128) * contrastK + 128;
+    let b = (data[i + 2] - 128) * contrastK + 128;
+
+    const luma = 0.2126 * r + 0.7152 * g + 0.0722 * b;
+    r = luma + (r - luma) * saturationK;
+    g = luma + (g - luma) * saturationK;
+    b = luma + (b - luma) * saturationK;
+
+    const grain = noise > 0 ? Math.random() * 255 * noise : 0;
+    data[i] = r + grain;
+    data[i + 1] = g + grain;
+    data[i + 2] = b + grain;
   }
   ctx.putImageData(imageData, 0, 0);
 };
@@ -143,7 +206,6 @@ const renderGradient = (
   const random = mulberry32(opts.seed);
   const blur = opts.blur * opts.blurScale;
 
-  ctx.filter = "none";
   ctx.fillStyle = normalizeHexColor(opts.backgroundColor);
   ctx.fillRect(0, 0, width, height);
 
@@ -202,18 +264,17 @@ const renderGradient = (
     ctx.fill(path);
   });
 
-  // Apply filters
-  ctx.filter = `blur(${blur}px)`;
-  ctx.drawImage(ctx.canvas, 0, 0);
-  ctx.filter = `contrast(${opts.contrast}%) saturate(${opts.saturation}%)`;
-  ctx.drawImage(ctx.canvas, 0, 0);
-  ctx.filter = `blur(${blur / 2}px)`;
-  ctx.drawImage(ctx.canvas, 0, 0);
-  ctx.filter = "none";
-
-  if (opts.noise > 0) {
-    generateNoise(ctx, width, height, opts.noise);
-  }
+  // Post-process without ctx.filter (unsupported on iOS Safari < 18).
+  // 1.12 folds the original chained blur(B) + blur(B/2) into one pass.
+  applyBlur(ctx, width, height, blur * 1.12);
+  applyAdjustments(
+    ctx,
+    width,
+    height,
+    opts.contrast,
+    opts.saturation,
+    opts.noise
+  );
 };
 
 // Color value input in the selected format. Hex renders one text field that
@@ -293,8 +354,8 @@ const GradientGenerator = () => {
     "#ec4899",
     "#f59e0b",
   ]);
-  const [blurAmount, setBlurAmount] = useState([125]);
-  const [noiseAmount, setNoiseAmount] = useState([0.3]);
+  const [blurAmount, setBlurAmount] = useState([700]);
+  const [noiseAmount, setNoiseAmount] = useState([0.2]);
   const [contrastAmount, setContrastAmount] = useState([130]);
   const [saturationAmount, setSaturationAmount] = useState([110]);
   const [gradientName, setGradientName] = useState("New Gradient");
@@ -595,21 +656,21 @@ const GradientGenerator = () => {
                   <XIcon className="w-5 h-5" />
                 </button>
               </div>
+              {/* Logo - desktop sidebar only */}
+              <div className="hidden lg:flex items-center gap-2 p-6 pb-0">
+                <Image
+                  src="/beautiful-mesh-logo.png"
+                  alt="Gradients Studio Logo"
+                  width={915}
+                  height={562}
+                  className="block w-10 h-auto"
+                />
+                <span className="text-md font-medium text-neutral-800">
+                  {`Gradients Studio`}
+                </span>
+              </div>
               {/* Scrollable Controls */}
               <div className="flex-1 overflow-y-auto p-6 space-y-10">
-                <div className="hidden lg:flex items-center gap-2">
-                  <Image
-                    src="/beautiful-mesh-logo.png"
-                    alt="Gradients Studio Logo"
-                    width={915}
-                    height={562}
-                    className="block w-10 h-auto"
-                  />
-                  <span className="text-md font-medium text-neutral-800">
-                    {`Gradients Studio`}
-                  </span>
-                </div>
-
                 {/* Color Controls */}
                 <div className="space-y-4">
                   <div className="flex items-center justify-between gap-2">
@@ -744,8 +805,8 @@ const GradientGenerator = () => {
                       </div>
                       <Slider
                         value={blurAmount}
-                        onValueChange={setBlurAmount}                        max={200}
-                        min={125}
+                        onValueChange={setBlurAmount}                        max={1000}
+                        min={550}
                         step={5}
                       />
                     </div>
@@ -798,8 +859,8 @@ const GradientGenerator = () => {
                 </div>
               </div>
 
-              {/* Fixed Action Buttons */}
-              <div className="flex-shrink-0 p-6 pt-4 border-t border-neutral-200 bg-white">
+              {/* Fixed Action Buttons - desktop sidebar only; mobile has icon buttons in the bottom bar */}
+              <div className="hidden lg:block flex-shrink-0 p-6 pt-4 border-t border-neutral-200 bg-white">
                 <div className="flex gap-2">
                   <Tooltip>
                     <TooltipTrigger asChild>
@@ -959,26 +1020,38 @@ const GradientGenerator = () => {
               </div>
               {/* Mobile bottom bar */}
               <div className="lg:hidden flex-shrink-0 flex items-center justify-between gap-3 p-4 border-t border-neutral-200 bg-white">
+                <Image
+                  src="/beautiful-mesh-logo.png"
+                  alt="Gradients Studio Logo"
+                  width={915}
+                  height={562}
+                  className="block w-8 h-auto"
+                />
                 <div className="flex items-center gap-2">
-                  <Image
-                    src="/beautiful-mesh-logo.png"
-                    alt="Gradients Studio Logo"
-                    width={915}
-                    height={562}
-                    className="block w-8 h-auto"
-                  />
-                  <span className="text-sm font-medium text-neutral-800">
-                    {`Gradients Studio`}
-                  </span>
+                  <Button
+                    variant="outline"
+                    onClick={handleRandomize}
+                    className="h-9 w-9 p-0"
+                    aria-label="Randomize gradient"
+                  >
+                    <ShuffleIcon weight="bold" className="w-4 h-4" />
+                  </Button>
+                  <Button
+                    onClick={downloadCanvasAsImage}
+                    className="h-9 w-9 p-0"
+                    aria-label="Download as PNG"
+                  >
+                    <DownloadIcon weight="bold" className="w-4 h-4" />
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={() => setControlsOpen(true)}
+                    className="h-9 w-9 p-0"
+                    aria-label="Show controls"
+                  >
+                    <SlidersIcon weight="bold" className="w-4 h-4" />
+                  </Button>
                 </div>
-                <Button
-                  variant="outline"
-                  onClick={() => setControlsOpen(true)}
-                  className="h-9 text-sm"
-                >
-                  <SlidersIcon weight="bold" className="w-4 h-4 mr-2" />
-                  Show Controls
-                </Button>
               </div>
             </div>
           </div>
