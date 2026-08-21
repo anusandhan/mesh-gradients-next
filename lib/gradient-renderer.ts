@@ -216,7 +216,7 @@ const renderStripes = (
   }));
   const waviness = opts.waviness ?? 1;
   const fiberDensity = opts.fiberDensity ?? 1;
-  const sheen = opts.sheen ?? 1;
+  const sheen = opts.sheen ?? 0.2;
 
   const waveOffset = (x: number, t: number) =>
     waviness *

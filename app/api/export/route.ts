@@ -35,7 +35,7 @@ const bodySchema = z.object({
   style: z.enum(["blobs", "stripes"]).default("blobs"),
   fiberDensity: z.number().min(0).max(2).default(1),
   waviness: z.number().min(0).max(2).default(1),
-  sheen: z.number().min(0).max(2).default(1),
+  sheen: z.number().min(0).max(2).default(0.2),
   // JPEG default: the grain makes PNGs huge (~16MB at 4K) and slow to
   // encode/transfer; JPEG at q92 is visually identical here and ~8x smaller
   format: z.enum(["jpeg", "png"]).default("jpeg"),

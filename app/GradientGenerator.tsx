@@ -168,7 +168,7 @@ const GradientGenerator = () => {
   const [gradientStyle, setGradientStyle] = useState<GradientStyle>("blobs");
   const [fiberDensity, setFiberDensity] = useState([1]);
   const [waviness, setWaviness] = useState([1]);
-  const [sheen, setSheen] = useState([1]);
+  const [sheen, setSheen] = useState([0.2]);
   const [colorFormat, setColorFormat] = useState<ColorFormat>("oklch");
   const [isExporting, setIsExporting] = useState(false);
   const [controlsOpen, setControlsOpen] = useState(false);
@@ -808,20 +808,23 @@ const GradientGenerator = () => {
                   </div>
 
                   <div className="space-y-5">
-                    <div className="space-y-2">
-                      <div className="flex justify-between">
-                        <Label className="text-sm">Blur Amount</Label>
-                        <span className="text-xs tabular-nums text-muted-foreground">
-                          {blurAmount[0]}px
-                        </span>
+                    {gradientStyle !== "stripes" && (
+                      <div className="space-y-2">
+                        <div className="flex justify-between">
+                          <Label className="text-sm">Blur Amount</Label>
+                          <span className="text-xs tabular-nums text-muted-foreground">
+                            {blurAmount[0]}px
+                          </span>
+                        </div>
+                        <Slider
+                          value={blurAmount}
+                          onValueChange={setBlurAmount}
+                          max={1000}
+                          min={550}
+                          step={5}
+                        />
                       </div>
-                      <Slider
-                        value={blurAmount}
-                        onValueChange={setBlurAmount}                        max={1000}
-                        min={550}
-                        step={5}
-                      />
-                    </div>
+                    )}
 
                     {gradientStyle === "stripes" && (
                       <>
