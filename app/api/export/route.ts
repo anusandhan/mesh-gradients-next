@@ -32,6 +32,9 @@ const bodySchema = z.object({
   contrast: z.number().min(50).max(200),
   saturation: z.number().min(50).max(200),
   aspectRatio: z.enum(ASPECT_RATIOS),
+  // JPEG default: the grain makes PNGs huge (~16MB at 4K) and slow to
+  // encode/transfer; JPEG at q92 is visually identical here and ~8x smaller
+  format: z.enum(["jpeg", "png"]).default("jpeg"),
 });
 
 const nodeCreateCanvas = (width: number, height: number) =>
@@ -93,10 +96,13 @@ export async function POST(request: NextRequest) {
     createCanvas: nodeCreateCanvas,
   });
 
-  const png = canvas.toBuffer("image/png");
-  return new NextResponse(new Uint8Array(png), {
+  const isJpeg = input.format === "jpeg";
+  const image = isJpeg
+    ? canvas.toBuffer("image/jpeg", 92)
+    : canvas.toBuffer("image/png");
+  return new NextResponse(new Uint8Array(image), {
     headers: {
-      "Content-Type": "image/png",
+      "Content-Type": isJpeg ? "image/jpeg" : "image/png",
       "Content-Disposition": "attachment",
       "Cache-Control": "no-store",
       "X-Exports-Remaining": pro ? "unlimited" : String(remaining),

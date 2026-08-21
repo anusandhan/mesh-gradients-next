@@ -456,6 +456,7 @@ const GradientGenerator = () => {
           contrast: contrastAmount[0],
           saturation: saturationAmount[0],
           aspectRatio,
+          format: "jpeg",
         }),
       });
 
@@ -495,7 +496,7 @@ const GradientGenerator = () => {
       const blob = await res.blob();
       const url = URL.createObjectURL(blob);
       const link = document.createElement("a");
-      link.download = `${gradientName}.png`;
+      link.download = `${gradientName}.jpg`;
       link.href = url;
       link.click();
       URL.revokeObjectURL(url);
@@ -851,9 +852,17 @@ const GradientGenerator = () => {
                     <TooltipTrigger asChild>
                       <Button
                         onClick={downloadCanvasAsImage}
+                        disabled={isExporting}
                         className="flex-1 h-9 text-sm"
                       >
-                        <DownloadIcon weight="bold" className="w-4 h-4 mr-2" />
+                        {isExporting ? (
+                          <Spinner size={16} className="mr-2" />
+                        ) : (
+                          <DownloadIcon
+                            weight="bold"
+                            className="w-4 h-4 mr-2"
+                          />
+                        )}
                         Download
                       </Button>
                     </TooltipTrigger>
@@ -974,17 +983,6 @@ const GradientGenerator = () => {
                       onContextMenu={(e) => e.preventDefault()}
                       className="absolute top-0 left-0 w-full h-full rounded-sm select-none"
                     />
-                    {/* Export Spinner Overlay */}
-                    {isExporting && (
-                      <div className="absolute inset-0 bg-white/80 backdrop-blur-sm flex items-center justify-center rounded-sm">
-                        <div className="text-center">
-                          <Spinner
-                            size={24}
-                            className="text-neutral-600 mb-2"
-                          />
-                        </div>
-                      </div>
-                    )}
                     {/* <div className="absolute inset-0 bg-gradient-to-t from-black/10 to-transparent pointer-events-none rounded-lg" /> */}
                   </div>
                 </div>
@@ -1014,10 +1012,15 @@ const GradientGenerator = () => {
                   </Button>
                   <Button
                     onClick={downloadCanvasAsImage}
+                    disabled={isExporting}
                     className="h-9 w-9 p-0"
-                    aria-label="Download as PNG"
+                    aria-label="Download image"
                   >
-                    <DownloadIcon weight="bold" className="w-4 h-4" />
+                    {isExporting ? (
+                      <Spinner size={16} />
+                    ) : (
+                      <DownloadIcon weight="bold" className="w-4 h-4" />
+                    )}
                   </Button>
                   <Button
                     variant="outline"
