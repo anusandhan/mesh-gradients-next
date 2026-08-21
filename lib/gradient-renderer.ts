@@ -193,11 +193,38 @@ const renderStripes = (
 
   const stops = [opts.backgroundColor, ...opts.colors].map(hexToRgbTuple);
 
+  // Span the band gradient across the canvas's projection on the
+  // perpendicular axis, so every palette stop (background included) is
+  // actually visible on screen
+  const halfSpan =
+    (Math.abs(width * Math.sin(angle)) + Math.abs(height * Math.cos(angle))) /
+      2 +
+    2;
+
+  // Shared wave field: every fiber and fold follows these, so the whole
+  // sheet undulates coherently like draped silk. Phase shifts with the
+  // fiber's band position (t) to shear the waves into folds.
+  const waves = Array.from({ length: 3 }, () => ({
+    amp: (0.025 + random() * 0.045) * halfSpan * 2,
+    freq: ((0.6 + random() * 1.6) * Math.PI) / diag,
+    phase: random() * Math.PI * 2,
+    grow: 0.3 + random() * 0.7,
+  }));
+  const waveOffset = (x: number, t: number) =>
+    waves.reduce(
+      (acc, w) =>
+        acc +
+        w.amp *
+          Math.sin(w.freq * x + w.phase + t * 5) *
+          (0.35 + (w.grow * (x + diag)) / (2 * diag)),
+      0
+    );
+
   // Base bands: linear gradient perpendicular to the flow
   ctx.save();
   ctx.translate(cx, cy);
   ctx.rotate(angle);
-  const bands = ctx.createLinearGradient(0, -diag * 0.7, 0, diag * 0.7);
+  const bands = ctx.createLinearGradient(0, -halfSpan, 0, halfSpan);
   stops.forEach((stop, i) => {
     bands.addColorStop(
       i / (stops.length - 1),
@@ -217,50 +244,68 @@ const renderStripes = (
     opts.createCanvas
   );
 
-  // Streaks along the flow, slightly fanned so they converge like combed
-  // silk. Same counts at every resolution for an identical look. Each
-  // streak samples the palette near its position with a brightness push
-  // so striations read even inside a single color band.
+  // Fibers and folds all follow the shared wave field. Fibers sample the
+  // palette near their band position with a brightness push; folds are
+  // broad white/black bands whose luminance modulation gives the sheet
+  // its 3D drape. Same counts at every resolution for an identical look.
+  const SEGMENTS = 28;
+  const strokeWave = (t: number, baseY: number, fan: number) => {
+    ctx.beginPath();
+    for (let s = 0; s <= SEGMENTS; s++) {
+      const x = -diag + (2 * diag * s) / SEGMENTS;
+      const y = baseY + waveOffset(x, t) + fan * x;
+      if (s === 0) ctx.moveTo(x, y);
+      else ctx.lineTo(x, y);
+    }
+    ctx.stroke();
+  };
+
   const drawStreaks = (
     count: number,
     widthRange: [number, number],
-    alphaRange: [number, number]
+    alphaRange: [number, number],
+    shade: "palette" | "light" | "dark" = "palette"
   ) => {
     ctx.save();
     ctx.translate(cx, cy);
     ctx.rotate(angle);
     ctx.lineCap = "round";
+    ctx.lineJoin = "round";
     for (let i = 0; i < count; i++) {
       const t = random();
-      const y = (t - 0.5) * diag * 1.3;
-      const [r, g, b] = samplePalette(stops, t + (random() - 0.5) * 0.15);
-      const brightness = 0.72 + random() * 0.6;
+      const baseY = (t - 0.5) * halfSpan * 2.2;
       const alpha =
         alphaRange[0] + random() * (alphaRange[1] - alphaRange[0]);
       const lineWidth = Math.max(
         0.6,
         (widthRange[0] + random() * (widthRange[1] - widthRange[0])) * scale
       );
-      const fan = (random() - 0.5) * 0.14 * (t - 0.5);
-      const bend = (random() - 0.5) * diag * 0.05;
+      const fan = (random() - 0.5) * 0.06 * (t - 0.5);
 
-      ctx.save();
-      ctx.rotate(fan);
-      ctx.strokeStyle = `rgba(${Math.round(Math.min(255, r * brightness))}, ${Math.round(Math.min(255, g * brightness))}, ${Math.round(Math.min(255, b * brightness))}, ${alpha})`;
+      if (shade === "palette") {
+        const [r, g, b] = samplePalette(stops, t + (random() - 0.5) * 0.15);
+        const brightness = 0.72 + random() * 0.6;
+        ctx.strokeStyle = `rgba(${Math.round(Math.min(255, r * brightness))}, ${Math.round(Math.min(255, g * brightness))}, ${Math.round(Math.min(255, b * brightness))}, ${alpha})`;
+      } else {
+        ctx.strokeStyle =
+          shade === "light"
+            ? `rgba(255, 255, 255, ${alpha})`
+            : `rgba(20, 10, 30, ${alpha})`;
+      }
       ctx.lineWidth = lineWidth;
-      ctx.beginPath();
-      ctx.moveTo(-diag, y);
-      ctx.quadraticCurveTo(0, y + bend, diag, y);
-      ctx.stroke();
-      ctx.restore();
+      strokeWave(t, baseY, fan);
     }
     ctx.restore();
   };
 
-  // A few broad soft beams, dense fine striations, then crisp hairlines
-  drawStreaks(14, [60, 220], [0.06, 0.14]);
+  // Broad soft beams, dense fine striations, crisp hairlines, then the
+  // sheen/shadow folds that sell the 3D drape
+  drawStreaks(14, [60, 220], [0.05, 0.12]);
   drawStreaks(900, [1, 9], [0.1, 0.28]);
   drawStreaks(220, [0.8, 2.2], [0.22, 0.4]);
+  drawStreaks(7, [180, 480], [0.05, 0.11], "light");
+  drawStreaks(6, [180, 480], [0.04, 0.09], "dark");
+  drawStreaks(120, [1, 4], [0.1, 0.22], "light");
 
   // Short directional smear along the flow softens the streaks into silk
   const dx = Math.cos(angle);
