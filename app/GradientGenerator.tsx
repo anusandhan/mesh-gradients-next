@@ -166,6 +166,9 @@ const GradientGenerator = () => {
   const [seed, setSeed] = useState(() => Math.floor(Math.random() * 2 ** 32));
   const [placement, setPlacement] = useState<"center" | "random">("center");
   const [gradientStyle, setGradientStyle] = useState<GradientStyle>("blobs");
+  const [fiberDensity, setFiberDensity] = useState([1]);
+  const [waviness, setWaviness] = useState([1]);
+  const [sheen, setSheen] = useState([1]);
   const [colorFormat, setColorFormat] = useState<ColorFormat>("oklch");
   const [isExporting, setIsExporting] = useState(false);
   const [controlsOpen, setControlsOpen] = useState(false);
@@ -404,6 +407,9 @@ const GradientGenerator = () => {
       seed,
       placement,
       style: gradientStyle,
+      fiberDensity: fiberDensity[0],
+      waviness: waviness[0],
+      sheen: sheen[0],
       createCanvas: domCreateCanvas,
     }),
     [
@@ -416,6 +422,9 @@ const GradientGenerator = () => {
       seed,
       placement,
       gradientStyle,
+      fiberDensity,
+      waviness,
+      sheen,
     ]
   );
 
@@ -465,6 +474,9 @@ const GradientGenerator = () => {
           saturation: saturationAmount[0],
           aspectRatio,
           style: gradientStyle,
+          fiberDensity: fiberDensity[0],
+          waviness: waviness[0],
+          sheen: sheen[0],
           format: "jpeg",
         }),
       });
@@ -810,6 +822,58 @@ const GradientGenerator = () => {
                         step={5}
                       />
                     </div>
+
+                    {gradientStyle === "stripes" && (
+                      <>
+                        <div className="space-y-2">
+                          <div className="flex justify-between">
+                            <Label className="text-sm">Fiber Density</Label>
+                            <span className="text-xs tabular-nums text-muted-foreground">
+                              {Math.round(fiberDensity[0] * 100)}%
+                            </span>
+                          </div>
+                          <Slider
+                            value={fiberDensity}
+                            onValueChange={setFiberDensity}
+                            min={0}
+                            max={2}
+                            step={0.05}
+                          />
+                        </div>
+
+                        <div className="space-y-2">
+                          <div className="flex justify-between">
+                            <Label className="text-sm">Waviness</Label>
+                            <span className="text-xs tabular-nums text-muted-foreground">
+                              {Math.round(waviness[0] * 100)}%
+                            </span>
+                          </div>
+                          <Slider
+                            value={waviness}
+                            onValueChange={setWaviness}
+                            min={0}
+                            max={2}
+                            step={0.05}
+                          />
+                        </div>
+
+                        <div className="space-y-2">
+                          <div className="flex justify-between">
+                            <Label className="text-sm">Sheen</Label>
+                            <span className="text-xs tabular-nums text-muted-foreground">
+                              {Math.round(sheen[0] * 100)}%
+                            </span>
+                          </div>
+                          <Slider
+                            value={sheen}
+                            onValueChange={setSheen}
+                            min={0}
+                            max={2}
+                            step={0.05}
+                          />
+                        </div>
+                      </>
+                    )}
 
                     <div className="space-y-2">
                       <div className="flex justify-between">

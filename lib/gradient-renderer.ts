@@ -145,6 +145,10 @@ export type RenderOptions = {
   blurScale: number; // rendered width / export width, 1 when exporting
   createCanvas: CreateCanvas; // scratch canvases for the blur pyramid
   style?: GradientStyle; // default "blobs"
+  // Stripes-only dials, all 0..2 multipliers with 1 as the designed look
+  fiberDensity?: number;
+  waviness?: number;
+  sheen?: number;
 };
 
 const hexToRgbTuple = (hex: string): [number, number, number] => {
@@ -210,7 +214,12 @@ const renderStripes = (
     phase: random() * Math.PI * 2,
     grow: 0.3 + random() * 0.7,
   }));
+  const waviness = opts.waviness ?? 1;
+  const fiberDensity = opts.fiberDensity ?? 1;
+  const sheen = opts.sheen ?? 1;
+
   const waveOffset = (x: number, t: number) =>
+    waviness *
     waves.reduce(
       (acc, w) =>
         acc +
@@ -264,27 +273,43 @@ const renderStripes = (
     count: number,
     widthRange: [number, number],
     alphaRange: [number, number],
-    shade: "palette" | "light" | "dark" = "palette"
+    options: {
+      shade?: "palette" | "light" | "dark";
+      useDensity?: boolean;
+      alphaScale?: number;
+    } = {}
   ) => {
+    const { shade = "palette", useDensity = false, alphaScale = 1 } = options;
+    // Always compute a fixed 2x pool of fibers so the RNG sequence — and
+    // therefore every fiber's position — is identical at every density.
+    // The density dial only changes how many of them get drawn.
+    const pool = count * 2;
+    const drawCount = useDensity
+      ? Math.round(count * fiberDensity)
+      : count;
+
     ctx.save();
     ctx.translate(cx, cy);
     ctx.rotate(angle);
     ctx.lineCap = "round";
     ctx.lineJoin = "round";
-    for (let i = 0; i < count; i++) {
+    for (let i = 0; i < pool; i++) {
       const t = random();
       const baseY = (t - 0.5) * halfSpan * 2.2;
       const alpha =
-        alphaRange[0] + random() * (alphaRange[1] - alphaRange[0]);
+        (alphaRange[0] + random() * (alphaRange[1] - alphaRange[0])) *
+        alphaScale;
       const lineWidth = Math.max(
         0.6,
         (widthRange[0] + random() * (widthRange[1] - widthRange[0])) * scale
       );
       const fan = (random() - 0.5) * 0.06 * (t - 0.5);
+      const [r, g, b] = samplePalette(stops, t + (random() - 0.5) * 0.15);
+      const brightness = 0.72 + random() * 0.6;
+
+      if (i >= drawCount || alpha <= 0.002) continue;
 
       if (shade === "palette") {
-        const [r, g, b] = samplePalette(stops, t + (random() - 0.5) * 0.15);
-        const brightness = 0.72 + random() * 0.6;
         ctx.strokeStyle = `rgba(${Math.round(Math.min(255, r * brightness))}, ${Math.round(Math.min(255, g * brightness))}, ${Math.round(Math.min(255, b * brightness))}, ${alpha})`;
       } else {
         ctx.strokeStyle =
@@ -300,12 +325,22 @@ const renderStripes = (
 
   // Broad soft beams, dense fine striations, crisp hairlines, then the
   // sheen/shadow folds that sell the 3D drape
-  drawStreaks(14, [60, 220], [0.05, 0.12]);
-  drawStreaks(900, [1, 9], [0.1, 0.28]);
-  drawStreaks(220, [0.8, 2.2], [0.22, 0.4]);
-  drawStreaks(7, [180, 480], [0.05, 0.11], "light");
-  drawStreaks(6, [180, 480], [0.04, 0.09], "dark");
-  drawStreaks(120, [1, 4], [0.1, 0.22], "light");
+  drawStreaks(14, [60, 220], [0.05, 0.12], { useDensity: true });
+  drawStreaks(900, [1, 9], [0.1, 0.28], { useDensity: true });
+  drawStreaks(220, [0.8, 2.2], [0.22, 0.4], { useDensity: true });
+  drawStreaks(7, [180, 480], [0.05, 0.11], {
+    shade: "light",
+    alphaScale: sheen,
+  });
+  drawStreaks(6, [180, 480], [0.04, 0.09], {
+    shade: "dark",
+    alphaScale: sheen,
+  });
+  drawStreaks(120, [1, 4], [0.1, 0.22], {
+    shade: "light",
+    useDensity: true,
+    alphaScale: sheen,
+  });
 
   // Short directional smear along the flow softens the streaks into silk
   const dx = Math.cos(angle);
