@@ -36,6 +36,9 @@ const bodySchema = z.object({
   fiberDensity: z.number().min(0).max(2).default(1),
   waviness: z.number().min(0).max(2).default(1),
   sheen: z.number().min(0).max(2).default(0.2),
+  coverage: z.number().min(0).max(2).default(1),
+  softness: z.number().min(0).max(2).default(1),
+  detail: z.number().min(0).max(2).default(1),
   // JPEG default: the grain makes PNGs huge (~16MB at 4K) and slow to
   // encode/transfer; JPEG at q92 is visually identical here and ~8x smaller
   format: z.enum(["jpeg", "png"]).default("jpeg"),
@@ -100,6 +103,9 @@ export async function POST(request: NextRequest) {
     fiberDensity: input.fiberDensity,
     waviness: input.waviness,
     sheen: input.sheen,
+    coverage: input.coverage,
+    softness: input.softness,
+    detail: input.detail,
     blurScale: 1,
     createCanvas: nodeCreateCanvas,
   });

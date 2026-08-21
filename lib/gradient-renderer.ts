@@ -149,6 +149,10 @@ export type RenderOptions = {
   fiberDensity?: number;
   waviness?: number;
   sheen?: number;
+  // Clouds-only dials, all 0..2 multipliers with 1 as the designed look
+  coverage?: number;
+  softness?: number;
+  detail?: number;
 };
 
 const hexToRgbTuple = (hex: string): [number, number, number] => {
@@ -376,8 +380,16 @@ const renderClouds = (
   fieldCtx.imageSmoothingEnabled = true;
   fieldCtx.imageSmoothingQuality = "high";
 
+  const coverage = opts.coverage ?? 1;
+  const softness = opts.softness ?? 1;
+  const detail = opts.detail ?? 1;
+
   const OCTAVES = 5;
-  const weights = [0.55, 0.3, 0.1, 0.05, 0.025];
+  // Detail scales the high-frequency octaves; the noise value gets
+  // renormalized by the total weight during mapping
+  const baseWeights = [0.55, 0.3, 0.1, 0.05, 0.025];
+  const weights = baseWeights.map((w, o) => (o < 2 ? w : w * detail));
+  const weightSum = weights.reduce((a, b) => a + b, 0);
   for (let o = 0; o < OCTAVES; o++) {
     const gw = Math.max(2, Math.round(3 * 2 ** o * aspect));
     const gh = Math.max(2, 3 * 2 ** o);
@@ -415,11 +427,15 @@ const renderClouds = (
   for (let y = 0; y < height; y++) {
     for (let x = 0; x < width; x++) {
       const i = (y * width + x) * 4;
-      const noise = fieldData[i] / 255;
+      const noise = fieldData[i] / 255 / weightSum;
       const ramp = (rampBase + rdx * x + rdy * y) / rampSpan;
       // Push contrast so cloud masses separate from sky and the palette
-      // extremes (deep background, bright highlights) actually appear
-      let t = 0.45 * (0.5 + (noise - 0.5) * 2.3) + 0.55 * ramp;
+      // extremes (deep background, bright highlights) actually appear.
+      // Coverage biases the whole mapping toward the highlight colors.
+      let t =
+        0.45 * (0.5 + (noise - 0.5) * 2.3) +
+        0.55 * ramp +
+        (coverage - 1) * 0.3;
       t = (t - 0.5) * 1.5 + 0.5;
       t = Math.max(0, Math.min(1, t));
       const [r, g, b] = samplePalette(stops, t);
@@ -432,7 +448,13 @@ const renderClouds = (
   ctx.putImageData(out, 0, 0);
 
   // Gentle soften to melt any bilinear grid artifacts into mist
-  applyBlur(ctx, width, height, 44 * (height / 2160), opts.createCanvas);
+  applyBlur(
+    ctx,
+    width,
+    height,
+    44 * softness * (height / 2160),
+    opts.createCanvas
+  );
 };
 
 export const renderGradient = (

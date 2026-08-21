@@ -169,6 +169,9 @@ const GradientGenerator = () => {
   const [fiberDensity, setFiberDensity] = useState([1]);
   const [waviness, setWaviness] = useState([1]);
   const [sheen, setSheen] = useState([0.2]);
+  const [coverage, setCoverage] = useState([1]);
+  const [softness, setSoftness] = useState([1]);
+  const [detail, setDetail] = useState([1]);
   const [colorFormat, setColorFormat] = useState<ColorFormat>("oklch");
   const [isExporting, setIsExporting] = useState(false);
   const [controlsOpen, setControlsOpen] = useState(false);
@@ -410,6 +413,9 @@ const GradientGenerator = () => {
       fiberDensity: fiberDensity[0],
       waviness: waviness[0],
       sheen: sheen[0],
+      coverage: coverage[0],
+      softness: softness[0],
+      detail: detail[0],
       createCanvas: domCreateCanvas,
     }),
     [
@@ -425,6 +431,9 @@ const GradientGenerator = () => {
       fiberDensity,
       waviness,
       sheen,
+      coverage,
+      softness,
+      detail,
     ]
   );
 
@@ -477,6 +486,9 @@ const GradientGenerator = () => {
           fiberDensity: fiberDensity[0],
           waviness: waviness[0],
           sheen: sheen[0],
+          coverage: coverage[0],
+          softness: softness[0],
+          detail: detail[0],
           format: "jpeg",
         }),
       });
@@ -871,6 +883,58 @@ const GradientGenerator = () => {
                           <Slider
                             value={sheen}
                             onValueChange={setSheen}
+                            min={0}
+                            max={2}
+                            step={0.05}
+                          />
+                        </div>
+                      </>
+                    )}
+
+                    {gradientStyle === "clouds" && (
+                      <>
+                        <div className="space-y-2">
+                          <div className="flex justify-between">
+                            <Label className="text-sm">Coverage</Label>
+                            <span className="text-xs tabular-nums text-muted-foreground">
+                              {Math.round(coverage[0] * 100)}%
+                            </span>
+                          </div>
+                          <Slider
+                            value={coverage}
+                            onValueChange={setCoverage}
+                            min={0}
+                            max={2}
+                            step={0.05}
+                          />
+                        </div>
+
+                        <div className="space-y-2">
+                          <div className="flex justify-between">
+                            <Label className="text-sm">Softness</Label>
+                            <span className="text-xs tabular-nums text-muted-foreground">
+                              {Math.round(softness[0] * 100)}%
+                            </span>
+                          </div>
+                          <Slider
+                            value={softness}
+                            onValueChange={setSoftness}
+                            min={0}
+                            max={2}
+                            step={0.05}
+                          />
+                        </div>
+
+                        <div className="space-y-2">
+                          <div className="flex justify-between">
+                            <Label className="text-sm">Detail</Label>
+                            <span className="text-xs tabular-nums text-muted-foreground">
+                              {Math.round(detail[0] * 100)}%
+                            </span>
+                          </div>
+                          <Slider
+                            value={detail}
+                            onValueChange={setDetail}
                             min={0}
                             max={2}
                             step={0.05}
