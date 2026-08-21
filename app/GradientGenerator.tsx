@@ -34,6 +34,7 @@ import {
   InstagramLogoIcon,
   DeviceTabletCameraIcon,
   XIcon,
+  StackIcon,
 } from "@phosphor-icons/react";
 import Image from "next/image";
 import {
@@ -55,7 +56,11 @@ import {
   type ColorFormat,
 } from "@/lib/color-format";
 import { ChannelNumberInput } from "@/components/ui/channel-color-picker";
-import { renderGradient, normalizeHexColor } from "@/lib/gradient-renderer";
+import {
+  renderGradient,
+  normalizeHexColor,
+  type GradientStyle,
+} from "@/lib/gradient-renderer";
 import { SignInButton, UserButton, useAuth, useClerk } from "@clerk/nextjs";
 
 // Browser canvas factory for the renderer's blur pyramid scratch canvases
@@ -160,6 +165,7 @@ const GradientGenerator = () => {
   const [aspectRatio, setAspectRatio] = useState("16:9");
   const [seed, setSeed] = useState(() => Math.floor(Math.random() * 2 ** 32));
   const [placement, setPlacement] = useState<"center" | "random">("center");
+  const [gradientStyle, setGradientStyle] = useState<GradientStyle>("blobs");
   const [colorFormat, setColorFormat] = useState<ColorFormat>("oklch");
   const [isExporting, setIsExporting] = useState(false);
   const [controlsOpen, setControlsOpen] = useState(false);
@@ -397,6 +403,7 @@ const GradientGenerator = () => {
       saturation: saturationAmount[0],
       seed,
       placement,
+      style: gradientStyle,
       createCanvas: domCreateCanvas,
     }),
     [
@@ -408,6 +415,7 @@ const GradientGenerator = () => {
       saturationAmount,
       seed,
       placement,
+      gradientStyle,
     ]
   );
 
@@ -456,6 +464,7 @@ const GradientGenerator = () => {
           contrast: contrastAmount[0],
           saturation: saturationAmount[0],
           aspectRatio,
+          style: gradientStyle,
           format: "jpeg",
         }),
       });
@@ -638,6 +647,30 @@ const GradientGenerator = () => {
               </div>
               {/* Scrollable Controls */}
               <div className="flex-1 overflow-y-auto p-6 space-y-10">
+                {/* Gradient Style */}
+                <div className="space-y-4">
+                  <div className="space-y-1">
+                    <h3 className="flex items-center gap-2 text-base font-medium text-neutral-800">
+                      <StackIcon className="w-6 h-6" />
+                      Style
+                    </h3>
+                  </div>
+                  <Select
+                    value={gradientStyle}
+                    onValueChange={(value) =>
+                      setGradientStyle(value as GradientStyle)
+                    }
+                  >
+                    <SelectTrigger className="w-full">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="blobs">Blurred Blobs</SelectItem>
+                      <SelectItem value="stripes">Silk Stripes</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
                 {/* Color Controls */}
                 <div className="space-y-4">
                   <div className="flex items-center justify-between gap-2">

@@ -32,6 +32,7 @@ const bodySchema = z.object({
   contrast: z.number().min(50).max(200),
   saturation: z.number().min(50).max(200),
   aspectRatio: z.enum(ASPECT_RATIOS),
+  style: z.enum(["blobs", "stripes"]).default("blobs"),
   // JPEG default: the grain makes PNGs huge (~16MB at 4K) and slow to
   // encode/transfer; JPEG at q92 is visually identical here and ~8x smaller
   format: z.enum(["jpeg", "png"]).default("jpeg"),
@@ -92,6 +93,7 @@ export async function POST(request: NextRequest) {
     saturation: input.saturation,
     seed: input.seed,
     placement: input.placement,
+    style: input.style,
     blurScale: 1,
     createCanvas: nodeCreateCanvas,
   });
