@@ -1020,13 +1020,18 @@ const GradientGenerator = () => {
               </div>
               {/* Mobile bottom bar */}
               <div className="lg:hidden flex-shrink-0 flex items-center justify-between gap-3 p-4 border-t border-neutral-200 bg-white">
-                <Image
-                  src="/beautiful-mesh-logo.png"
-                  alt="Gradients Studio Logo"
-                  width={915}
-                  height={562}
-                  className="block w-8 h-auto"
-                />
+                <div className="flex items-center gap-2 min-w-0">
+                  <Image
+                    src="/beautiful-mesh-logo.png"
+                    alt="Gradients Studio Logo"
+                    width={915}
+                    height={562}
+                    className="block w-8 h-auto shrink-0"
+                  />
+                  <span className="truncate text-sm font-medium text-neutral-800">
+                    {`Gradients Studio`}
+                  </span>
+                </div>
                 <div className="flex items-center gap-2">
                   <Button
                     variant="outline"
