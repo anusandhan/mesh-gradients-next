@@ -837,7 +837,8 @@ const GradientGenerator = () => {
                       ref={canvasRef}
                       width={previewCanvasSize.width}
                       height={previewCanvasSize.height}
-                      className="absolute top-0 left-0 w-full h-full object-cover rounded-sm"
+                      onContextMenu={(e) => e.preventDefault()}
+                      className="absolute top-0 left-0 w-full h-full rounded-sm select-none"
                     />
                     {/* Export Spinner Overlay */}
                     {isExporting && (
