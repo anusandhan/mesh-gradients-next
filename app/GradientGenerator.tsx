@@ -679,6 +679,7 @@ const GradientGenerator = () => {
                     <SelectContent>
                       <SelectItem value="blobs">Blurred Blobs</SelectItem>
                       <SelectItem value="stripes">Silk Stripes</SelectItem>
+                      <SelectItem value="clouds">Clouds</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -808,7 +809,7 @@ const GradientGenerator = () => {
                   </div>
 
                   <div className="space-y-5">
-                    {gradientStyle !== "stripes" && (
+                    {gradientStyle === "blobs" && (
                       <div className="space-y-2">
                         <div className="flex justify-between">
                           <Label className="text-sm">Blur Amount</Label>

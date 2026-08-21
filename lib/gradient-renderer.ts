@@ -131,7 +131,7 @@ const applyAdjustments = (
   ctx.putImageData(imageData, 0, 0);
 };
 
-export type GradientStyle = "blobs" | "stripes";
+export type GradientStyle = "blobs" | "stripes" | "clouds";
 
 export type RenderOptions = {
   backgroundColor: string;
@@ -352,6 +352,89 @@ const renderStripes = (
   ctx.globalAlpha = 1;
 };
 
+// "Clouds": fbm noise mapped through the palette. Value noise comes from
+// seeded coarse random grids upscaled with bilinear smoothing; summing
+// octaves gives the fractal cloud field. A seeded directional ramp biases
+// the field so one side stays denser, like a real sky.
+const renderClouds = (
+  ctx: CanvasRenderingContext2D,
+  width: number,
+  height: number,
+  opts: RenderOptions,
+  random: () => number
+) => {
+  const stops = [opts.backgroundColor, ...opts.colors].map(hexToRgbTuple);
+  const aspect = width / height;
+
+  // Octave value-noise: coarse seeded grids, bilinear-upscaled. Grid sizes
+  // are resolution-independent so every canvas size shows the same clouds.
+  const field = opts.createCanvas(width, height);
+  const fieldCtx = field.getContext("2d")!;
+  fieldCtx.fillStyle = "#000000";
+  fieldCtx.fillRect(0, 0, width, height);
+  fieldCtx.globalCompositeOperation = "lighter";
+  fieldCtx.imageSmoothingEnabled = true;
+  fieldCtx.imageSmoothingQuality = "high";
+
+  const OCTAVES = 5;
+  const weights = [0.55, 0.3, 0.1, 0.05, 0.025];
+  for (let o = 0; o < OCTAVES; o++) {
+    const gw = Math.max(2, Math.round(3 * 2 ** o * aspect));
+    const gh = Math.max(2, 3 * 2 ** o);
+    const grid = opts.createCanvas(gw, gh);
+    const gridCtx = grid.getContext("2d")!;
+    const cells = gridCtx.createImageData(gw, gh);
+    for (let i = 0; i < cells.data.length; i += 4) {
+      const v = Math.round(random() * 255);
+      cells.data[i] = v;
+      cells.data[i + 1] = v;
+      cells.data[i + 2] = v;
+      cells.data[i + 3] = 255;
+    }
+    gridCtx.putImageData(cells, 0, 0);
+
+    fieldCtx.globalAlpha = weights[o];
+    fieldCtx.drawImage(grid, 0, 0, width, height);
+  }
+  fieldCtx.globalAlpha = 1;
+  fieldCtx.globalCompositeOperation = "source-over";
+
+  // Directional ramp for the macro composition (denser toward one corner)
+  const rampAngle = random() * Math.PI * 2;
+  const rdx = Math.cos(rampAngle);
+  const rdy = Math.sin(rampAngle);
+  const rampSpan =
+    Math.abs(rdx * width) + Math.abs(rdy * height) || 1;
+  const rampBase =
+    (Math.min(0, rdx * width) + Math.min(0, rdy * height)) * -1;
+
+  // Map field + ramp through the palette, per pixel
+  const fieldData = fieldCtx.getImageData(0, 0, width, height).data;
+  const out = ctx.createImageData(width, height);
+  const outData = out.data;
+  for (let y = 0; y < height; y++) {
+    for (let x = 0; x < width; x++) {
+      const i = (y * width + x) * 4;
+      const noise = fieldData[i] / 255;
+      const ramp = (rampBase + rdx * x + rdy * y) / rampSpan;
+      // Push contrast so cloud masses separate from sky and the palette
+      // extremes (deep background, bright highlights) actually appear
+      let t = 0.45 * (0.5 + (noise - 0.5) * 2.3) + 0.55 * ramp;
+      t = (t - 0.5) * 1.5 + 0.5;
+      t = Math.max(0, Math.min(1, t));
+      const [r, g, b] = samplePalette(stops, t);
+      outData[i] = r;
+      outData[i + 1] = g;
+      outData[i + 2] = b;
+      outData[i + 3] = 255;
+    }
+  }
+  ctx.putImageData(out, 0, 0);
+
+  // Gentle soften to melt any bilinear grid artifacts into mist
+  applyBlur(ctx, width, height, 44 * (height / 2160), opts.createCanvas);
+};
+
 export const renderGradient = (
   ctx: CanvasRenderingContext2D,
   width: number,
@@ -361,8 +444,12 @@ export const renderGradient = (
   const random = mulberry32(opts.seed);
   const blur = opts.blur * opts.blurScale;
 
-  if (opts.style === "stripes") {
-    renderStripes(ctx, width, height, opts, random);
+  if (opts.style === "stripes" || opts.style === "clouds") {
+    if (opts.style === "stripes") {
+      renderStripes(ctx, width, height, opts, random);
+    } else {
+      renderClouds(ctx, width, height, opts, random);
+    }
     applyAdjustments(
       ctx,
       width,

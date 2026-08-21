@@ -32,7 +32,7 @@ const bodySchema = z.object({
   contrast: z.number().min(50).max(200),
   saturation: z.number().min(50).max(200),
   aspectRatio: z.enum(ASPECT_RATIOS),
-  style: z.enum(["blobs", "stripes"]).default("blobs"),
+  style: z.enum(["blobs", "stripes", "clouds"]).default("blobs"),
   fiberDensity: z.number().min(0).max(2).default(1),
   waviness: z.number().min(0).max(2).default(1),
   sheen: z.number().min(0).max(2).default(0.2),
