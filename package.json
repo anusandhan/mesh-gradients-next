@@ -7,11 +7,13 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "test:render": "tsx scripts/render-smoke-test.ts"
+    "test:render": "tsx scripts/render-smoke-test.ts",
+    "db:migrate": "tsx --env-file=.env.local scripts/migrate.ts"
   },
   "dependencies": {
     "@clerk/nextjs": "^7.8.0",
     "@napi-rs/canvas": "^1.0.7",
+    "@neondatabase/serverless": "^1.1.0",
     "@phosphor-icons/react": "^2.1.10",
     "@radix-ui/react-label": "^2.1.7",
     "@radix-ui/react-select": "^2.2.5",
@@ -29,9 +31,11 @@
     "react": "^18",
     "react-dom": "^18",
     "react-icons": "^4.11.0",
+    "server-only": "^0.0.1",
     "simplex-noise": "^4.0.3",
     "tailwind-merge": "^3.3.1",
-    "tailwindcss-animate": "^1.0.7"
+    "tailwindcss-animate": "^1.0.7",
+    "zod": "^4.4.3"
   },
   "devDependencies": {
     "@types/color": "^4.2.0",
