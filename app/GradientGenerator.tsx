@@ -56,7 +56,7 @@ import {
 } from "@/lib/color-format";
 import { ChannelNumberInput } from "@/components/ui/channel-color-picker";
 import { renderGradient, normalizeHexColor } from "@/lib/gradient-renderer";
-import { SignInButton, UserButton, useAuth } from "@clerk/nextjs";
+import { SignInButton, UserButton, useAuth, useClerk } from "@clerk/nextjs";
 
 // Browser canvas factory for the renderer's blur pyramid scratch canvases
 const domCreateCanvas = (width: number, height: number) => {
@@ -144,6 +144,7 @@ const ColorField = ({
 
 const GradientGenerator = () => {
   const { isLoaded, isSignedIn } = useAuth();
+  const { openSignIn } = useClerk();
   const [backgroundColor, setBackgroundColor] = useState("#f8fafc");
   const [colorInputs, setColorInputs] = useState([
     "#3b82f6",
@@ -379,36 +380,63 @@ const GradientGenerator = () => {
     };
   }, [renderPreview, previewCanvasSize]);
 
-  const downloadCanvasAsImage = () => {
+  // High-res export happens server-side (/api/export enforces the plan
+  // and quota); the client only previews and downloads the returned PNG.
+  const downloadCanvasAsImage = async () => {
+    if (!isSignedIn) {
+      openSignIn();
+      return;
+    }
     setIsExporting(true);
-    // Let the spinner paint before blocking the main thread with the 4K render
-    requestAnimationFrame(() => {
-      setTimeout(() => {
-        const exportCanvas = document.createElement("canvas");
-        exportCanvas.width = canvasDimensions.width;
-        exportCanvas.height = canvasDimensions.height;
-        const ctx = exportCanvas.getContext("2d");
-        if (!ctx) {
-          setIsExporting(false);
-          return;
-        }
-        renderGradient(ctx, exportCanvas.width, exportCanvas.height, {
-          ...renderOptions,
-          blurScale: 1,
-        });
-        exportCanvas.toBlob((blob) => {
-          if (blob) {
-            const url = URL.createObjectURL(blob);
-            const link = document.createElement("a");
-            link.download = `${gradientName}.png`;
-            link.href = url;
-            link.click();
-            URL.revokeObjectURL(url);
-          }
-          setIsExporting(false);
-        }, "image/png");
-      }, 0);
-    });
+    try {
+      const res = await fetch("/api/export", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          seed,
+          placement,
+          backgroundColor: normalizeHexColor(backgroundColor),
+          colors: colorInputs.map(normalizeHexColor),
+          blur: blurAmount[0],
+          noise: noiseAmount[0],
+          contrast: contrastAmount[0],
+          saturation: saturationAmount[0],
+          aspectRatio,
+        }),
+      });
+
+      if (res.status === 401) {
+        openSignIn();
+        return;
+      }
+      if (res.status === 402) {
+        // Upgrade dialog lands with the quota UI (UNF-214)
+        alert(
+          "You've used all your free exports this month. Pro upgrade coming soon."
+        );
+        return;
+      }
+      if (res.status === 429) {
+        alert("Too many exports at once — try again in a minute.");
+        return;
+      }
+      if (!res.ok) {
+        alert("Export failed. Please try again.");
+        return;
+      }
+
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.download = `${gradientName}.png`;
+      link.href = url;
+      link.click();
+      URL.revokeObjectURL(url);
+    } catch {
+      alert("Export failed. Please check your connection and try again.");
+    } finally {
+      setIsExporting(false);
+    }
   };
 
   const applyPreset = (preset: PresetGradient) => {
