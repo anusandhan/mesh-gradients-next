@@ -35,6 +35,9 @@ import {
   DeviceTabletCameraIcon,
   XIcon,
   StackIcon,
+  CirclesThreeIcon,
+  WaveSineIcon,
+  CloudIcon,
 } from "@phosphor-icons/react";
 import Image from "next/image";
 import {
@@ -689,9 +692,30 @@ const GradientGenerator = () => {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="blobs">Blurred Blobs</SelectItem>
-                      <SelectItem value="stripes">Silk Stripes</SelectItem>
-                      <SelectItem value="clouds">Clouds</SelectItem>
+                      <SelectItem value="blobs">
+                        <div className="flex items-center gap-2">
+                          <CirclesThreeIcon
+                            size={16}
+                            className="text-neutral-600"
+                          />
+                          Blurred Blobs
+                        </div>
+                      </SelectItem>
+                      <SelectItem value="stripes">
+                        <div className="flex items-center gap-2">
+                          <WaveSineIcon
+                            size={16}
+                            className="text-neutral-600"
+                          />
+                          Silk Stripes
+                        </div>
+                      </SelectItem>
+                      <SelectItem value="clouds">
+                        <div className="flex items-center gap-2">
+                          <CloudIcon size={16} className="text-neutral-600" />
+                          Clouds
+                        </div>
+                      </SelectItem>
                     </SelectContent>
                   </Select>
                 </div>

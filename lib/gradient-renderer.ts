@@ -201,6 +201,13 @@ const renderStripes = (
 
   const stops = [opts.backgroundColor, ...opts.colors].map(hexToRgbTuple);
 
+  // Seeded shuffle: each randomize also re-deals which color sits where
+  // in the band gradient
+  for (let i = stops.length - 1; i > 0; i--) {
+    const j = Math.floor(random() * (i + 1));
+    [stops[i], stops[j]] = [stops[j], stops[i]];
+  }
+
   // Span the band gradient across the canvas's projection on the
   // perpendicular axis, so every palette stop (background included) is
   // actually visible on screen
