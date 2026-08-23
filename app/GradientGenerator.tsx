@@ -543,14 +543,26 @@ const GradientGenerator = () => {
     }
   };
 
+  const isProUser = quota?.plan === "pro";
+
+  // Free users see their remaining quota; Pro is shown as the badge next
+  // to the wordmark instead of text here
   const quotaBadge =
-    isSignedIn && quota ? (
+    isSignedIn && quota && quota.plan === "free" ? (
       <p className="text-center text-xs tabular-nums text-neutral-500">
-        {quota.plan === "pro"
-          ? "Pro — unlimited exports"
-          : `${quota.remaining} of 5 free exports left this month`}
+        {`${quota.remaining} of 5 free exports left this month`}
       </p>
     ) : null;
+
+  const proBadge = (
+    <Image
+      src="/gs-pro-badge.png"
+      alt="Pro"
+      width={819}
+      height={450}
+      className="block h-5 w-auto shrink-0"
+    />
+  );
 
   const applyPreset = (preset: PresetGradient) => {
     setBackgroundColor(preset.background);
@@ -664,6 +676,7 @@ const GradientGenerator = () => {
                   <span className="truncate text-md font-medium text-neutral-800">
                     {`Gradients Studio`}
                   </span>
+                  {isProUser && proBadge}
                 </div>
                 {isLoaded && !isSignedIn && (
                   <SignInButton mode="modal">
@@ -1180,18 +1193,22 @@ const GradientGenerator = () => {
               </div>
               {/* Mobile bottom bar */}
               <div className="lg:hidden flex-shrink-0 flex items-center justify-between gap-3 p-4 border-t border-neutral-200 bg-white">
-                <div className="flex items-center gap-2 min-w-0">
-                  <Image
-                    src="/beautiful-mesh-logo.png"
-                    alt="Gradients Studio Logo"
-                    width={915}
-                    height={562}
-                    className="block w-8 h-auto shrink-0"
-                  />
-                  <span className="truncate text-sm font-medium text-neutral-800">
-                    {`Gradients Studio`}
-                  </span>
-                </div>
+                {isProUser ? (
+                  proBadge
+                ) : (
+                  <div className="flex items-center gap-2 min-w-0">
+                    <Image
+                      src="/beautiful-mesh-logo.png"
+                      alt="Gradients Studio Logo"
+                      width={915}
+                      height={562}
+                      className="block w-8 h-auto shrink-0"
+                    />
+                    <span className="truncate text-sm font-medium text-neutral-800">
+                      {`Gradients Studio`}
+                    </span>
+                  </div>
+                )}
                 <div className="flex items-center gap-2">
                   <Button
                     variant="outline"
