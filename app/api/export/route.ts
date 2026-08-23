@@ -42,7 +42,7 @@ const bodySchema = z.object({
   // JPEG default: the grain makes PNGs huge (~16MB at 4K) and slow to
   // encode/transfer; JPEG at q92 is visually identical here and ~8x smaller
   format: z.enum(["jpeg", "png"]).default("jpeg"),
-});
+}).strict();
 
 const nodeCreateCanvas = (width: number, height: number) =>
   createCanvas(width, height) as unknown as HTMLCanvasElement;
