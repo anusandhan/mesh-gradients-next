@@ -87,7 +87,7 @@ export const recordStripeEvent = async (eventId: string): Promise<boolean> => {
   return rows.length > 0;
 };
 
-// Grant or extend Pro: 365 days on top of the current expiry (if still
+// Grant or extend Pro: 6 months on top of the current expiry (if still
 // active) or from now. Called ONLY from the Stripe webhook handler.
 export const grantPro = async (
   userId: number,
@@ -96,9 +96,9 @@ export const grantPro = async (
   const sql = getSql();
   await sql`
     INSERT INTO entitlements (user_id, pro_until, stripe_payment_id)
-    VALUES (${userId}, now() + interval '365 days', ${stripePaymentId})
+    VALUES (${userId}, now() + interval '6 months', ${stripePaymentId})
     ON CONFLICT (user_id) DO UPDATE SET
-      pro_until = GREATEST(entitlements.pro_until, now()) + interval '365 days',
+      pro_until = GREATEST(entitlements.pro_until, now()) + interval '6 months',
       stripe_payment_id = EXCLUDED.stripe_payment_id,
       updated_at = now()
   `;

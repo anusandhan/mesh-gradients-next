@@ -577,14 +577,16 @@ const GradientGenerator = () => {
                   </h2>
                   <p className="mt-2 text-sm text-neutral-600">
                     You&apos;ve used all 5 free exports this month. Go Pro for
-                    a year of unlimited 4K exports.
+                    6 months of unlimited 4K exports.
                   </p>
                   <div className="mt-4 rounded-xl border border-neutral-200 p-4">
                     <div className="flex items-baseline gap-1">
                       <span className="text-2xl font-semibold text-neutral-900">
-                        $29
+                        $38
                       </span>
-                      <span className="text-sm text-neutral-500">/ year</span>
+                      <span className="text-sm text-neutral-500">
+                        / 6 months
+                      </span>
                     </div>
                     <ul className="mt-2 space-y-1 text-sm text-neutral-600">
                       <li>Unlimited 4K exports</li>
