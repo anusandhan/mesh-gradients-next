@@ -75,6 +75,32 @@ export const tryConsumeExport = async (
   return FREE_EXPORTS_PER_MONTH - (rows[0] as { count: number }).count;
 };
 
+// Fixed-window rate limiter (atomic, same pattern as the quota counter).
+// Returns whether the call is allowed and, when blocked, how many seconds
+// remain in the current window.
+export const rateLimit = async (
+  key: string,
+  limitPerMinute: number
+): Promise<{ ok: boolean; retryAfter: number }> => {
+  const sql = getSql();
+  const rows = await sql`
+    INSERT INTO rate_limits (key, window_start, count)
+    VALUES (${key}, date_trunc('minute', now()), 1)
+    ON CONFLICT (key, window_start)
+    DO UPDATE SET count = rate_limits.count + 1
+    RETURNING count
+  `;
+  const count = (rows[0] as { count: number }).count;
+  // Opportunistic cleanup of stale windows
+  if (Math.random() < 0.02) {
+    await sql`DELETE FROM rate_limits WHERE window_start < now() - interval '1 hour'`;
+  }
+  return {
+    ok: count <= limitPerMinute,
+    retryAfter: 60 - new Date().getUTCSeconds(),
+  };
+};
+
 // Record a Stripe webhook event id. Returns false if we've already
 // processed it (replay or retry) — callers must then skip side effects.
 export const recordStripeEvent = async (eventId: string): Promise<boolean> => {

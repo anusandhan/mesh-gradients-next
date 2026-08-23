@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth, currentUser } from "@clerk/nextjs/server";
 import Stripe from "stripe";
+import { rateLimit } from "@/lib/db";
 
 export const runtime = "nodejs";
 
@@ -11,6 +12,14 @@ export async function POST(request: NextRequest) {
   const { userId: clerkUserId } = await auth();
   if (!clerkUserId) {
     return NextResponse.json({ error: "Sign in first" }, { status: 401 });
+  }
+
+  const limit = await rateLimit(`checkout:user:${clerkUserId}`, 5);
+  if (!limit.ok) {
+    return NextResponse.json(
+      { error: "Too many attempts, try again shortly" },
+      { status: 429, headers: { "Retry-After": String(limit.retryAfter) } }
+    );
   }
 
   const secretKey = process.env.STRIPE_SECRET_KEY;

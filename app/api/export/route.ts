@@ -3,7 +3,7 @@ import { auth, currentUser } from "@clerk/nextjs/server";
 import { createCanvas } from "@napi-rs/canvas";
 import { z } from "zod";
 import { renderGradient } from "@/lib/gradient-renderer";
-import { getOrCreateUser, isPro, tryConsumeExport } from "@/lib/db";
+import { getOrCreateUser, isPro, tryConsumeExport, rateLimit } from "@/lib/db";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -59,6 +59,22 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(
       { error: "Verify your email address to export" },
       { status: 403 }
+    );
+  }
+
+  // Rate limits protect render CPU even for Pro users: per-user and,
+  // as a backstop against account farming, per-IP
+  const ip =
+    request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
+  const [userLimit, ipLimit] = await Promise.all([
+    rateLimit(`export:user:${clerkUserId}`, 10),
+    rateLimit(`export:ip:${ip}`, 20),
+  ]);
+  if (!userLimit.ok || !ipLimit.ok) {
+    const retryAfter = Math.max(userLimit.retryAfter, ipLimit.retryAfter);
+    return NextResponse.json(
+      { error: "Too many exports, try again shortly", code: "rate_limited" },
+      { status: 429, headers: { "Retry-After": String(retryAfter) } }
     );
   }
 

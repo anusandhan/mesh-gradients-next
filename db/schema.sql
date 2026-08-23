@@ -23,6 +23,14 @@ CREATE TABLE IF NOT EXISTS export_usage (
   PRIMARY KEY (user_id, month)
 );
 
+-- Fixed-window rate limit counters (key = route:scope:id).
+CREATE TABLE IF NOT EXISTS rate_limits (
+  key          text NOT NULL,
+  window_start timestamptz NOT NULL,
+  count        integer NOT NULL DEFAULT 0,
+  PRIMARY KEY (key, window_start)
+);
+
 -- Processed Stripe webhook event ids (replay protection).
 CREATE TABLE IF NOT EXISTS stripe_events (
   event_id     text PRIMARY KEY,
