@@ -556,10 +556,10 @@ const GradientGenerator = () => {
 
   const proBadge = (
     <Image
-      src="/gs-pro-badge.png"
+      src="/pro-badge.png"
       alt="Pro"
-      width={819}
-      height={450}
+      width={849}
+      height={480}
       className="block h-5 w-auto shrink-0"
     />
   );
@@ -666,13 +666,23 @@ const GradientGenerator = () => {
               {/* Logo + account - desktop sidebar only */}
               <div className="hidden lg:flex items-center justify-between gap-2 p-6 pb-0">
                 <div className="flex items-center gap-2 min-w-0">
-                  <Image
-                    src="/beautiful-mesh-logo.png"
-                    alt="Gradients Studio Logo"
-                    width={915}
-                    height={562}
-                    className="block w-10 h-auto shrink-0"
-                  />
+                  {isProUser ? (
+                    <Image
+                      src="/gs-pro-logo.png"
+                      alt="Gradients Studio Pro Logo"
+                      width={704}
+                      height={432}
+                      className="block w-10 h-auto shrink-0"
+                    />
+                  ) : (
+                    <Image
+                      src="/gs-logo.png"
+                      alt="Gradients Studio Logo"
+                      width={915}
+                      height={562}
+                      className="block w-10 h-auto shrink-0"
+                    />
+                  )}
                   <span className="truncate text-md font-medium text-neutral-800">
                     {`Gradients Studio`}
                   </span>
@@ -1198,7 +1208,7 @@ const GradientGenerator = () => {
                 ) : (
                   <div className="flex items-center gap-2 min-w-0">
                     <Image
-                      src="/beautiful-mesh-logo.png"
+                      src="/gs-logo.png"
                       alt="Gradients Studio Logo"
                       width={915}
                       height={562}
