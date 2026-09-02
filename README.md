@@ -75,6 +75,51 @@ A beautiful, modern web application for creating customizable mesh gradients usi
 - ✅ Improved color picker integration
 - ✅ Better visual hierarchy and spacing
 
+## Deployment & Operations
+
+### Canonical domain: always use `www`
+
+Production serves from `https://www.gradients.studio`. The apex domain
+`https://gradients.studio` issues a **308 permanent redirect** to `www`.
+
+**Any server-to-server URL must target `www` directly.** Stripe (and most
+webhook senders) do **not** follow redirects on POST — a 308 is treated as a
+failed delivery. Pointing a Stripe webhook at the apex domain silently breaks
+every event with no error surfaced to the app.
+
+This bit us once: live Stripe `checkout.session.completed` events were all
+failing with 308 because the endpoint was registered at `gradients.studio`
+instead of `www.gradients.studio`, so Pro was never granted after payment.
+
+Applies to: Stripe webhooks, OAuth/SSO callbacks, and any external service
+that calls back into the app.
+
+### Stripe
+
+- **Webhook endpoint**: `https://www.gradients.studio/api/webhooks/stripe`,
+  subscribed to `checkout.session.completed` and
+  `checkout.session.async_payment_succeeded`. Its signing secret must match
+  `STRIPE_WEBHOOK_SECRET` in Vercel (Production), or every event is rejected
+  with a 400.
+- **Entitlements are webhook-only.** The success page (`/?upgraded=1`) is just
+  a redirect and never grants Pro; the webhook is the sole writer. If Pro
+  isn't granted after a payment, check the endpoint's **Event deliveries** tab
+  for non-2xx responses before touching code.
+- **Promo / 100%-off codes**: checkout passes `allow_promotion_codes: true`.
+  A 100%-off code produces a `checkout.session.completed` with `amount_total:
+  0`; the webhook grants Pro on both `paid` and `no_payment_required` states.
+  Redeeming a 100% code through the real flow is the cleanest way to comp an
+  account (it exercises the whole pipeline).
+
+### Database migrations
+
+`db/schema.sql` is idempotent (`CREATE TABLE IF NOT EXISTS`, `ADD COLUMN IF
+NOT EXISTS`). Apply with `npm run db:migrate` against the target
+`DATABASE_URL`. The Vercel-managed Neon store's **main branch backs both
+development and production**, so a schema change applied once is visible to
+both. Migrating prod: run the SQL in the Vercel → Storage → Query console
+(toggle Read-only off) or `DATABASE_URL="<prod>" npx tsx scripts/migrate.ts`.
+
 ## Testing the Improvements
 
 1. **Color Controls**: Try changing colors using both hex inputs and color pickers
