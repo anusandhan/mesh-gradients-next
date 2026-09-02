@@ -113,19 +113,29 @@ SelectLabel.displayName = SelectPrimitive.Label.displayName;
 
 const SelectItem = React.forwardRef<
   React.ElementRef<typeof SelectPrimitive.Item>,
-  React.ComponentPropsWithoutRef<typeof SelectPrimitive.Item>
->(({ className, children, ...props }, ref) => (
+  React.ComponentPropsWithoutRef<typeof SelectPrimitive.Item> & {
+    // "dot" renders selection as a muted dot - for lists whose rows carry
+    // their own trailing actions, where a check would collide
+    indicator?: "check" | "dot";
+  }
+>(({ className, children, indicator = "check", ...props }, ref) => (
   <SelectPrimitive.Item
     ref={ref}
     className={cn(
-      "relative flex w-full cursor-default select-none items-center rounded-lg py-1.5 pl-2 pr-8 text-sm outline-none focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
+      // rounded (4px) = content radius (rounded-lg, 8px) - viewport padding
+      // (p-1, 4px), keeping the hover background concentric with the popover
+      "relative flex w-full cursor-default select-none items-center rounded py-1.5 pl-2 pr-8 text-sm outline-none focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
       className
     )}
     {...props}
   >
     <span className="absolute right-2 flex h-3.5 w-3.5 items-center justify-center">
       <SelectPrimitive.ItemIndicator>
-        <CheckIcon weight="bold" className="h-3 w-3 text-neutral-500" />
+        {indicator === "dot" ? (
+          <span className="block h-1.5 w-1.5 rounded-full bg-neutral-400" />
+        ) : (
+          <CheckIcon weight="bold" className="h-3 w-3 text-neutral-500" />
+        )}
       </SelectPrimitive.ItemIndicator>
     </span>
     <SelectPrimitive.ItemText>{children}</SelectPrimitive.ItemText>

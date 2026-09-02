@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Kbd } from "@/components/ui/kbd";
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
 import { ColorPickerPopover } from "@/components/ui/color-picker-popover";
@@ -17,12 +18,18 @@ import {
 import {
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
+  SelectLabel,
+  SelectSeparator,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
 import {
+  CheckIcon,
   DownloadIcon,
+  GearSixIcon,
+  PlusIcon,
   ShuffleIcon,
   SwatchesIcon,
   TabsIcon,
@@ -65,6 +72,13 @@ import {
   type GradientStyle,
 } from "@/lib/gradient-renderer";
 import { SignInButton, UserButton, useAuth, useClerk } from "@clerk/nextjs";
+import { motion } from "framer-motion";
+import { toast } from "sonner";
+import { Toaster } from "@/components/ui/sonner";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { useColorPresets } from "@/hooks/useColorPresets";
+import { ManagePresetsDialog } from "@/components/presets/ManagePresetsDialog";
+import { dedupeName, paletteMatchesPreset } from "@/lib/presets";
 
 // Browser canvas factory for the renderer's blur pyramid scratch canvases
 const domCreateCanvas = (width: number, height: number) => {
@@ -570,10 +584,119 @@ const GradientGenerator = () => {
     setGradientName(preset.name);
   };
 
+  const {
+    presets: userPresets,
+    save: savePresetApi,
+    remove: removePresetApi,
+    update: updatePresetApi,
+    reorder: reorderPresetsApi,
+  } = useColorPresets(isSignedIn);
+  const [managePresetsOpen, setManagePresetsOpen] = useState(false);
+  const [presetSelectOpen, setPresetSelectOpen] = useState(false);
+
+  const [savingPreset, setSavingPreset] = useState(false);
+  // null = idle; a string = the name being typed for the palette about to save
+  const [presetDraftName, setPresetDraftName] = useState<string | null>(null);
+
+  // The saved palette (if any) matching what's currently on the canvas —
+  // drives the filled bookmark and save-vs-remove behavior.
+  const activeUserPreset = useMemo(
+    () =>
+      userPresets.find((p) =>
+        paletteMatchesPreset(
+          p,
+          normalizeHexColor(backgroundColor),
+          colorInputs.map(normalizeHexColor)
+        )
+      ),
+    [userPresets, backgroundColor, colorInputs]
+  );
+
+  // Same match against the curated presets - selection is fully derived from
+  // the palette, so editing any color deselects and reverting reselects.
+  const activeCuratedPreset = presetGradients.find((p) =>
+    paletteMatchesPreset(
+      {
+        background: normalizeHexColor(p.background),
+        colors: p.colors.map(normalizeHexColor),
+      },
+      normalizeHexColor(backgroundColor),
+      colorInputs.map(normalizeHexColor)
+    )
+  );
+
+  const selectedPresetValue = activeUserPreset
+    ? `user:${activeUserPreset.id}`
+    : activeCuratedPreset?.name ?? "";
+
+  // The + button is always present; it only disables while the palette
+  // already matches a saved or curated preset (nothing new to save).
+  const presetSelected = Boolean(activeUserPreset || activeCuratedPreset);
+
+  const startSavingPreset = () => {
+    if (!isSignedIn) {
+      openSignIn();
+      return;
+    }
+    if (!isProUser) {
+      setUpgradeOpen(true);
+      return;
+    }
+    setPresetDraftName(
+      dedupeName(
+        (gradientName.trim() || "My Palette").slice(0, 40),
+        userPresets.map((p) => p.name)
+      )
+    );
+  };
+
+  const commitSavePreset = async () => {
+    if (savingPreset) return;
+    const name = dedupeName(
+      ((presetDraftName ?? "").trim() || "My Palette").slice(0, 40),
+      userPresets.map((p) => p.name)
+    );
+    setSavingPreset(true);
+    const result = await savePresetApi({
+      name,
+      background: normalizeHexColor(backgroundColor),
+      colors: colorInputs.map(normalizeHexColor),
+    });
+    setSavingPreset(false);
+    if (result.ok) {
+      // The new preset now matches the palette, so it selects itself and
+      // the save affordance disappears
+      setPresetDraftName(null);
+    } else if (result.code === "pro_required") {
+      setPresetDraftName(null);
+      setUpgradeOpen(true);
+    } else if (result.code === "preset_cap") {
+      setPresetDraftName(null);
+      toast("Palette limit reached (50)");
+    } else {
+      // Keep the draft so the user can retry
+      toast("Could not save palette");
+    }
+  };
+
   return (
     <TooltipProvider>
       <div className="bg-white">
         <div className="flex flex-col h-screen" style={{ height: "100dvh" }}>
+          {/* Toaster is fixed-position but its host element still takes a
+              flex slot, so it must live outside the gap-6 row */}
+          <Toaster position="bottom-center" />
+
+          <ManagePresetsDialog
+            open={managePresetsOpen}
+            onOpenChange={setManagePresetsOpen}
+            presets={userPresets}
+            colorFormat={colorFormat}
+            onUpdate={updatePresetApi}
+            onRemove={removePresetApi}
+            onReorder={reorderPresetsApi}
+          />
+
           {/* Main Content - full-screen preview on mobile, sidebar + preview on lg+ */}
           <div className="flex-1 flex lg:gap-6 min-h-0">
             {/* Upgrade dialog - shown when the free export quota is spent */}
@@ -707,42 +830,30 @@ const GradientGenerator = () => {
                       Style
                     </h3>
                   </div>
-                  <Select
+                  <ToggleGroup
+                    type="single"
                     value={gradientStyle}
-                    onValueChange={(value) =>
-                      setGradientStyle(value as GradientStyle)
-                    }
+                    onValueChange={(value) => {
+                      // Radix allows deselecting the active item; a style is
+                      // always required, so ignore empty
+                      if (value) setGradientStyle(value as GradientStyle);
+                    }}
+                    aria-label="Gradient style"
+                    className="w-full"
                   >
-                    <SelectTrigger className="w-full">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="blobs">
-                        <div className="flex items-center gap-2">
-                          <CirclesThreeIcon
-                            size={16}
-                            className="text-neutral-600"
-                          />
-                          Blurred Blobs
-                        </div>
-                      </SelectItem>
-                      <SelectItem value="stripes">
-                        <div className="flex items-center gap-2">
-                          <WaveSineIcon
-                            size={16}
-                            className="text-neutral-600"
-                          />
-                          Silk Stripes
-                        </div>
-                      </SelectItem>
-                      <SelectItem value="clouds">
-                        <div className="flex items-center gap-2">
-                          <CloudIcon size={16} className="text-neutral-600" />
-                          Clouds
-                        </div>
-                      </SelectItem>
-                    </SelectContent>
-                  </Select>
+                    <ToggleGroupItem value="blobs" aria-label="Blurred Blobs">
+                      <CirclesThreeIcon size={16} weight="fill" />
+                      Blobs
+                    </ToggleGroupItem>
+                    <ToggleGroupItem value="stripes" aria-label="Silk Stripes">
+                      <WaveSineIcon size={16} weight="fill" />
+                      Stripes
+                    </ToggleGroupItem>
+                    <ToggleGroupItem value="clouds" aria-label="Clouds">
+                      <CloudIcon size={16} weight="fill" />
+                      Clouds
+                    </ToggleGroupItem>
+                  </ToggleGroup>
                 </div>
 
                 {/* Color Controls */}
@@ -826,9 +937,24 @@ const GradientGenerator = () => {
                     </h3>
                   </div>
 
-                  <div className="space-y-2">
+                  <div className="flex items-center gap-2">
+                    {presetDraftName === null ? (
                     <Select
+                      value={selectedPresetValue}
+                      open={presetSelectOpen}
+                      onOpenChange={setPresetSelectOpen}
                       onValueChange={(value) => {
+                        if (value.startsWith("user:")) {
+                          const preset = userPresets.find(
+                            (p) => `user:${p.id}` === value
+                          );
+                          if (preset) {
+                            setBackgroundColor(preset.background);
+                            setColorInputs(preset.colors);
+                            setGradientName(preset.name);
+                          }
+                          return;
+                        }
                         const preset = presetGradients.find(
                           (p) => p.name === value
                         );
@@ -837,14 +963,46 @@ const GradientGenerator = () => {
                         }
                       }}
                     >
-                      <SelectTrigger className="w-full">
+                      <SelectTrigger className="flex-1">
                         <SelectValue placeholder="Choose a preset" />
                       </SelectTrigger>
                       <SelectContent>
+                        {userPresets.length > 0 && (
+                          <SelectGroup>
+                            <SelectLabel className="px-2 py-1.5 text-[11px] font-medium tracking-wide text-neutral-500">
+                              USER PRESETS
+                            </SelectLabel>
+                            {userPresets.map((preset) => (
+                              <SelectItem
+                                key={preset.id}
+                                value={`user:${preset.id}`}
+                                indicator="dot"
+                              >
+                                <div className="flex items-center gap-2">
+                                  <span
+                                    aria-hidden
+                                    className="h-4 w-4 shrink-0 rounded-full border border-black/10"
+                                    style={{
+                                      background: `linear-gradient(135deg, ${preset.colors.join(", ")})`,
+                                    }}
+                                  />
+                                  <span className="max-w-[10rem] truncate">
+                                    {preset.name}
+                                  </span>
+                                </div>
+                              </SelectItem>
+                            ))}
+                            <SelectSeparator />
+                          </SelectGroup>
+                        )}
                         {presetGradients.map((preset, index) => {
                           const IconComponent = preset.icon;
                           return (
-                            <SelectItem key={index} value={preset.name}>
+                            <SelectItem
+                              key={index}
+                              value={preset.name}
+                              indicator="dot"
+                            >
                               <div className="flex items-center gap-2">
                                 <IconComponent
                                   size={16}
@@ -855,8 +1013,138 @@ const GradientGenerator = () => {
                             </SelectItem>
                           );
                         })}
+                        {userPresets.length > 0 && (
+                          <>
+                            <SelectSeparator />
+                            <button
+                              type="button"
+                              className="flex w-full items-center gap-2 rounded px-2 py-1.5 text-sm text-neutral-600 transition-colors hover:bg-accent hover:text-accent-foreground"
+                              onPointerDown={(e) => {
+                                // Keep Radix Select from treating this as an
+                                // item selection
+                                e.preventDefault();
+                              }}
+                              onClick={() => {
+                                setPresetSelectOpen(false);
+                                setManagePresetsOpen(true);
+                              }}
+                            >
+                              <GearSixIcon size={16} />
+                              Manage Presets
+                            </button>
+                          </>
+                        )}
                       </SelectContent>
                     </Select>
+                    ) : (
+                      <motion.div
+                        initial={{ opacity: 0, filter: "blur(4px)" }}
+                        animate={{ opacity: 1, filter: "blur(0px)" }}
+                        transition={{
+                          type: "spring",
+                          duration: 0.3,
+                          bounce: 0,
+                        }}
+                        className="relative flex-1"
+                      >
+                        <Input
+                          autoFocus
+                          value={presetDraftName}
+                          maxLength={40}
+                          placeholder="Palette name"
+                          aria-label="Palette name"
+                          className="w-full pr-14 text-sm"
+                          onFocus={(e) => e.currentTarget.select()}
+                          onChange={(e) => setPresetDraftName(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") commitSavePreset();
+                            if (e.key === "Escape") setPresetDraftName(null);
+                          }}
+                        />
+                        <Kbd className="absolute right-2 top-1/2 -translate-y-1/2">
+                          ↵
+                        </Kbd>
+                      </motion.div>
+                    )}
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      aria-label={
+                        presetDraftName === null
+                          ? "Save palette"
+                          : "Confirm save"
+                      }
+                      disabled={
+                        savingPreset ||
+                        (presetDraftName === null && presetSelected)
+                      }
+                      className="shrink-0"
+                      onClick={
+                        presetDraftName === null
+                          ? startSavingPreset
+                          : commitSavePreset
+                      }
+                    >
+                            {savingPreset ? (
+                              <Spinner size={16} />
+                            ) : (
+                              <span className="relative flex h-4 w-4 items-center justify-center">
+                                <motion.span
+                                  className="absolute flex"
+                                  animate={
+                                    presetDraftName === null
+                                      ? {
+                                          opacity: 1,
+                                          scale: 1,
+                                          filter: "blur(0px)",
+                                        }
+                                      : {
+                                          opacity: 0,
+                                          scale: 0.25,
+                                          filter: "blur(4px)",
+                                        }
+                                  }
+                                  transition={{
+                                    type: "spring",
+                                    duration: 0.3,
+                                    bounce: 0,
+                                  }}
+                                >
+                                  <PlusIcon
+                                    weight="bold"
+                                    className="w-4 h-4"
+                                  />
+                                </motion.span>
+                                <motion.span
+                                  className="absolute flex"
+                                  initial={false}
+                                  animate={
+                                    presetDraftName === null
+                                      ? {
+                                          opacity: 0,
+                                          scale: 0.25,
+                                          filter: "blur(4px)",
+                                        }
+                                      : {
+                                          opacity: 1,
+                                          scale: 1,
+                                          filter: "blur(0px)",
+                                        }
+                                  }
+                                  transition={{
+                                    type: "spring",
+                                    duration: 0.3,
+                                    bounce: 0,
+                                  }}
+                                >
+                                  <CheckIcon
+                                    weight="bold"
+                                    className="w-4 h-4"
+                                  />
+                                </motion.span>
+                              </span>
+                            )}
+                    </Button>
                   </div>
                 </div>
 
@@ -1081,7 +1369,7 @@ const GradientGenerator = () => {
                       </Button>
                     </TooltipTrigger>
                     <TooltipContent>
-                      <p>Download as PNG image</p>
+                      <p>Download as JPG image</p>
                     </TooltipContent>
                   </Tooltip>
                 </div>

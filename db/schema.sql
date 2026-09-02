@@ -31,6 +31,19 @@ CREATE TABLE IF NOT EXISTS rate_limits (
   PRIMARY KEY (key, window_start)
 );
 
+-- User-saved color palettes (Pro feature; lapsed Pro keeps read access).
+CREATE TABLE IF NOT EXISTS presets (
+  id         uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id    bigint NOT NULL REFERENCES users(id),
+  name       text NOT NULL,
+  background text NOT NULL,
+  colors     jsonb NOT NULL,
+  position   integer NOT NULL DEFAULT 0, -- user-chosen sort order, low = top
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+ALTER TABLE presets ADD COLUMN IF NOT EXISTS position integer NOT NULL DEFAULT 0;
+CREATE INDEX IF NOT EXISTS presets_user_id_idx ON presets (user_id);
+
 -- Processed Stripe webhook event ids (replay protection).
 CREATE TABLE IF NOT EXISTS stripe_events (
   event_id     text PRIMARY KEY,

@@ -24,7 +24,7 @@ const ColorPickerPopover = ({
       <Popover.Trigger asChild>
         <button
           className={cn(
-            "w-9 h-9 shrink-0 p-0 rounded-lg border border-[1.25px] border-neutral-400 hover:border-neutral-700 transition-all duration-200 ease cursor-pointer",
+            "w-9 h-9 shrink-0 p-0 rounded-lg border border-[1.25px] border-neutral-400 hover:border-neutral-700 transition-[border-color] duration-200 cursor-pointer",
             className
           )}
           style={{

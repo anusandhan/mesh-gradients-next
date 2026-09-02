@@ -130,6 +130,85 @@ export const grantPro = async (
   `;
 };
 
+export type PresetRecord = {
+  id: string;
+  name: string;
+  background: string;
+  colors: string[];
+};
+
+export const listPresets = async (userId: number): Promise<PresetRecord[]> => {
+  const sql = getSql();
+  const rows = await sql`
+    SELECT id, name, background, colors FROM presets
+    WHERE user_id = ${userId}
+    ORDER BY position ASC, created_at DESC
+  `;
+  return rows as PresetRecord[];
+};
+
+// Insert-if-under-cap in one statement so concurrent saves can't overshoot
+// MAX_PRESETS_PER_USER. New presets go to the top of the user's order.
+// Returns null when the cap is hit.
+export const createPreset = async (
+  userId: number,
+  input: { name: string; background: string; colors: string[] },
+  maxPerUser: number
+): Promise<PresetRecord | null> => {
+  const sql = getSql();
+  const rows = await sql`
+    INSERT INTO presets (user_id, name, background, colors, position)
+    SELECT ${userId}, ${input.name}, ${input.background}, ${JSON.stringify(input.colors)}::jsonb,
+      COALESCE((SELECT MIN(position) - 1 FROM presets WHERE user_id = ${userId}), 0)
+    WHERE (SELECT count(*) FROM presets WHERE user_id = ${userId}) < ${maxPerUser}
+    RETURNING id, name, background, colors
+  `;
+  return rows.length > 0 ? (rows[0] as PresetRecord) : null;
+};
+
+// Partial edit; absent fields keep their current values.
+export const updatePreset = async (
+  userId: number,
+  presetId: string,
+  patch: { name?: string; background?: string; colors?: string[] }
+): Promise<boolean> => {
+  const sql = getSql();
+  const rows = await sql`
+    UPDATE presets SET
+      name = COALESCE(${patch.name ?? null}, name),
+      background = COALESCE(${patch.background ?? null}, background),
+      colors = COALESCE(${patch.colors ? JSON.stringify(patch.colors) : null}::jsonb, colors)
+    WHERE id = ${presetId} AND user_id = ${userId}
+    RETURNING id
+  `;
+  return rows.length > 0;
+};
+
+// Persist a full ordering; ids not owned by the user are ignored.
+export const reorderPresets = async (
+  userId: number,
+  orderedIds: string[]
+): Promise<void> => {
+  const sql = getSql();
+  await sql`
+    UPDATE presets SET position = u.ord
+    FROM unnest(${orderedIds}::uuid[]) WITH ORDINALITY AS u(id, ord)
+    WHERE presets.id = u.id AND presets.user_id = ${userId}
+  `;
+};
+
+export const deletePreset = async (
+  userId: number,
+  presetId: string
+): Promise<boolean> => {
+  const sql = getSql();
+  const rows = await sql`
+    DELETE FROM presets WHERE id = ${presetId} AND user_id = ${userId}
+    RETURNING id
+  `;
+  return rows.length > 0;
+};
+
 export type QuotaStatus = {
   plan: "pro" | "free";
   remaining: number | null; // null = unlimited

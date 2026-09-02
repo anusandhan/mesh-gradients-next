@@ -7,6 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
+    "test": "vitest run",
     "test:render": "tsx scripts/render-smoke-test.ts",
     "db:migrate": "tsx --env-file=.env.local scripts/migrate.ts"
   },
@@ -33,6 +34,7 @@
     "react-icons": "^4.11.0",
     "server-only": "^0.0.1",
     "simplex-noise": "^4.0.3",
+    "sonner": "^2.0.8",
     "stripe": "^22.5.0",
     "tailwind-merge": "^3.3.1",
     "tailwindcss-animate": "^1.0.7",
@@ -50,6 +52,7 @@
     "postcss": "^8",
     "tailwindcss": "^3.3.0",
     "tsx": "^4.23.12",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vitest": "^4.1.11"
   }
 }
