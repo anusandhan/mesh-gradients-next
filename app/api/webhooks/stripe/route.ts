@@ -42,7 +42,12 @@ export async function POST(request: NextRequest) {
     const session = event.data.object as Stripe.Checkout.Session;
     const clerkUserId = session.client_reference_id;
 
-    if (session.payment_status === "paid" && clerkUserId) {
+    // "paid" for normal purchases; "no_payment_required" when a 100%-off
+    // promotion code zeroes the total (Checkout skips payment collection)
+    const settled =
+      session.payment_status === "paid" ||
+      session.payment_status === "no_payment_required";
+    if (settled && clerkUserId) {
       const email = session.customer_details?.email ?? "";
       const user = await getOrCreateUser(clerkUserId, email);
       await grantPro(
