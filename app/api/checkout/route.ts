@@ -39,6 +39,7 @@ export async function POST(request: NextRequest) {
   const session = await stripe.checkout.sessions.create({
     mode: "payment",
     line_items: [{ price: priceId, quantity: 1 }],
+    allow_promotion_codes: true,
     client_reference_id: clerkUserId,
     customer_email: email,
     success_url: `${origin}/?upgraded=1`,
