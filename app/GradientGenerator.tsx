@@ -1,11 +1,17 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback, useMemo } from "react";
+import {
+  memo,
+  useState,
+  useEffect,
+  useRef,
+  useCallback,
+  useMemo,
+} from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Kbd } from "@/components/ui/kbd";
 import { Label } from "@/components/ui/label";
-import { Slider } from "@/components/ui/slider";
 import { ColorPickerPopover } from "@/components/ui/color-picker-popover";
 import { cn } from "@/lib/utils";
 import Spinner from "@/components/ui/spinner";
@@ -40,12 +46,26 @@ import {
   DeviceMobileIcon,
   InstagramLogoIcon,
   DeviceTabletCameraIcon,
-  XIcon,
   StackIcon,
   CirclesThreeIcon,
   WaveSineIcon,
   CloudIcon,
+  DropIcon,
+  DotsNineIcon,
+  CircleHalfIcon,
+  PaletteIcon,
+  RowsIcon,
+  SunDimIcon,
+  FeatherIcon,
+  SparkleIcon,
 } from "@phosphor-icons/react";
+import { RulerSlider } from "@/components/mobile/RulerSlider";
+import {
+  MobileEditHeader,
+  MobileEditPanel,
+  type Adjustment,
+  type EditTab,
+} from "@/components/mobile/MobileEditPanel";
 import Image from "next/image";
 import {
   LovableIcon,
@@ -76,15 +96,27 @@ import { motion } from "framer-motion";
 import { toast } from "sonner";
 import { Toaster } from "@/components/ui/sonner";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import { useColorPresets } from "@/hooks/useColorPresets";
+import { useColorPresets, type UserPreset } from "@/hooks/useColorPresets";
 import { ManagePresetsDialog } from "@/components/presets/ManagePresetsDialog";
 import { dedupeName, paletteMatchesPreset } from "@/lib/presets";
 
-// Browser canvas factory for the renderer's blur pyramid scratch canvases
+// Browser canvas factory for the renderer's scratch canvases. Canvases are
+// pooled by size: every scratch canvas within one render has a distinct
+// size and is fully repainted before use, so handing back the same element
+// each frame is safe and avoids allocating a fresh GPU-backed canvas per
+// blur level per render.
+const scratchCanvases = new Map<string, HTMLCanvasElement>();
 const domCreateCanvas = (width: number, height: number) => {
-  const canvas = document.createElement("canvas");
-  canvas.width = width;
-  canvas.height = height;
+  const key = `${width}x${height}`;
+  let canvas = scratchCanvases.get(key);
+  if (!canvas) {
+    // Aspect ratio or viewport changes retire old sizes; keep the pool small
+    if (scratchCanvases.size >= 32) scratchCanvases.clear();
+    canvas = document.createElement("canvas");
+    canvas.width = width;
+    canvas.height = height;
+    scratchCanvases.set(key, canvas);
+  }
   return canvas;
 };
 
@@ -164,6 +196,553 @@ const ColorField = ({
   );
 };
 
+const presetGradients: PresetGradient[] = [
+  // {
+  //   name: "Heatwaves",
+  //   background: "#f8fafc",
+  //   colors: ["#3b82f6", "#8b5cf6", "#ec4899", "#f59e0b"],
+  // },
+  {
+    name: "Lovable",
+    background: "#1A1B1D",
+    colors: ["#FE7A04", "#FE4F1A", "#F35CBE", "#7472FC"],
+    icon: LovableIcon,
+  },
+  {
+    name: "Dia",
+    background: "#0358f7",
+    colors: ["#c679c4", "#fa3d1d", "#ffb005", "#e1e1fe"],
+    icon: DiaIcon,
+  },
+  {
+    name: "Raycast",
+    background: "#07090B",
+    colors: ["#CF1627", "#08243A", "#0F8B92", "#D54F63"],
+    icon: RaycastIcon,
+  },
+  {
+    name: "Stripe",
+    background: "#635BFF",
+    colors: ["#F15372", "#FFCA3B", "#76E2FF", "#B5DAB9"],
+    icon: StripeIcon,
+  },
+  {
+    name: "Arc",
+    background: "#140080",
+    colors: ["#0229C9", "#FF526B", "#FF9598", "#EE4A5F"],
+    icon: ArcIcon,
+  },
+  {
+    name: "Comet",
+    background: "#101013",
+    colors: ["#5099A1", "#733138", "#53969F", "#C17B55"],
+    icon: CometIcon,
+  },
+  {
+    name: "Devin",
+    background: "#11131D",
+    colors: ["#2A6DCE", "#1796E2", "#1DC19C", "#3FA9DD"],
+    icon: DevinIcon,
+  },
+  // {
+  //   name: "Creem",
+  //   background: "#18120E",
+  //   colors: ["#FFC099", "#FFB68A", "#FF8E57", "#B39A8D"],
+  // },
+];
+
+const aspectRatioOptions = [
+  { value: "16:9", label: "Desktop", ratio: "16:9", icon: MonitorIcon },
+  { value: "1:1", label: "Square Post", ratio: "1:1", icon: SquareIcon },
+  {
+    value: "4:3",
+    label: "YouTube",
+    ratio: "4:3",
+    icon: YoutubeLogoIcon,
+  },
+  { value: "9:16", label: "Story", ratio: "9:16", icon: DeviceMobileIcon },
+  {
+    value: "3:4",
+    label: "Post",
+    ratio: "3:4",
+    icon: InstagramLogoIcon,
+  },
+  {
+    value: "4:5",
+    label: "Portrait",
+    ratio: "4:5",
+    icon: DeviceTabletCameraIcon,
+  },
+];
+
+// Sidebar sections are memoized so a slider tick (which re-renders the
+// generator for the new value) doesn't also reconcile the color pickers,
+// preset select, style toggle, and preview badges — they only depend on
+// props that don't change during a drag.
+
+const StyleSection = memo(function StyleSection({
+  gradientStyle,
+  onChange,
+}: {
+  gradientStyle: GradientStyle;
+  onChange: (style: GradientStyle) => void;
+}) {
+  return (
+        <div className="space-y-4">
+          <div className="space-y-1">
+            <h3 className="flex items-center gap-2 text-base font-medium text-neutral-800">
+              <StackIcon className="w-6 h-6" />
+              Style
+            </h3>
+          </div>
+          <ToggleGroup
+            type="single"
+            value={gradientStyle}
+            onValueChange={(value) => {
+              // Radix allows deselecting the active item; a style is
+              // always required, so ignore empty
+              if (value) onChange(value as GradientStyle);
+            }}
+            aria-label="Gradient style"
+            className="w-full"
+          >
+            <ToggleGroupItem value="blobs" aria-label="Blurred Blobs">
+              <CirclesThreeIcon size={16} weight="fill" />
+              Blobs
+            </ToggleGroupItem>
+            <ToggleGroupItem value="stripes" aria-label="Silk Stripes">
+              <WaveSineIcon size={16} weight="fill" />
+              Stripes
+            </ToggleGroupItem>
+            <ToggleGroupItem value="clouds" aria-label="Clouds">
+              <CloudIcon size={16} weight="fill" />
+              Clouds
+            </ToggleGroupItem>
+          </ToggleGroup>
+        </div>
+  );
+});
+
+const ColorsSection = memo(function ColorsSection({
+  colorFormat,
+  onColorFormatChange,
+  backgroundColor,
+  colorInputs,
+  onBackgroundChange,
+  onColorChange,
+}: {
+  colorFormat: ColorFormat;
+  onColorFormatChange: (format: ColorFormat) => void;
+  backgroundColor: string;
+  colorInputs: string[];
+  onBackgroundChange: (hex: string) => void;
+  onColorChange: (index: number, hex: string) => void;
+}) {
+  return (
+        <div className="space-y-4">
+          <div className="flex items-center justify-between gap-2">
+            <h3 className="flex items-center gap-2 text-base font-medium text-neutral-800">
+              <SwatchesIcon className="w-6 h-6" />
+              Colors
+            </h3>
+            <Select
+              value={colorFormat}
+              onValueChange={(value) =>
+                onColorFormatChange(value as ColorFormat)
+              }
+            >
+              <SelectTrigger className="h-7 w-auto gap-1 px-2 text-xs text-neutral-600">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {COLOR_FORMATS.map((format) => (
+                  <SelectItem key={format.value} value={format.value}>
+                    {format.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label
+                htmlFor="backgroundColor"
+                className="text-sm font-medium"
+              >
+                Background
+              </Label>
+              <div className="flex gap-2">
+                <ColorPickerPopover
+                  value={normalizeHexColor(backgroundColor)}
+                  format={colorFormat}
+                  onChange={onBackgroundChange}
+                />
+                <ColorField
+                  id="backgroundColor"
+                  hex={normalizeHexColor(backgroundColor)}
+                  format={colorFormat}
+                  placeholder="oklch(1 0 0)"
+                  onChange={onBackgroundChange}
+                />
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              <Label className="text-sm">Gradient Colors</Label>
+              {colorInputs.map((color, index) => (
+                <div key={index} className="flex gap-2">
+                  <ColorPickerPopover
+                    value={normalizeHexColor(color)}
+                    format={colorFormat}
+                    onChange={(hex) => onColorChange(index, hex)}
+                  />
+
+                  <ColorField
+                    hex={normalizeHexColor(color)}
+                    format={colorFormat}
+                    placeholder="oklch(0 0 0)"
+                    onChange={(hex) => onColorChange(index, hex)}
+                  />
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+  );
+});
+
+const PresetsSection = memo(function PresetsSection({
+  selectedPresetValue,
+  presetSelectOpen,
+  onPresetSelectOpenChange,
+  onSelectPreset,
+  userPresets,
+  presetDraftName,
+  onPresetDraftNameChange,
+  onStartSaving,
+  onCommitSave,
+  savingPreset,
+  presetSelected,
+  onManagePresets,
+}: {
+  selectedPresetValue: string;
+  presetSelectOpen: boolean;
+  onPresetSelectOpenChange: (open: boolean) => void;
+  onSelectPreset: (value: string) => void;
+  userPresets: UserPreset[];
+  presetDraftName: string | null;
+  onPresetDraftNameChange: (name: string | null) => void;
+  onStartSaving: () => void;
+  onCommitSave: () => void;
+  savingPreset: boolean;
+  presetSelected: boolean;
+  onManagePresets: () => void;
+}) {
+  return (
+        <div className="space-y-4">
+          <div className="space-y-1">
+            <h3 className="flex items-center gap-2 text-base font-medium text-neutral-800">
+              <TabsIcon className="w-6 h-6" />
+              Preset
+            </h3>
+          </div>
+
+          <div className="flex items-center gap-2">
+            {presetDraftName === null ? (
+            <Select
+              value={selectedPresetValue}
+              open={presetSelectOpen}
+              onOpenChange={onPresetSelectOpenChange}
+              onValueChange={onSelectPreset}
+            >
+              <SelectTrigger className="flex-1">
+                <SelectValue placeholder="Choose a preset" />
+              </SelectTrigger>
+              <SelectContent>
+                {userPresets.length > 0 && (
+                  <SelectGroup>
+                    <SelectLabel className="px-2 py-1.5 text-[11px] font-medium tracking-wide text-neutral-500">
+                      USER PRESETS
+                    </SelectLabel>
+                    {userPresets.map((preset) => (
+                      <SelectItem
+                        key={preset.id}
+                        value={`user:${preset.id}`}
+                        indicator="dot"
+                      >
+                        <div className="flex items-center gap-2">
+                          <span
+                            aria-hidden
+                            className="h-4 w-4 shrink-0 rounded-full border border-black/10"
+                            style={{
+                              background: `linear-gradient(135deg, ${preset.colors.join(", ")})`,
+                            }}
+                          />
+                          <span className="max-w-[10rem] truncate">
+                            {preset.name}
+                          </span>
+                        </div>
+                      </SelectItem>
+                    ))}
+                    <SelectSeparator />
+                  </SelectGroup>
+                )}
+                {presetGradients.map((preset, index) => {
+                  const IconComponent = preset.icon;
+                  return (
+                    <SelectItem
+                      key={index}
+                      value={preset.name}
+                      indicator="dot"
+                    >
+                      <div className="flex items-center gap-2">
+                        <IconComponent
+                          size={16}
+                          className="text-neutral-600"
+                        />
+                        {preset.name}
+                      </div>
+                    </SelectItem>
+                  );
+                })}
+                {userPresets.length > 0 && (
+                  <>
+                    <SelectSeparator />
+                    <button
+                      type="button"
+                      className="flex w-full items-center gap-2 rounded px-2 py-1.5 text-sm text-neutral-600 transition-colors hover:bg-accent hover:text-accent-foreground"
+                      onPointerDown={(e) => {
+                        // Keep Radix Select from treating this as an
+                        // item selection
+                        e.preventDefault();
+                      }}
+                      onClick={() => {
+                        onPresetSelectOpenChange(false);
+                        onManagePresets();
+                      }}
+                    >
+                      <GearSixIcon size={16} />
+                      Manage Presets
+                    </button>
+                  </>
+                )}
+              </SelectContent>
+            </Select>
+            ) : (
+              <motion.div
+                initial={{ opacity: 0, filter: "blur(4px)" }}
+                animate={{ opacity: 1, filter: "blur(0px)" }}
+                transition={{
+                  type: "spring",
+                  duration: 0.3,
+                  bounce: 0,
+                }}
+                className="relative flex-1"
+              >
+                <Input
+                  autoFocus
+                  value={presetDraftName}
+                  maxLength={40}
+                  placeholder="Palette name"
+                  aria-label="Palette name"
+                  className="w-full pr-14 text-sm"
+                  onFocus={(e) => e.currentTarget.select()}
+                  onChange={(e) => onPresetDraftNameChange(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") onCommitSave();
+                    if (e.key === "Escape") onPresetDraftNameChange(null);
+                  }}
+                />
+                <Kbd className="absolute right-2 top-1/2 -translate-y-1/2">
+                  ↵
+                </Kbd>
+              </motion.div>
+            )}
+            <Button
+              variant="outline"
+              size="icon"
+              aria-label={
+                presetDraftName === null
+                  ? "Save palette"
+                  : "Confirm save"
+              }
+              disabled={
+                savingPreset ||
+                (presetDraftName === null && presetSelected)
+              }
+              className="shrink-0"
+              onClick={
+                presetDraftName === null
+                  ? onStartSaving
+                  : onCommitSave
+              }
+            >
+                    {savingPreset ? (
+                      <Spinner size={16} />
+                    ) : (
+                      <span className="relative flex h-4 w-4 items-center justify-center">
+                        <motion.span
+                          className="absolute flex"
+                          animate={
+                            presetDraftName === null
+                              ? {
+                                  opacity: 1,
+                                  scale: 1,
+                                  filter: "blur(0px)",
+                                }
+                              : {
+                                  opacity: 0,
+                                  scale: 0.25,
+                                  filter: "blur(4px)",
+                                }
+                          }
+                          transition={{
+                            type: "spring",
+                            duration: 0.3,
+                            bounce: 0,
+                          }}
+                        >
+                          <PlusIcon
+                            weight="bold"
+                            className="w-4 h-4"
+                          />
+                        </motion.span>
+                        <motion.span
+                          className="absolute flex"
+                          initial={false}
+                          animate={
+                            presetDraftName === null
+                              ? {
+                                  opacity: 0,
+                                  scale: 0.25,
+                                  filter: "blur(4px)",
+                                }
+                              : {
+                                  opacity: 1,
+                                  scale: 1,
+                                  filter: "blur(0px)",
+                                }
+                          }
+                          transition={{
+                            type: "spring",
+                            duration: 0.3,
+                            bounce: 0,
+                          }}
+                        >
+                          <CheckIcon
+                            weight="bold"
+                            className="w-4 h-4"
+                          />
+                        </motion.span>
+                      </span>
+                    )}
+            </Button>
+          </div>
+        </div>
+  );
+});
+
+const PreviewBadges = memo(function PreviewBadges({
+  gradientName,
+  onGradientNameChange,
+  aspectRatio,
+  onAspectRatioChange,
+}: {
+  gradientName: string;
+  onGradientNameChange: (name: string) => void;
+  aspectRatio: string;
+  onAspectRatioChange: (value: string) => void;
+}) {
+  return (
+    <>
+            {/* Gradient Name Badge */}
+            <div className="absolute top-2 left-2 z-20">
+              <div className="bg-white border border-neutral-200 rounded-lg px-3 py-1.5 shadow-sm">
+                <div
+                  contentEditable
+                  suppressContentEditableWarning
+                  onBlur={(e) =>
+                    onGradientNameChange(
+                      e.currentTarget.textContent || "New Gradient"
+                    )
+                  }
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      e.currentTarget.blur();
+                    }
+                    if (e.key === "Escape") {
+                      e.currentTarget.textContent = gradientName;
+                      e.currentTarget.blur();
+                    }
+                  }}
+                  className="text-xs text-neutral-600 hover:text-neutral-800 transition-colors cursor-text outline-none w-auto"
+                >
+                  {gradientName}
+                </div>
+              </div>
+            </div>
+
+            {/* Aspect Ratio Badge */}
+            <div className="absolute top-2 right-2 z-20">
+              <Select value={aspectRatio} onValueChange={onAspectRatioChange}>
+                <SelectTrigger className="w-auto bg-white border border-neutral-200 rounded-lg px-3 py-1.5 shadow-sm h-auto text-xs text-neutral-600 hover:text-neutral-800 transition-colors cursor-pointer outline-none [&>span]:line-clamp-none">
+                  <SelectValue>
+                    <div className="flex items-center gap-1.5 whitespace-nowrap">
+                      {(() => {
+                        const currentOption = aspectRatioOptions.find(
+                          (opt) => opt.value === aspectRatio
+                        );
+                        const IconComponent =
+                          currentOption?.icon || MonitorIcon;
+                        return (
+                          <>
+                            <IconComponent className="w-3 h-3 shrink-0" />
+                            {/* Phones only get room for the ratio;
+                                the label lives in the Size tab */}
+                            <span className="hidden sm:inline text-xs text-neutral-600">
+                              {currentOption?.label}
+                            </span>
+                            <span className="text-xs tabular-nums text-neutral-600 sm:text-neutral-400">
+                              {currentOption?.ratio}
+                            </span>
+                          </>
+                        );
+                      })()}
+                    </div>
+                  </SelectValue>
+                </SelectTrigger>
+                <SelectContent
+                  position="popper"
+                  side="top" // or "bottom" if you want it under the trigger
+                  align="end" // right edge
+                  sideOffset={2} // optional spacing from the trigger
+                  className="origin-top-right bg-white border border-neutral-200 rounded-lg shadow-sm"
+                >
+                  {aspectRatioOptions.map((option) => {
+                    const IconComponent = option.icon;
+                    return (
+                      <SelectItem key={option.value} value={option.value}>
+                        <div className="flex items-center gap-1.5 whitespace-nowrap">
+                          <IconComponent className="w-3 h-3 shrink-0" />
+                          <span className="text-xs text-neutral-600">
+                            {option.label}
+                          </span>
+                          <span className="text-xs tabular-nums text-neutral-400">
+                            {option.ratio}
+                          </span>
+                        </div>
+                      </SelectItem>
+                    );
+                  })}
+                </SelectContent>
+              </Select>
+            </div>
+    </>
+  );
+});
+
 const GradientGenerator = () => {
   const { isLoaded, isSignedIn } = useAuth();
   const { openSignIn } = useClerk();
@@ -192,6 +771,27 @@ const GradientGenerator = () => {
   const [colorFormat, setColorFormat] = useState<ColorFormat>("oklch");
   const [isExporting, setIsExporting] = useState(false);
   const [controlsOpen, setControlsOpen] = useState(false);
+  const [editTab, setEditTab] = useState<EditTab>("adjust");
+  const [activeAdjustmentKey, setActiveAdjustmentKey] = useState("blur");
+  // Everything the mobile edit mode can touch, captured on open so Cancel
+  // can put it back
+  const editSnapshotRef = useRef<{
+    backgroundColor: string;
+    colorInputs: string[];
+    blurAmount: number[];
+    noiseAmount: number[];
+    contrastAmount: number[];
+    saturationAmount: number[];
+    gradientStyle: GradientStyle;
+    fiberDensity: number[];
+    waviness: number[];
+    sheen: number[];
+    coverage: number[];
+    softness: number[];
+    detail: number[];
+    aspectRatio: string;
+    gradientName: string;
+  } | null>(null);
   const [upgradeOpen, setUpgradeOpen] = useState(false);
   const [checkoutLoading, setCheckoutLoading] = useState(false);
   const [quota, setQuota] = useState<{
@@ -206,6 +806,16 @@ const GradientGenerator = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const previewContainerRef = useRef<HTMLDivElement>(null);
   const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const renderFrameRef = useRef<number | null>(null);
+  const lastRenderMsRef = useRef(0);
+
+  // Phones get a portrait canvas by default; it fills the screen far better
+  // than 16:9. Runs once after mount to avoid a hydration mismatch.
+  useEffect(() => {
+    if (window.matchMedia("(max-width: 1023px)").matches) {
+      setAspectRatio("3:4");
+    }
+  }, []);
 
   // Track the preview container's actual size so the canvas fits any viewport
   useEffect(() => {
@@ -271,99 +881,23 @@ const GradientGenerator = () => {
     }
   };
 
-  const handleBackgroundColorChange = (value: string) => {
-    setBackgroundColor(value);
-  };
+  const handleBackgroundColorChange = setBackgroundColor;
 
-  const handleColorInputChange = (colorIndex: number) => (value: string) => {
-    const newColors = [...colorInputs];
-    newColors[colorIndex] = value;
-    setColorInputs(newColors);
-  };
+  const handleColorInputChange = useCallback(
+    (colorIndex: number, value: string) => {
+      setColorInputs((prev) => {
+        const next = [...prev];
+        next[colorIndex] = value;
+        return next;
+      });
+    },
+    []
+  );
 
-  const handleRandomize = () => {
+  const handleRandomize = useCallback(() => {
     setPlacement("random");
     setSeed(Math.floor(Math.random() * 2 ** 32));
-  };
-
-  const presetGradients: PresetGradient[] = [
-    // {
-    //   name: "Heatwaves",
-    //   background: "#f8fafc",
-    //   colors: ["#3b82f6", "#8b5cf6", "#ec4899", "#f59e0b"],
-    // },
-    {
-      name: "Lovable",
-      background: "#1A1B1D",
-      colors: ["#FE7A04", "#FE4F1A", "#F35CBE", "#7472FC"],
-      icon: LovableIcon,
-    },
-    {
-      name: "Dia",
-      background: "#0358f7",
-      colors: ["#c679c4", "#fa3d1d", "#ffb005", "#e1e1fe"],
-      icon: DiaIcon,
-    },
-    {
-      name: "Raycast",
-      background: "#07090B",
-      colors: ["#CF1627", "#08243A", "#0F8B92", "#D54F63"],
-      icon: RaycastIcon,
-    },
-    {
-      name: "Stripe",
-      background: "#635BFF",
-      colors: ["#F15372", "#FFCA3B", "#76E2FF", "#B5DAB9"],
-      icon: StripeIcon,
-    },
-    {
-      name: "Arc",
-      background: "#140080",
-      colors: ["#0229C9", "#FF526B", "#FF9598", "#EE4A5F"],
-      icon: ArcIcon,
-    },
-    {
-      name: "Comet",
-      background: "#101013",
-      colors: ["#5099A1", "#733138", "#53969F", "#C17B55"],
-      icon: CometIcon,
-    },
-    {
-      name: "Devin",
-      background: "#11131D",
-      colors: ["#2A6DCE", "#1796E2", "#1DC19C", "#3FA9DD"],
-      icon: DevinIcon,
-    },
-    // {
-    //   name: "Creem",
-    //   background: "#18120E",
-    //   colors: ["#FFC099", "#FFB68A", "#FF8E57", "#B39A8D"],
-    // },
-  ];
-
-  const aspectRatioOptions = [
-    { value: "16:9", label: "Desktop", ratio: "16:9", icon: MonitorIcon },
-    { value: "1:1", label: "Square Post", ratio: "1:1", icon: SquareIcon },
-    {
-      value: "4:3",
-      label: "YouTube Classic",
-      ratio: "4:3",
-      icon: YoutubeLogoIcon,
-    },
-    { value: "9:16", label: "Story", ratio: "9:16", icon: DeviceMobileIcon },
-    {
-      value: "3:4",
-      label: "Post",
-      ratio: "3:4",
-      icon: InstagramLogoIcon,
-    },
-    {
-      value: "4:5",
-      label: "Portrait",
-      ratio: "4:5",
-      icon: DeviceTabletCameraIcon,
-    },
-  ];
+  }, []);
 
   const canvasDimensions = useMemo(() => {
     const baseWidth = 3840; // 4K base width
@@ -464,17 +998,39 @@ const GradientGenerator = () => {
     });
   }, [renderOptions, canvasDimensions]);
 
-  // Re-render the preview (debounced) whenever any gradient parameter changes
+  // Re-render the preview whenever any gradient parameter changes. Renders
+  // are coalesced onto the next animation frame so a drag paints as fast as
+  // the renderer allows. When a style renders slowly (clouds' per-pixel
+  // palette mapping), back off to a short delay sized by the last render so
+  // the slider itself stays responsive instead of queueing a render per tick.
   useEffect(() => {
-    if (debounceTimeoutRef.current) {
-      clearTimeout(debounceTimeoutRef.current);
-    }
-    debounceTimeoutRef.current = setTimeout(renderPreview, 120);
-    return () => {
+    const cancel = () => {
+      if (renderFrameRef.current !== null) {
+        cancelAnimationFrame(renderFrameRef.current);
+        renderFrameRef.current = null;
+      }
       if (debounceTimeoutRef.current) {
         clearTimeout(debounceTimeoutRef.current);
+        debounceTimeoutRef.current = null;
       }
     };
+    cancel();
+    const run = () => {
+      renderFrameRef.current = null;
+      debounceTimeoutRef.current = null;
+      const start = performance.now();
+      renderPreview();
+      lastRenderMsRef.current = performance.now() - start;
+    };
+    if (lastRenderMsRef.current > 40) {
+      debounceTimeoutRef.current = setTimeout(
+        run,
+        Math.min(250, lastRenderMsRef.current)
+      );
+    } else {
+      renderFrameRef.current = requestAnimationFrame(run);
+    }
+    return cancel;
   }, [renderPreview, previewCanvasSize]);
 
   // High-res export happens server-side (/api/export enforces the plan
@@ -578,12 +1134,6 @@ const GradientGenerator = () => {
     />
   );
 
-  const applyPreset = (preset: PresetGradient) => {
-    setBackgroundColor(preset.background);
-    setColorInputs(preset.colors);
-    setGradientName(preset.name);
-  };
-
   const {
     presets: userPresets,
     save: savePresetApi,
@@ -633,7 +1183,209 @@ const GradientGenerator = () => {
   // already matches a saved or curated preset (nothing new to save).
   const presetSelected = Boolean(activeUserPreset || activeCuratedPreset);
 
-  const startSavingPreset = () => {
+  // Shared by the sidebar Select and the mobile preset chips
+  const selectPreset = useCallback(
+    (value: string) => {
+      const preset = value.startsWith("user:")
+        ? userPresets.find((p) => `user:${p.id}` === value)
+        : presetGradients.find((p) => p.name === value);
+      if (preset) {
+        setBackgroundColor(preset.background);
+        setColorInputs(preset.colors);
+        setGradientName(preset.name);
+      }
+    },
+    [userPresets]
+  );
+
+  const openManagePresets = useCallback(() => setManagePresetsOpen(true), []);
+
+  const mobilePresets = [
+    ...userPresets.map((p) => ({
+      value: `user:${p.id}`,
+      name: p.name,
+      swatches: p.colors,
+    })),
+    ...presetGradients.map((p) => ({
+      value: p.name,
+      name: p.name,
+      icon: p.icon,
+    })),
+  ];
+
+  // Dials for the mobile Adjust tab; mirrors the sidebar's Effects section
+  const percent = (v: number) => `${Math.round(v * 100)}%`;
+  const dial = (
+    key: string,
+    label: string,
+    shortLabel: string,
+    icon: Adjustment["icon"],
+    state: [number[], (v: number[]) => void],
+    range: { min: number; max: number; step: number; defaultValue: number },
+    format: (v: number) => string
+  ): Adjustment => ({
+    key,
+    label,
+    shortLabel,
+    icon,
+    value: state[0][0],
+    onChange: (v) => state[1]([v]),
+    format,
+    ...range,
+  });
+  const styleDials: Adjustment[] =
+    gradientStyle === "blobs"
+      ? [
+          dial(
+            "blur",
+            "Blur Amount",
+            "Blur",
+            DropIcon,
+            [blurAmount, setBlurAmount],
+            { min: 550, max: 1000, step: 5, defaultValue: 700 },
+            (v) => `${v}px`
+          ),
+        ]
+      : gradientStyle === "stripes"
+        ? [
+            dial(
+              "fiberDensity",
+              "Fiber Density",
+              "Fibers",
+              RowsIcon,
+              [fiberDensity, setFiberDensity],
+              { min: 0, max: 2, step: 0.05, defaultValue: 1 },
+              percent
+            ),
+            dial(
+              "waviness",
+              "Waviness",
+              "Waviness",
+              WaveSineIcon,
+              [waviness, setWaviness],
+              { min: 0, max: 2, step: 0.05, defaultValue: 1 },
+              percent
+            ),
+            dial(
+              "sheen",
+              "Sheen",
+              "Sheen",
+              SunDimIcon,
+              [sheen, setSheen],
+              { min: 0, max: 2, step: 0.05, defaultValue: 0.2 },
+              percent
+            ),
+          ]
+        : [
+            dial(
+              "coverage",
+              "Coverage",
+              "Coverage",
+              CloudIcon,
+              [coverage, setCoverage],
+              { min: 0, max: 2, step: 0.05, defaultValue: 1 },
+              percent
+            ),
+            dial(
+              "softness",
+              "Softness",
+              "Softness",
+              FeatherIcon,
+              [softness, setSoftness],
+              { min: 0, max: 2, step: 0.05, defaultValue: 1 },
+              percent
+            ),
+            dial(
+              "detail",
+              "Detail",
+              "Detail",
+              SparkleIcon,
+              [detail, setDetail],
+              { min: 0, max: 2, step: 0.05, defaultValue: 1 },
+              percent
+            ),
+          ];
+  const adjustments: Adjustment[] = [
+    ...styleDials,
+    dial(
+      "noise",
+      "Noise",
+      "Noise",
+      DotsNineIcon,
+      [noiseAmount, setNoiseAmount],
+      { min: 0, max: 0.8, step: 0.01, defaultValue: 0.2 },
+      percent
+    ),
+    dial(
+      "contrast",
+      "Contrast",
+      "Contrast",
+      CircleHalfIcon,
+      [contrastAmount, setContrastAmount],
+      { min: 50, max: 200, step: 5, defaultValue: 130 },
+      (v) => `${v}%`
+    ),
+    dial(
+      "saturation",
+      "Saturation",
+      "Saturation",
+      PaletteIcon,
+      [saturationAmount, setSaturationAmount],
+      { min: 50, max: 200, step: 5, defaultValue: 110 },
+      (v) => `${v}%`
+    ),
+  ];
+
+  const openEditMode = () => {
+    editSnapshotRef.current = {
+      backgroundColor,
+      colorInputs,
+      blurAmount,
+      noiseAmount,
+      contrastAmount,
+      saturationAmount,
+      gradientStyle,
+      fiberDensity,
+      waviness,
+      sheen,
+      coverage,
+      softness,
+      detail,
+      aspectRatio,
+      gradientName,
+    };
+    setControlsOpen(true);
+  };
+
+  const cancelEditMode = () => {
+    const s = editSnapshotRef.current;
+    if (s) {
+      setBackgroundColor(s.backgroundColor);
+      setColorInputs(s.colorInputs);
+      setBlurAmount(s.blurAmount);
+      setNoiseAmount(s.noiseAmount);
+      setContrastAmount(s.contrastAmount);
+      setSaturationAmount(s.saturationAmount);
+      setGradientStyle(s.gradientStyle);
+      setFiberDensity(s.fiberDensity);
+      setWaviness(s.waviness);
+      setSheen(s.sheen);
+      setCoverage(s.coverage);
+      setSoftness(s.softness);
+      setDetail(s.detail);
+      setAspectRatio(s.aspectRatio);
+      setGradientName(s.gradientName);
+    }
+    editSnapshotRef.current = null;
+    setControlsOpen(false);
+  };
+
+  const doneEditMode = () => {
+    editSnapshotRef.current = null;
+    setControlsOpen(false);
+  };
+
+  const startSavingPreset = useCallback(() => {
     if (!isSignedIn) {
       openSignIn();
       return;
@@ -648,9 +1400,9 @@ const GradientGenerator = () => {
         userPresets.map((p) => p.name)
       )
     );
-  };
+  }, [isSignedIn, isProUser, openSignIn, gradientName, userPresets]);
 
-  const commitSavePreset = async () => {
+  const commitSavePreset = useCallback(async () => {
     if (savingPreset) return;
     const name = dedupeName(
       ((presetDraftName ?? "").trim() || "My Palette").slice(0, 40),
@@ -677,7 +1429,14 @@ const GradientGenerator = () => {
       // Keep the draft so the user can retry
       toast("Could not save palette");
     }
-  };
+  }, [
+    savingPreset,
+    presetDraftName,
+    userPresets,
+    savePresetApi,
+    backgroundColor,
+    colorInputs,
+  ]);
 
   return (
     <TooltipProvider>
@@ -755,39 +1514,10 @@ const GradientGenerator = () => {
               </>
             )}
 
-            {/* Backdrop behind the mobile controls modal */}
-            {controlsOpen && (
-              <div
-                className="lg:hidden fixed inset-0 z-40 bg-black/40"
-                onClick={() => setControlsOpen(false)}
-              />
-            )}
-            {/* Controls Panel - near-full-screen modal on mobile, static sidebar on lg+ */}
-            <div
-              className={cn(
-                "flex-col bg-white",
-                controlsOpen
-                  ? "flex fixed inset-x-0 bottom-0 top-14 z-50 rounded-t-2xl border-t border-neutral-200 shadow-xl"
-                  : "hidden",
-                "lg:flex lg:static lg:inset-auto lg:z-auto lg:w-80 lg:flex-shrink-0 lg:min-h-0 lg:rounded-none lg:border-t-0 lg:border-r lg:border-neutral-200 lg:shadow-none"
-              )}
-            >
-              {/* Mobile modal header */}
-              <div className="lg:hidden flex items-center justify-between px-6 py-3 border-b border-neutral-200">
-                <span className="text-base font-medium text-neutral-800">
-                  Controls
-                </span>
-                <button
-                  onClick={() => setControlsOpen(false)}
-                  className="p-1 text-neutral-500 hover:text-neutral-800 transition-colors"
-                  aria-label="Close controls"
-                  type="button"
-                >
-                  <XIcon className="w-5 h-5" />
-                </button>
-              </div>
-              {/* Logo + account - desktop sidebar only */}
-              <div className="hidden lg:flex items-center justify-between gap-2 p-6 pb-0">
+            {/* Controls Panel - desktop sidebar; mobile uses the edit mode below the preview */}
+            <div className="hidden lg:flex flex-col bg-white lg:w-80 lg:flex-shrink-0 lg:min-h-0 lg:border-r lg:border-neutral-200">
+              {/* Logo + account */}
+              <div className="flex items-center justify-between gap-2 p-6 pb-0">
                 <div className="flex items-center gap-2 min-w-0">
                   {isProUser ? (
                     <Image
@@ -822,331 +1552,34 @@ const GradientGenerator = () => {
               </div>
               {/* Scrollable Controls */}
               <div className="flex-1 overflow-y-auto p-6 space-y-10">
-                {/* Gradient Style */}
-                <div className="space-y-4">
-                  <div className="space-y-1">
-                    <h3 className="flex items-center gap-2 text-base font-medium text-neutral-800">
-                      <StackIcon className="w-6 h-6" />
-                      Style
-                    </h3>
-                  </div>
-                  <ToggleGroup
-                    type="single"
-                    value={gradientStyle}
-                    onValueChange={(value) => {
-                      // Radix allows deselecting the active item; a style is
-                      // always required, so ignore empty
-                      if (value) setGradientStyle(value as GradientStyle);
-                    }}
-                    aria-label="Gradient style"
-                    className="w-full"
-                  >
-                    <ToggleGroupItem value="blobs" aria-label="Blurred Blobs">
-                      <CirclesThreeIcon size={16} weight="fill" />
-                      Blobs
-                    </ToggleGroupItem>
-                    <ToggleGroupItem value="stripes" aria-label="Silk Stripes">
-                      <WaveSineIcon size={16} weight="fill" />
-                      Stripes
-                    </ToggleGroupItem>
-                    <ToggleGroupItem value="clouds" aria-label="Clouds">
-                      <CloudIcon size={16} weight="fill" />
-                      Clouds
-                    </ToggleGroupItem>
-                  </ToggleGroup>
-                </div>
+                <StyleSection
+                  gradientStyle={gradientStyle}
+                  onChange={setGradientStyle}
+                />
 
-                {/* Color Controls */}
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between gap-2">
-                    <h3 className="flex items-center gap-2 text-base font-medium text-neutral-800">
-                      <SwatchesIcon className="w-6 h-6" />
-                      Colors
-                    </h3>
-                    <Select
-                      value={colorFormat}
-                      onValueChange={(value) =>
-                        setColorFormat(value as ColorFormat)
-                      }
-                    >
-                      <SelectTrigger className="h-7 w-auto gap-1 px-2 text-xs text-neutral-600">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {COLOR_FORMATS.map((format) => (
-                          <SelectItem key={format.value} value={format.value}>
-                            {format.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
+                <ColorsSection
+                  colorFormat={colorFormat}
+                  onColorFormatChange={setColorFormat}
+                  backgroundColor={backgroundColor}
+                  colorInputs={colorInputs}
+                  onBackgroundChange={handleBackgroundColorChange}
+                  onColorChange={handleColorInputChange}
+                />
 
-                  <div className="space-y-4">
-                    <div className="space-y-2">
-                      <Label
-                        htmlFor="backgroundColor"
-                        className="text-sm font-medium"
-                      >
-                        Background
-                      </Label>
-                      <div className="flex gap-2">
-                        <ColorPickerPopover
-                          value={normalizeHexColor(backgroundColor)}
-                          format={colorFormat}
-                          onChange={handleBackgroundColorChange}
-                        />
-                        <ColorField
-                          id="backgroundColor"
-                          hex={normalizeHexColor(backgroundColor)}
-                          format={colorFormat}
-                          placeholder="oklch(1 0 0)"
-                          onChange={handleBackgroundColorChange}
-                        />
-                      </div>
-                    </div>
-
-                    <div className="space-y-3">
-                      <Label className="text-sm">Gradient Colors</Label>
-                      {colorInputs.map((color, index) => (
-                        <div key={index} className="flex gap-2">
-                          <ColorPickerPopover
-                            value={normalizeHexColor(color)}
-                            format={colorFormat}
-                            onChange={handleColorInputChange(index)}
-                          />
-
-                          <ColorField
-                            hex={normalizeHexColor(color)}
-                            format={colorFormat}
-                            placeholder="oklch(0 0 0)"
-                            onChange={handleColorInputChange(index)}
-                          />
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-
-                {/* Presets */}
-                <div className="space-y-4">
-                  <div className="space-y-1">
-                    <h3 className="flex items-center gap-2 text-base font-medium text-neutral-800">
-                      <TabsIcon className="w-6 h-6" />
-                      Preset
-                    </h3>
-                  </div>
-
-                  <div className="flex items-center gap-2">
-                    {presetDraftName === null ? (
-                    <Select
-                      value={selectedPresetValue}
-                      open={presetSelectOpen}
-                      onOpenChange={setPresetSelectOpen}
-                      onValueChange={(value) => {
-                        if (value.startsWith("user:")) {
-                          const preset = userPresets.find(
-                            (p) => `user:${p.id}` === value
-                          );
-                          if (preset) {
-                            setBackgroundColor(preset.background);
-                            setColorInputs(preset.colors);
-                            setGradientName(preset.name);
-                          }
-                          return;
-                        }
-                        const preset = presetGradients.find(
-                          (p) => p.name === value
-                        );
-                        if (preset) {
-                          applyPreset(preset);
-                        }
-                      }}
-                    >
-                      <SelectTrigger className="flex-1">
-                        <SelectValue placeholder="Choose a preset" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {userPresets.length > 0 && (
-                          <SelectGroup>
-                            <SelectLabel className="px-2 py-1.5 text-[11px] font-medium tracking-wide text-neutral-500">
-                              USER PRESETS
-                            </SelectLabel>
-                            {userPresets.map((preset) => (
-                              <SelectItem
-                                key={preset.id}
-                                value={`user:${preset.id}`}
-                                indicator="dot"
-                              >
-                                <div className="flex items-center gap-2">
-                                  <span
-                                    aria-hidden
-                                    className="h-4 w-4 shrink-0 rounded-full border border-black/10"
-                                    style={{
-                                      background: `linear-gradient(135deg, ${preset.colors.join(", ")})`,
-                                    }}
-                                  />
-                                  <span className="max-w-[10rem] truncate">
-                                    {preset.name}
-                                  </span>
-                                </div>
-                              </SelectItem>
-                            ))}
-                            <SelectSeparator />
-                          </SelectGroup>
-                        )}
-                        {presetGradients.map((preset, index) => {
-                          const IconComponent = preset.icon;
-                          return (
-                            <SelectItem
-                              key={index}
-                              value={preset.name}
-                              indicator="dot"
-                            >
-                              <div className="flex items-center gap-2">
-                                <IconComponent
-                                  size={16}
-                                  className="text-neutral-600"
-                                />
-                                {preset.name}
-                              </div>
-                            </SelectItem>
-                          );
-                        })}
-                        {userPresets.length > 0 && (
-                          <>
-                            <SelectSeparator />
-                            <button
-                              type="button"
-                              className="flex w-full items-center gap-2 rounded px-2 py-1.5 text-sm text-neutral-600 transition-colors hover:bg-accent hover:text-accent-foreground"
-                              onPointerDown={(e) => {
-                                // Keep Radix Select from treating this as an
-                                // item selection
-                                e.preventDefault();
-                              }}
-                              onClick={() => {
-                                setPresetSelectOpen(false);
-                                setManagePresetsOpen(true);
-                              }}
-                            >
-                              <GearSixIcon size={16} />
-                              Manage Presets
-                            </button>
-                          </>
-                        )}
-                      </SelectContent>
-                    </Select>
-                    ) : (
-                      <motion.div
-                        initial={{ opacity: 0, filter: "blur(4px)" }}
-                        animate={{ opacity: 1, filter: "blur(0px)" }}
-                        transition={{
-                          type: "spring",
-                          duration: 0.3,
-                          bounce: 0,
-                        }}
-                        className="relative flex-1"
-                      >
-                        <Input
-                          autoFocus
-                          value={presetDraftName}
-                          maxLength={40}
-                          placeholder="Palette name"
-                          aria-label="Palette name"
-                          className="w-full pr-14 text-sm"
-                          onFocus={(e) => e.currentTarget.select()}
-                          onChange={(e) => setPresetDraftName(e.target.value)}
-                          onKeyDown={(e) => {
-                            if (e.key === "Enter") commitSavePreset();
-                            if (e.key === "Escape") setPresetDraftName(null);
-                          }}
-                        />
-                        <Kbd className="absolute right-2 top-1/2 -translate-y-1/2">
-                          ↵
-                        </Kbd>
-                      </motion.div>
-                    )}
-                    <Button
-                      variant="outline"
-                      size="icon"
-                      aria-label={
-                        presetDraftName === null
-                          ? "Save palette"
-                          : "Confirm save"
-                      }
-                      disabled={
-                        savingPreset ||
-                        (presetDraftName === null && presetSelected)
-                      }
-                      className="shrink-0"
-                      onClick={
-                        presetDraftName === null
-                          ? startSavingPreset
-                          : commitSavePreset
-                      }
-                    >
-                            {savingPreset ? (
-                              <Spinner size={16} />
-                            ) : (
-                              <span className="relative flex h-4 w-4 items-center justify-center">
-                                <motion.span
-                                  className="absolute flex"
-                                  animate={
-                                    presetDraftName === null
-                                      ? {
-                                          opacity: 1,
-                                          scale: 1,
-                                          filter: "blur(0px)",
-                                        }
-                                      : {
-                                          opacity: 0,
-                                          scale: 0.25,
-                                          filter: "blur(4px)",
-                                        }
-                                  }
-                                  transition={{
-                                    type: "spring",
-                                    duration: 0.3,
-                                    bounce: 0,
-                                  }}
-                                >
-                                  <PlusIcon
-                                    weight="bold"
-                                    className="w-4 h-4"
-                                  />
-                                </motion.span>
-                                <motion.span
-                                  className="absolute flex"
-                                  initial={false}
-                                  animate={
-                                    presetDraftName === null
-                                      ? {
-                                          opacity: 0,
-                                          scale: 0.25,
-                                          filter: "blur(4px)",
-                                        }
-                                      : {
-                                          opacity: 1,
-                                          scale: 1,
-                                          filter: "blur(0px)",
-                                        }
-                                  }
-                                  transition={{
-                                    type: "spring",
-                                    duration: 0.3,
-                                    bounce: 0,
-                                  }}
-                                >
-                                  <CheckIcon
-                                    weight="bold"
-                                    className="w-4 h-4"
-                                  />
-                                </motion.span>
-                              </span>
-                            )}
-                    </Button>
-                  </div>
-                </div>
+                <PresetsSection
+                  selectedPresetValue={selectedPresetValue}
+                  presetSelectOpen={presetSelectOpen}
+                  onPresetSelectOpenChange={setPresetSelectOpen}
+                  onSelectPreset={selectPreset}
+                  userPresets={userPresets}
+                  presetDraftName={presetDraftName}
+                  onPresetDraftNameChange={setPresetDraftName}
+                  onStartSaving={startSavingPreset}
+                  onCommitSave={commitSavePreset}
+                  savingPreset={savingPreset}
+                  presetSelected={presetSelected}
+                  onManagePresets={openManagePresets}
+                />
 
                 {/* Effect Controls */}
                 <div className="space-y-4">
@@ -1158,181 +1591,41 @@ const GradientGenerator = () => {
                   </div>
 
                   <div className="space-y-5">
-                    {gradientStyle === "blobs" && (
-                      <div className="space-y-2">
-                        <div className="flex justify-between">
-                          <Label className="text-sm">Blur Amount</Label>
-                          <span className="text-xs tabular-nums text-muted-foreground">
-                            {blurAmount[0]}px
-                          </span>
+                    {adjustments.map((a) => (
+                      <div key={a.key} className="space-y-1">
+                        <div className="flex items-baseline justify-between">
+                          <Label className="text-sm">{a.label}</Label>
+                          <button
+                            type="button"
+                            disabled={a.value === a.defaultValue}
+                            onClick={() => a.onChange(a.defaultValue)}
+                            aria-label={`Reset ${a.label}`}
+                            title="Reset to default"
+                            className="rounded text-xs tabular-nums text-neutral-800 transition-colors hover:text-neutral-950 disabled:text-muted-foreground"
+                          >
+                            {a.format(a.value)}
+                          </button>
                         </div>
-                        <Slider
-                          value={blurAmount}
-                          onValueChange={setBlurAmount}
-                          max={1000}
-                          min={550}
-                          step={5}
+                        <RulerSlider
+                          value={a.value}
+                          min={a.min}
+                          max={a.max}
+                          step={a.step}
+                          defaultValue={a.defaultValue}
+                          onChange={a.onChange}
+                          aria-label={a.label}
+                          aria-valuetext={a.format(a.value)}
+                          className="h-10"
                         />
                       </div>
-                    )}
-
-                    {gradientStyle === "stripes" && (
-                      <>
-                        <div className="space-y-2">
-                          <div className="flex justify-between">
-                            <Label className="text-sm">Fiber Density</Label>
-                            <span className="text-xs tabular-nums text-muted-foreground">
-                              {Math.round(fiberDensity[0] * 100)}%
-                            </span>
-                          </div>
-                          <Slider
-                            value={fiberDensity}
-                            onValueChange={setFiberDensity}
-                            min={0}
-                            max={2}
-                            step={0.05}
-                          />
-                        </div>
-
-                        <div className="space-y-2">
-                          <div className="flex justify-between">
-                            <Label className="text-sm">Waviness</Label>
-                            <span className="text-xs tabular-nums text-muted-foreground">
-                              {Math.round(waviness[0] * 100)}%
-                            </span>
-                          </div>
-                          <Slider
-                            value={waviness}
-                            onValueChange={setWaviness}
-                            min={0}
-                            max={2}
-                            step={0.05}
-                          />
-                        </div>
-
-                        <div className="space-y-2">
-                          <div className="flex justify-between">
-                            <Label className="text-sm">Sheen</Label>
-                            <span className="text-xs tabular-nums text-muted-foreground">
-                              {Math.round(sheen[0] * 100)}%
-                            </span>
-                          </div>
-                          <Slider
-                            value={sheen}
-                            onValueChange={setSheen}
-                            min={0}
-                            max={2}
-                            step={0.05}
-                          />
-                        </div>
-                      </>
-                    )}
-
-                    {gradientStyle === "clouds" && (
-                      <>
-                        <div className="space-y-2">
-                          <div className="flex justify-between">
-                            <Label className="text-sm">Coverage</Label>
-                            <span className="text-xs tabular-nums text-muted-foreground">
-                              {Math.round(coverage[0] * 100)}%
-                            </span>
-                          </div>
-                          <Slider
-                            value={coverage}
-                            onValueChange={setCoverage}
-                            min={0}
-                            max={2}
-                            step={0.05}
-                          />
-                        </div>
-
-                        <div className="space-y-2">
-                          <div className="flex justify-between">
-                            <Label className="text-sm">Softness</Label>
-                            <span className="text-xs tabular-nums text-muted-foreground">
-                              {Math.round(softness[0] * 100)}%
-                            </span>
-                          </div>
-                          <Slider
-                            value={softness}
-                            onValueChange={setSoftness}
-                            min={0}
-                            max={2}
-                            step={0.05}
-                          />
-                        </div>
-
-                        <div className="space-y-2">
-                          <div className="flex justify-between">
-                            <Label className="text-sm">Detail</Label>
-                            <span className="text-xs tabular-nums text-muted-foreground">
-                              {Math.round(detail[0] * 100)}%
-                            </span>
-                          </div>
-                          <Slider
-                            value={detail}
-                            onValueChange={setDetail}
-                            min={0}
-                            max={2}
-                            step={0.05}
-                          />
-                        </div>
-                      </>
-                    )}
-
-                    <div className="space-y-2">
-                      <div className="flex justify-between">
-                        <Label className="text-sm">Noise</Label>
-                        <span className="text-xs tabular-nums text-muted-foreground">
-                          {(noiseAmount[0] * 100).toFixed(0)}%
-                        </span>
-                      </div>
-                      <Slider
-                        value={noiseAmount}
-                        onValueChange={setNoiseAmount}                        max={0.8}
-                        min={0}
-                        step={0.01}
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <div className="flex justify-between">
-                        <Label className="text-sm">Contrast</Label>
-                        <span className="text-xs tabular-nums text-muted-foreground">
-                          {contrastAmount[0]}%
-                        </span>
-                      </div>
-                      <Slider
-                        value={contrastAmount}
-                        onValueChange={setContrastAmount}                        max={200}
-                        min={50}
-                        step={5}
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <div className="flex justify-between">
-                        <Label className="text-sm">Saturation</Label>
-                        <span className="text-xs tabular-nums text-muted-foreground">
-                          {saturationAmount[0]}%
-                        </span>
-                      </div>
-                      <Slider
-                        value={saturationAmount}
-                        onValueChange={setSaturationAmount}                        max={200}
-                        min={50}
-                        step={5}
-                      />
-                    </div>
+                    ))}
                   </div>
                 </div>
 
-                {/* Quota status - mobile sheet (desktop shows it under the action buttons) */}
-                {quotaBadge && <div className="lg:hidden">{quotaBadge}</div>}
               </div>
 
               {/* Fixed Action Buttons - desktop sidebar only; mobile has icon buttons in the bottom bar */}
-              <div className="hidden lg:block flex-shrink-0 p-6 pt-4 border-t border-neutral-200 bg-white">
+              <div className="flex-shrink-0 p-6 pt-4 border-t border-neutral-200 bg-white">
                 <div className="flex gap-2">
                   <Tooltip>
                     <TooltipTrigger asChild>
@@ -1379,6 +1672,15 @@ const GradientGenerator = () => {
 
             {/* Canvas Preview - fills remaining space; mobile adds a bottom bar */}
             <div className="flex-1 min-w-0 flex flex-col">
+              {controlsOpen && (
+                <div className="lg:hidden">
+                  <MobileEditHeader
+                    tab={editTab}
+                    onCancel={cancelEditMode}
+                    onDone={doneEditMode}
+                  />
+                </div>
+              )}
               <div
                 ref={previewContainerRef}
                 className="flex-1 min-h-0 flex items-center justify-center p-4 lg:p-6"
@@ -1389,87 +1691,12 @@ const GradientGenerator = () => {
                     width: `${previewDimensions.width}px`,
                   }}
                 >
-                  {/* Gradient Name Badge */}
-                  <div className="absolute top-2 left-2 z-20">
-                    <div className="bg-white border border-neutral-200 rounded-lg px-3 py-1.5 shadow-sm">
-                      <div
-                        contentEditable
-                        suppressContentEditableWarning
-                        onBlur={(e) =>
-                          setGradientName(
-                            e.currentTarget.textContent || "New Gradient"
-                          )
-                        }
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter") {
-                            e.preventDefault();
-                            e.currentTarget.blur();
-                          }
-                          if (e.key === "Escape") {
-                            e.currentTarget.textContent = gradientName;
-                            e.currentTarget.blur();
-                          }
-                        }}
-                        className="text-xs text-neutral-600 hover:text-neutral-800 transition-colors cursor-text outline-none w-auto"
-                      >
-                        {gradientName}
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Aspect Ratio Badge */}
-                  <div className="absolute top-2 right-2 z-20">
-                    <Select value={aspectRatio} onValueChange={setAspectRatio}>
-                      <SelectTrigger className="bg-white border border-neutral-200 rounded-lg px-3 py-1.5 shadow-sm h-auto text-xs text-neutral-600 hover:text-neutral-800 transition-colors cursor-pointer outline-none">
-                        <SelectValue>
-                          <div className="flex items-center gap-1.5">
-                            {(() => {
-                              const currentOption = aspectRatioOptions.find(
-                                (opt) => opt.value === aspectRatio
-                              );
-                              const IconComponent =
-                                currentOption?.icon || MonitorIcon;
-                              return (
-                                <>
-                                  <IconComponent className="w-3 h-3" />
-                                  <span className="text-xs text-neutral-600">
-                                    {currentOption?.label}
-                                  </span>
-                                  <span className="text-xs text-neutral-400">
-                                    {currentOption?.ratio}
-                                  </span>
-                                </>
-                              );
-                            })()}
-                          </div>
-                        </SelectValue>
-                      </SelectTrigger>
-                      <SelectContent
-                        position="popper"
-                        side="top" // or "bottom" if you want it under the trigger
-                        align="end" // right edge
-                        sideOffset={2} // optional spacing from the trigger
-                        className="origin-top-right bg-white border border-neutral-200 rounded-lg shadow-sm"
-                      >
-                        {aspectRatioOptions.map((option) => {
-                          const IconComponent = option.icon;
-                          return (
-                            <SelectItem key={option.value} value={option.value}>
-                              <div className="flex items-center gap-1.5">
-                                <IconComponent className="w-3 h-3" />
-                                <span className="text-xs text-neutral-600">
-                                  {option.label}
-                                </span>
-                                <span className="text-xs text-neutral-400">
-                                  {option.ratio}
-                                </span>
-                              </div>
-                            </SelectItem>
-                          );
-                        })}
-                      </SelectContent>
-                    </Select>
-                  </div>
+                  <PreviewBadges
+                    gradientName={gradientName}
+                    onGradientNameChange={setGradientName}
+                    aspectRatio={aspectRatio}
+                    onAspectRatioChange={setAspectRatio}
+                  />
 
                   <div
                     className="relative mx-auto"
@@ -1489,8 +1716,33 @@ const GradientGenerator = () => {
                   </div>
                 </div>
               </div>
-              {/* Mobile bottom bar */}
-              <div className="lg:hidden flex-shrink-0 flex items-center justify-between gap-3 p-4 border-t border-neutral-200 bg-white">
+              {/* Mobile bottom: edit panel while editing, otherwise the action bar */}
+              {controlsOpen ? (
+                <div className="lg:hidden">
+                  <MobileEditPanel
+                    tab={editTab}
+                    onTabChange={setEditTab}
+                    adjustments={adjustments}
+                    activeAdjustmentKey={activeAdjustmentKey}
+                    onActiveAdjustmentChange={setActiveAdjustmentKey}
+                    backgroundColor={normalizeHexColor(backgroundColor)}
+                    colors={colorInputs.map(normalizeHexColor)}
+                    colorFormat={colorFormat}
+                    onColorFormatChange={setColorFormat}
+                    onBackgroundColorChange={handleBackgroundColorChange}
+                    onColorChange={handleColorInputChange}
+                    presets={mobilePresets}
+                    selectedPreset={selectedPresetValue}
+                    onSelectPreset={selectPreset}
+                    style={gradientStyle}
+                    onStyleChange={setGradientStyle}
+                    aspectRatio={aspectRatio}
+                    aspectRatioOptions={aspectRatioOptions}
+                    onAspectRatioChange={setAspectRatio}
+                  />
+                </div>
+              ) : (
+              <div className="lg:hidden flex-shrink-0 flex items-center justify-between gap-3 p-4 border-t border-neutral-200 bg-white pb-[max(1rem,env(safe-area-inset-bottom))]">
                 {isProUser ? (
                   proBadge
                 ) : (
@@ -1502,9 +1754,16 @@ const GradientGenerator = () => {
                       height={562}
                       className="block w-8 h-auto shrink-0"
                     />
-                    <span className="truncate text-sm font-medium text-neutral-800">
-                      {`Gradients Studio`}
-                    </span>
+                    <div className="flex min-w-0 flex-col">
+                      <span className="hidden min-[400px]:block truncate text-sm font-medium text-neutral-800">
+                        {`Gradients Studio`}
+                      </span>
+                      {isSignedIn && quota?.plan === "free" && (
+                        <span className="truncate text-[10px] tabular-nums leading-tight text-neutral-500">
+                          {`${quota.remaining} of 5 exports left`}
+                        </span>
+                      )}
+                    </div>
                   </div>
                 )}
                 <div className="flex items-center gap-2">
@@ -1530,9 +1789,9 @@ const GradientGenerator = () => {
                   </Button>
                   <Button
                     variant="outline"
-                    onClick={() => setControlsOpen(true)}
+                    onClick={openEditMode}
                     className="h-9 w-9 p-0"
-                    aria-label="Show controls"
+                    aria-label="Edit gradient"
                   >
                     <SlidersIcon weight="bold" className="w-4 h-4" />
                   </Button>
@@ -1546,6 +1805,7 @@ const GradientGenerator = () => {
                   {isSignedIn && <UserButton />}
                 </div>
               </div>
+              )}
             </div>
           </div>
         </div>

@@ -97,6 +97,82 @@ const applyBlur = (
   ctx.drawImage(src, 0, 0, width, height);
 };
 
+// Browser preview fast path. ctx.filter runs contrast()/saturate() on the
+// GPU, and the grain is a pre-generated noise tile composited with
+// "lighter" (additive, scaled by globalAlpha), which is exactly what the
+// per-pixel loop below computes — without the getImageData round trip
+// that dominates preview render time. Export (Node canvas) and browsers
+// where ctx.filter is a no-op (iOS Safari < 18) keep the pixel loop.
+const NOISE_TILE_SIZE = 1024;
+let fastPathSupported: boolean | null = null;
+let noiseTile: HTMLCanvasElement | null = null;
+
+const detectFastPath = () => {
+  if (fastPathSupported !== null) return fastPathSupported;
+  fastPathSupported = false;
+  if (typeof document === "undefined") return false;
+  try {
+    const probe = document.createElement("canvas");
+    probe.width = 1;
+    probe.height = 1;
+    const p = probe.getContext("2d");
+    if (!p || typeof p.filter !== "string") return false;
+    p.fillStyle = "#ffffff";
+    p.filter = "invert(1)";
+    p.fillRect(0, 0, 1, 1);
+    const px = p.getImageData(0, 0, 1, 1).data;
+    // A browser that ignores the filter paints white; a working one, black
+    fastPathSupported = px[0] < 8 && px[3] === 255;
+  } catch {
+    fastPathSupported = false;
+  }
+  return fastPathSupported;
+};
+
+const getNoiseTile = () => {
+  if (noiseTile) return noiseTile;
+  const tile = document.createElement("canvas");
+  tile.width = NOISE_TILE_SIZE;
+  tile.height = NOISE_TILE_SIZE;
+  const t = tile.getContext("2d")!;
+  const img = t.createImageData(NOISE_TILE_SIZE, NOISE_TILE_SIZE);
+  const d = img.data;
+  for (let i = 0; i < d.length; i += 4) {
+    const v = (Math.random() * 256) | 0;
+    d[i] = v;
+    d[i + 1] = v;
+    d[i + 2] = v;
+    d[i + 3] = 255;
+  }
+  t.putImageData(img, 0, 0);
+  noiseTile = tile;
+  return tile;
+};
+
+const applyAdjustmentsFast = (
+  ctx: CanvasRenderingContext2D,
+  width: number,
+  height: number,
+  contrastK: number,
+  saturationK: number,
+  noise: number
+) => {
+  ctx.save();
+  if (contrastK !== 1 || saturationK !== 1) {
+    ctx.filter = `contrast(${contrastK}) saturate(${saturationK})`;
+    // Drawing a canvas onto itself snapshots the source first (HTML spec)
+    ctx.drawImage(ctx.canvas, 0, 0, width, height);
+    ctx.filter = "none";
+  }
+  if (noise > 0) {
+    ctx.globalCompositeOperation = "lighter";
+    ctx.globalAlpha = noise;
+    ctx.fillStyle = ctx.createPattern(getNoiseTile(), "repeat")!;
+    ctx.fillRect(0, 0, width, height);
+  }
+  ctx.restore();
+};
+
 // Contrast, saturation, and film-grain noise in one per-pixel pass,
 // matching the CSS filter definitions of contrast() and saturate()
 const applyAdjustments = (
@@ -110,6 +186,11 @@ const applyAdjustments = (
   const contrastK = contrast / 100;
   const saturationK = saturation / 100;
   if (contrastK === 1 && saturationK === 1 && noise <= 0) return;
+
+  if (detectFastPath()) {
+    applyAdjustmentsFast(ctx, width, height, contrastK, saturationK, noise);
+    return;
+  }
 
   const imageData = ctx.getImageData(0, 0, width, height);
   const data = imageData.data;
@@ -377,12 +458,24 @@ const renderClouds = (
   const stops = [opts.backgroundColor, ...opts.colors].map(hexToRgbTuple);
   const aspect = width / height;
 
+  // The field is smooth (bilinear-upscaled grids) and gets softened after
+  // mapping, so the preview maps it through the palette at a capped size
+  // and upscales — the per-pixel loop is the only real cost here. Export
+  // (blurScale 1) maps every pixel at full resolution.
+  const MAP_PIXEL_BUDGET = 360_000;
+  const mapScale =
+    opts.blurScale < 1
+      ? Math.min(1, Math.sqrt(MAP_PIXEL_BUDGET / (width * height)))
+      : 1;
+  const mapW = Math.max(1, Math.round(width * mapScale));
+  const mapH = Math.max(1, Math.round(height * mapScale));
+
   // Octave value-noise: coarse seeded grids, bilinear-upscaled. Grid sizes
   // are resolution-independent so every canvas size shows the same clouds.
-  const field = opts.createCanvas(width, height);
+  const field = opts.createCanvas(mapW, mapH);
   const fieldCtx = field.getContext("2d")!;
   fieldCtx.fillStyle = "#000000";
-  fieldCtx.fillRect(0, 0, width, height);
+  fieldCtx.fillRect(0, 0, mapW, mapH);
   fieldCtx.globalCompositeOperation = "lighter";
   fieldCtx.imageSmoothingEnabled = true;
   fieldCtx.imageSmoothingQuality = "high";
@@ -413,7 +506,7 @@ const renderClouds = (
     gridCtx.putImageData(cells, 0, 0);
 
     fieldCtx.globalAlpha = weights[o];
-    fieldCtx.drawImage(grid, 0, 0, width, height);
+    fieldCtx.drawImage(grid, 0, 0, mapW, mapH);
   }
   fieldCtx.globalAlpha = 1;
   fieldCtx.globalCompositeOperation = "source-over";
@@ -422,37 +515,53 @@ const renderClouds = (
   const rampAngle = random() * Math.PI * 2;
   const rdx = Math.cos(rampAngle);
   const rdy = Math.sin(rampAngle);
-  const rampSpan =
-    Math.abs(rdx * width) + Math.abs(rdy * height) || 1;
-  const rampBase =
-    (Math.min(0, rdx * width) + Math.min(0, rdy * height)) * -1;
+  // Ramp is expressed in map-space; it's scale-invariant so the look is
+  // identical at any mapping size
+  const rampSpan = Math.abs(rdx * mapW) + Math.abs(rdy * mapH) || 1;
+  const rampBase = (Math.min(0, rdx * mapW) + Math.min(0, rdy * mapH)) * -1;
+
+  // Palette lookup table: t quantized to 1/1023, well under 8-bit output
+  // precision, so the loop does an index instead of an interpolation
+  const LUT_SIZE = 1024;
+  const lut = new Uint8ClampedArray(LUT_SIZE * 3);
+  for (let k = 0; k < LUT_SIZE; k++) {
+    const [r, g, b] = samplePalette(stops, k / (LUT_SIZE - 1));
+    lut[k * 3] = r;
+    lut[k * 3 + 1] = g;
+    lut[k * 3 + 2] = b;
+  }
 
   // Map field + ramp through the palette, per pixel
-  const fieldData = fieldCtx.getImageData(0, 0, width, height).data;
-  const out = ctx.createImageData(width, height);
+  const fieldData = fieldCtx.getImageData(0, 0, mapW, mapH).data;
+  const out = fieldCtx.createImageData(mapW, mapH);
   const outData = out.data;
-  for (let y = 0; y < height; y++) {
-    for (let x = 0; x < width; x++) {
-      const i = (y * width + x) * 4;
-      const noise = fieldData[i] / 255 / weightSum;
-      const ramp = (rampBase + rdx * x + rdy * y) / rampSpan;
+  const noiseK = 1 / 255 / weightSum;
+  const rampK = 1 / rampSpan;
+  const coverageBias = (coverage - 1) * 0.3;
+  for (let y = 0; y < mapH; y++) {
+    const rowRamp = rampBase + rdy * y;
+    for (let x = 0; x < mapW; x++) {
+      const i = (y * mapW + x) * 4;
+      const noise = fieldData[i] * noiseK;
+      const ramp = (rowRamp + rdx * x) * rampK;
       // Push contrast so cloud masses separate from sky and the palette
       // extremes (deep background, bright highlights) actually appear.
       // Coverage biases the whole mapping toward the highlight colors.
-      let t =
-        0.45 * (0.5 + (noise - 0.5) * 2.3) +
-        0.55 * ramp +
-        (coverage - 1) * 0.3;
+      let t = 0.45 * (0.5 + (noise - 0.5) * 2.3) + 0.55 * ramp + coverageBias;
       t = (t - 0.5) * 1.5 + 0.5;
-      t = Math.max(0, Math.min(1, t));
-      const [r, g, b] = samplePalette(stops, t);
-      outData[i] = r;
-      outData[i + 1] = g;
-      outData[i + 2] = b;
+      const k = (Math.max(0, Math.min(1, t)) * (LUT_SIZE - 1) + 0.5) | 0;
+      outData[i] = lut[k * 3];
+      outData[i + 1] = lut[k * 3 + 1];
+      outData[i + 2] = lut[k * 3 + 2];
       outData[i + 3] = 255;
     }
   }
-  ctx.putImageData(out, 0, 0);
+  // Reuse the field canvas (its pixels are already read out) as the
+  // mapped image, then scale it onto the target
+  fieldCtx.putImageData(out, 0, 0);
+  ctx.imageSmoothingEnabled = true;
+  ctx.imageSmoothingQuality = "high";
+  ctx.drawImage(field, 0, 0, width, height);
 
   // Gentle soften to melt any bilinear grid artifacts into mist
   applyBlur(
@@ -548,7 +657,6 @@ export const renderGradient = (
     ctx.fill();
   });
 
-  // Post-process without ctx.filter (unsupported on iOS Safari < 18).
   // 1.12 folds the original chained blur(B) + blur(B/2) into one pass.
   applyBlur(ctx, width, height, blur * 1.12, opts.createCanvas);
   applyAdjustments(
