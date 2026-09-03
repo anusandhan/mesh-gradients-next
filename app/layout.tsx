@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Inter, Azeret_Mono } from "next/font/google";
 import { ClerkProvider } from "@clerk/nextjs";
+import AnalyticsBootstrap from "@/components/analytics/AnalyticsBootstrap";
 import "./globals.css";
 
 const inter = Inter({ subsets: ["latin"] });
@@ -25,7 +26,10 @@ export default function RootLayout({
   return (
     <ClerkProvider>
       <html lang="en">
-        <body className={`${inter.className} ${azeretMono.variable} antialiased`}>{children}</body>
+        <body className={`${inter.className} ${azeretMono.variable} antialiased`}>
+          <AnalyticsBootstrap />
+          {children}
+        </body>
       </html>
     </ClerkProvider>
   );

@@ -20,6 +20,7 @@ import {
   formatPrice,
   type PlanId,
 } from "@/lib/plans";
+import { track } from "@/lib/analytics";
 import Spinner from "@/components/ui/spinner";
 import {
   Tooltip,
@@ -811,6 +812,19 @@ const GradientGenerator = () => {
     false | "exports" | "presets" | "browse"
   >(false);
   const [checkoutLoading, setCheckoutLoading] = useState<PlanId | null>(null);
+
+  // One place to observe the upgrade dialog regardless of which code path
+  // opened it. Dismissal is inferred from the open -> closed transition.
+  const previousUpgradeOpen = useRef<typeof upgradeOpen>(false);
+  useEffect(() => {
+    const previous = previousUpgradeOpen.current;
+    previousUpgradeOpen.current = upgradeOpen;
+    if (upgradeOpen) {
+      track("upgrade_dialog_opened", { reason: upgradeOpen });
+    } else if (previous) {
+      track("upgrade_dialog_dismissed", { reason: previous });
+    }
+  }, [upgradeOpen]);
   const [quota, setQuota] = useState<{
     plan: "free" | "pro";
     remaining: number | null;
@@ -883,6 +897,7 @@ const GradientGenerator = () => {
 
   const startCheckout = async (plan: PlanId) => {
     setCheckoutLoading(plan);
+    track("checkout_started", { plan, reason: upgradeOpen || "unknown" });
     try {
       const res = await fetch("/api/checkout", {
         method: "POST",
@@ -1093,6 +1108,7 @@ const GradientGenerator = () => {
       }
       if (res.status === 402) {
         setQuota((prev) => (prev ? { ...prev, remaining: 0 } : prev));
+        track("export_blocked_quota", { aspectRatio, style: gradientStyle });
         setUpgradeOpen("exports");
         return;
       }
@@ -1127,6 +1143,15 @@ const GradientGenerator = () => {
       link.href = url;
       link.click();
       URL.revokeObjectURL(url);
+      track("export_completed", {
+        aspectRatio,
+        style: gradientStyle,
+        plan: quota?.plan ?? "unknown",
+        remaining:
+          remainingHeader === null || remainingHeader === "unlimited"
+            ? null
+            : Number(remainingHeader),
+      });
     } catch {
       alert("Export failed. Please check your connection and try again.");
     } finally {
@@ -1446,8 +1471,10 @@ const GradientGenerator = () => {
       // The new preset now matches the palette, so it selects itself and
       // the save affordance disappears
       setPresetDraftName(null);
+      track("preset_saved", { count: userPresets.length + 1 });
     } else if (result.code === "pro_required") {
       setPresetDraftName(null);
+      track("preset_blocked_free_cap");
       setUpgradeOpen("presets");
     } else if (result.code === "preset_cap") {
       setPresetDraftName(null);

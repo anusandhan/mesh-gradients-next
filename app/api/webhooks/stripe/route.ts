@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import Stripe from "stripe";
 import { getOrCreateUser, grantPro, recordStripeEvent } from "@/lib/db";
 import { parsePlanId } from "@/lib/plans";
+import { captureServerEvent } from "@/lib/analytics-server";
 
 export const runtime = "nodejs";
 
@@ -53,13 +54,25 @@ export async function POST(request: NextRequest) {
       const user = await getOrCreateUser(clerkUserId, email);
       // The checkout route stamps the plan into session metadata; sessions
       // created before plans existed have none and get the default.
+      const plan = parsePlanId(session.metadata?.plan);
       await grantPro(
         user.id,
         typeof session.payment_intent === "string"
           ? session.payment_intent
           : null,
-        parsePlanId(session.metadata?.plan)
+        plan
       );
+      // Revenue attribution keyed by Clerk id, which the browser also
+      // identifies as, so the purchase lands on the same PostHog person.
+      // Test-mode events (local dev) stay out of the numbers.
+      if (event.livemode) {
+        await captureServerEvent(clerkUserId, "purchase_completed", {
+          plan,
+          amount: (session.amount_total ?? 0) / 100,
+          currency: session.currency ?? "usd",
+          promo: session.payment_status === "no_payment_required",
+        });
+      }
     }
   }
 

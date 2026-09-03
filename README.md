@@ -116,6 +116,21 @@ Stripe means creating a **new** Price object and updating the env var —
 Prices are immutable. The rationale for these numbers is in
 `docs/pricing-research-2026-09.md`.
 
+### Analytics (PostHog)
+
+- Env: `NEXT_PUBLIC_POSTHOG_KEY` (public project token, `phc_…`) and
+  `NEXT_PUBLIC_POSTHOG_HOST` (`https://us.i.posthog.com` or the EU host).
+  Both are safe to expose; mark them "Config" in Vercel.
+- The client only captures on `www.gradients.studio`. Localhost and preview
+  deployments are silent unless `NEXT_PUBLIC_POSTHOG_FORCE=1` is set.
+- Requests go through the same-origin `/ingest` proxy (`next.config.js`) so
+  ad blockers don't drop them.
+- Event names live in `lib/analytics.ts`. The Stripe webhook also emits a
+  server-side `purchase_completed` (live mode only) keyed by Clerk user id,
+  which is the same id the browser identifies with.
+- Funnel to watch: `$pageview` → `export_completed` → `export_blocked_quota`
+  → `upgrade_dialog_opened` → `checkout_started` → `purchase_completed`.
+
 ### Stripe
 
 - **Webhook endpoint**: `https://www.gradients.studio/api/webhooks/stripe`,
