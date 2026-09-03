@@ -65,7 +65,7 @@ export type EditAspectRatio = {
 };
 
 const TABS: { key: EditTab; label: string; icon: Icon }[] = [
-  { key: "adjust", label: "Adjust", icon: SlidersIcon },
+  { key: "adjust", label: "Effects", icon: SlidersIcon },
   { key: "colors", label: "Colors", icon: SwatchesIcon },
   { key: "style", label: "Style", icon: StackIcon },
   { key: "size", label: "Size", icon: CropIcon },
@@ -87,7 +87,7 @@ type MobileEditHeaderProps = {
 
 export function MobileEditHeader({ tab, onCancel, onDone }: MobileEditHeaderProps) {
   return (
-    <div className="flex h-12 shrink-0 items-center justify-between border-b border-neutral-200 bg-white px-2">
+    <div className="flex h-12 shrink-0 select-none items-center justify-between border-b border-neutral-200 bg-white px-2">
       <button
         type="button"
         onClick={onCancel}
@@ -161,7 +161,7 @@ export function MobileEditPanel({
     adjustments.find((a) => a.key === activeAdjustmentKey) ?? adjustments[0];
 
   return (
-    <div className="flex shrink-0 flex-col border-t border-neutral-200 bg-white pb-[env(safe-area-inset-bottom)]">
+    <div className="flex shrink-0 select-none flex-col border-t border-neutral-200 bg-white pb-[env(safe-area-inset-bottom)]">
       {/* Fixed-height content area so the preview doesn't jump between tabs */}
       <div className="relative h-40 overflow-hidden">
         <AnimatePresence initial={false} mode="popLayout">
@@ -184,7 +184,7 @@ export function MobileEditPanel({
                     disabled={active.value === active.defaultValue}
                     onClick={() => active.onChange(active.defaultValue)}
                     aria-label={`Reset ${active.label}`}
-                    className="min-w-[3.5rem] rounded-md text-right text-sm tabular-nums text-neutral-900 transition-colors disabled:text-neutral-500"
+                    className="min-w-[3.5rem] rounded-md text-right font-azeret text-sm tabular-nums text-neutral-900 transition-colors disabled:text-neutral-500"
                   >
                     {active.format(active.value)}
                   </button>
@@ -222,7 +222,7 @@ export function MobileEditPanel({
               <div className="flex h-full flex-col justify-between pt-2">
                 <div className="flex items-center justify-between px-5">
                   <span className="text-xs font-medium uppercase tracking-wide text-neutral-500">
-                    Palette
+                    Colors
                   </span>
                   <Select
                     value={colorFormat}
@@ -359,7 +359,7 @@ export function MobileEditPanel({
                           size={20}
                           weight={selected ? "fill" : "regular"}
                         />
-                        <span className="text-sm font-medium tabular-nums">
+                        <span className="font-azeret text-sm font-medium tabular-nums">
                           {option.ratio}
                         </span>
                         <span

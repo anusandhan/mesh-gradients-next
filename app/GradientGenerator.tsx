@@ -551,8 +551,8 @@ const PresetsSection = memo(function PresetsSection({
                   autoFocus
                   value={presetDraftName}
                   maxLength={40}
-                  placeholder="Palette name"
-                  aria-label="Palette name"
+                  placeholder="Preset name"
+                  aria-label="Preset name"
                   className="w-full pr-14 text-sm"
                   onFocus={(e) => e.currentTarget.select()}
                   onChange={(e) => onPresetDraftNameChange(e.target.value)}
@@ -571,7 +571,7 @@ const PresetsSection = memo(function PresetsSection({
               size="icon"
               aria-label={
                 presetDraftName === null
-                  ? "Save palette"
+                  ? "Save preset"
                   : "Confirm save"
               }
               disabled={
@@ -711,7 +711,7 @@ const PreviewBadges = memo(function PreviewBadges({
                             <span className="hidden sm:inline text-xs text-neutral-600">
                               {currentOption?.label}
                             </span>
-                            <span className="text-xs tabular-nums text-neutral-600 sm:text-neutral-400">
+                            <span className="font-azeret text-xs tabular-nums text-neutral-600 sm:text-neutral-400">
                               {currentOption?.ratio}
                             </span>
                           </>
@@ -736,7 +736,7 @@ const PreviewBadges = memo(function PreviewBadges({
                           <span className="text-xs text-neutral-600">
                             {option.label}
                           </span>
-                          <span className="text-xs tabular-nums text-neutral-400">
+                          <span className="font-azeret text-xs tabular-nums text-neutral-400">
                             {option.ratio}
                           </span>
                         </div>
@@ -1126,7 +1126,7 @@ const GradientGenerator = () => {
   // to the wordmark instead of text here
   const quotaBadge =
     isSignedIn && quota && quota.plan === "free" ? (
-      <p className="text-center text-xs tabular-nums text-neutral-500">
+      <p className="text-center font-azeret text-xs tabular-nums text-neutral-500">
         {`${quota.remaining} of 5 free exports left this month`}
       </p>
     ) : null;
@@ -1403,7 +1403,7 @@ const GradientGenerator = () => {
     }
     setPresetDraftName(
       dedupeName(
-        (gradientName.trim() || "My Palette").slice(0, 40),
+        (gradientName.trim() || "My Preset").slice(0, 40),
         userPresets.map((p) => p.name)
       )
     );
@@ -1412,7 +1412,7 @@ const GradientGenerator = () => {
   const commitSavePreset = useCallback(async () => {
     if (savingPreset) return;
     const name = dedupeName(
-      ((presetDraftName ?? "").trim() || "My Palette").slice(0, 40),
+      ((presetDraftName ?? "").trim() || "My Preset").slice(0, 40),
       userPresets.map((p) => p.name)
     );
     setSavingPreset(true);
@@ -1431,10 +1431,10 @@ const GradientGenerator = () => {
       setUpgradeOpen(true);
     } else if (result.code === "preset_cap") {
       setPresetDraftName(null);
-      toast("Palette limit reached (50)");
+      toast("Preset limit reached (50)");
     } else {
       // Keep the draft so the user can retry
-      toast("Could not save palette");
+      toast("Could not save preset");
     }
   }, [
     savingPreset,
@@ -1448,7 +1448,10 @@ const GradientGenerator = () => {
   return (
     <TooltipProvider>
       <div className="bg-white">
-        <div className="flex flex-col h-screen" style={{ height: "100dvh" }}>
+        <div
+          className="flex h-screen flex-col overflow-hidden overscroll-none"
+          style={{ height: "100dvh" }}
+        >
           {/* Toaster is fixed-position but its host element still takes a
               flex slot, so it must live outside the gap-6 row */}
           <Toaster position="bottom-center" />
@@ -1589,7 +1592,7 @@ const GradientGenerator = () => {
                 />
 
                 {/* Effect Controls */}
-                <div className="space-y-4">
+                <div className="select-none space-y-4">
                   <div className="space-y-2">
                     <h3 className="flex items-center gap-2 text-base font-medium text-neutral-800">
                       <SlidersIcon className="w-6 h-6" />
@@ -1608,7 +1611,7 @@ const GradientGenerator = () => {
                             onClick={() => a.onChange(a.defaultValue)}
                             aria-label={`Reset ${a.label}`}
                             title="Reset to default"
-                            className="rounded text-xs tabular-nums text-neutral-800 transition-colors hover:text-neutral-950 disabled:text-muted-foreground"
+                            className="rounded font-azeret text-xs tabular-nums text-neutral-800 transition-colors hover:text-neutral-950 disabled:text-muted-foreground"
                           >
                             {a.format(a.value)}
                           </button>
@@ -1766,7 +1769,7 @@ const GradientGenerator = () => {
                         {`Gradients Studio`}
                       </span>
                       {isSignedIn && quota?.plan === "free" && (
-                        <span className="truncate text-[10px] tabular-nums leading-tight text-neutral-500">
+                        <span className="truncate font-azeret text-[10px] tabular-nums leading-tight text-neutral-500">
                           {`${quota.remaining} of 5 exports left`}
                         </span>
                       )}

@@ -356,7 +356,7 @@ export function RulerSlider({
       aria-valuetext={ariaValueText}
       aria-orientation="horizontal"
       className={cn(
-        "relative h-12 w-full cursor-pointer touch-pan-y select-none overflow-hidden outline-none focus-visible:ring-1 focus-visible:ring-ring rounded-md",
+        "relative h-12 w-full cursor-pointer touch-none select-none overflow-hidden outline-none focus-visible:ring-1 focus-visible:ring-ring rounded-md",
         className
       )}
       style={{ WebkitMaskImage: fade, maskImage: fade }}

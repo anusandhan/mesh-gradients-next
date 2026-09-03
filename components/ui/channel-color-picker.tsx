@@ -52,7 +52,7 @@ const ChannelNumberInput = ({
         if (e.key === "Enter") e.currentTarget.blur();
       }}
       className={cn(
-        "w-full min-w-0 bg-transparent text-sm tabular-nums text-neutral-800 outline-none",
+        "w-full min-w-0 bg-transparent font-azeret text-sm tabular-nums text-neutral-800 outline-none",
         className
       )}
       aria-label={def.label}
