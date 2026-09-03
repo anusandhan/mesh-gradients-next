@@ -1,9 +1,15 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { Inter, Azeret_Mono } from "next/font/google";
 import { ClerkProvider } from "@clerk/nextjs";
 import "./globals.css";
 
 const inter = Inter({ subsets: ["latin"] });
+// Numeric color channels (Figma spec: Azeret Mono 400, 12px)
+const azeretMono = Azeret_Mono({
+  subsets: ["latin"],
+  weight: ["400"],
+  variable: "--font-azeret-mono",
+});
 
 export const metadata: Metadata = {
   title: "Gradients Studio",
@@ -19,7 +25,7 @@ export default function RootLayout({
   return (
     <ClerkProvider>
       <html lang="en">
-        <body className={`${inter.className} antialiased`}>{children}</body>
+        <body className={`${inter.className} ${azeretMono.variable} antialiased`}>{children}</body>
       </html>
     </ClerkProvider>
   );

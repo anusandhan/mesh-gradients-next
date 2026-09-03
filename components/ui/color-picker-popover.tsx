@@ -24,12 +24,15 @@ const ColorPickerPopover = ({
       <Popover.Trigger asChild>
         <button
           className={cn(
-            "w-9 h-9 shrink-0 p-0 rounded-lg border border-[1.25px] border-neutral-400 hover:border-neutral-700 transition-[border-color] duration-200 cursor-pointer",
+            // Figma "Color Picker" swatch: 36px, 8px radius, hairline
+            // border, 2px white inset ring and a soft 1px halo
+            "w-9 h-9 shrink-0 p-0 rounded-lg border-[0.5px] border-black/30 hover:border-black/50 transition-[border-color,transform] duration-200 cursor-pointer active:scale-[0.96]",
             className
           )}
           style={{
             backgroundColor: value,
-            boxShadow: "inset 0 0 0 2px rgba(255, 255, 255, 0.25)",
+            boxShadow:
+              "inset 0 0 0 2px #fff, 0 0 1px 1px rgba(0, 0, 0, 0.08)",
           }}
           aria-label="Select color"
           type="button"

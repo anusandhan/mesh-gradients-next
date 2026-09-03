@@ -83,6 +83,38 @@ renderGradient(
 );
 check("different seed renders differently", !other.toBuffer("image/png").equals(bufferA));
 
+// Blur must be continuous: neighbouring slider ticks and the top of the
+// range must all render differently (the pyramid used to quantize to whole
+// halving steps and saturate at 4K, so most of the slider did nothing)
+const renderBlur = (blur: number, scale = 1) => {
+  const w = Math.round(WIDTH * scale);
+  const h = Math.round(HEIGHT * scale);
+  const c = createCanvas(w, h);
+  renderGradient(c.getContext("2d") as unknown as CanvasRenderingContext2D, w, h, {
+    ...baseOptions,
+    noise: 0,
+    blur,
+    blurScale: scale,
+  });
+  return c.toBuffer("image/png");
+};
+for (const [a, b] of [
+  [550, 555],
+  [560, 565],
+  [700, 705],
+  [995, 1000],
+]) {
+  check(`4K blur ${a} vs ${b} differ`, !renderBlur(a).equals(renderBlur(b)));
+}
+check(
+  "preview-scale blur 560 vs 565 differ",
+  !renderBlur(560, 0.287).equals(renderBlur(565, 0.287))
+);
+check(
+  "preview-scale blur 700 vs 1000 differ",
+  !renderBlur(700, 0.287).equals(renderBlur(1000, 0.287))
+);
+
 const outPath = join(tmpdir(), "gradient-smoke-test.png");
 writeFileSync(outPath, png);
 console.log(`\n4K render took ${renderMs}ms — inspect: ${outPath}`);

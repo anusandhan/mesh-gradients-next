@@ -161,7 +161,7 @@ const ColorField = ({
         onKeyDown={(e) => {
           if (e.key === "Enter") e.currentTarget.blur();
         }}
-        className="flex-1 text-sm"
+        className="h-9 flex-1 rounded-lg border-black/[0.04] bg-neutral-50 px-2 text-center font-azeret text-xs text-neutral-700 shadow-none"
         placeholder={placeholder}
       />
     );
@@ -171,13 +171,15 @@ const ColorField = ({
   const channels = hexToChannels(hex, format);
 
   return (
-    <div className="flex h-9 flex-1 min-w-0 items-center rounded-lg border border-input bg-transparent shadow-sm">
+    // Figma "Color Picker" fields: one 8px-radius well with hairline
+    // dividers between the channel cells
+    <div className="flex h-9 flex-1 min-w-0 items-center rounded-lg border border-black/[0.04] bg-neutral-50">
       {defs.map((def, index) => (
         <div
           key={def.key}
           className={cn(
-            "flex h-full min-w-0 flex-1 items-center px-2.5",
-            index > 0 && "border-l border-neutral-200"
+            "flex h-full min-w-0 flex-1 items-center px-2",
+            index > 0 && "border-l border-black/[0.04]"
           )}
         >
           <ChannelNumberInput
@@ -188,7 +190,7 @@ const ColorField = ({
               next[index] = channelValue;
               onChange(channelsToHex(next, format));
             }}
-            className="text-center"
+            className="text-center font-azeret text-xs text-neutral-700"
           />
         </div>
       ))}
@@ -323,6 +325,11 @@ const StyleSection = memo(function StyleSection({
   );
 });
 
+// Figma "Color Picker" row: 12px outer radius = 8px swatch/field radius +
+// 4px padding, so the nested corners stay concentric
+const colorRowClass =
+  "flex items-center gap-1 rounded-xl border border-black/10 bg-white p-1";
+
 const ColorsSection = memo(function ColorsSection({
   colorFormat,
   onColorFormatChange,
@@ -372,7 +379,7 @@ const ColorsSection = memo(function ColorsSection({
               >
                 Background
               </Label>
-              <div className="flex gap-2">
+              <div className={colorRowClass}>
                 <ColorPickerPopover
                   value={normalizeHexColor(backgroundColor)}
                   format={colorFormat}
@@ -391,7 +398,7 @@ const ColorsSection = memo(function ColorsSection({
             <div className="space-y-3">
               <Label className="text-sm">Gradient Colors</Label>
               {colorInputs.map((color, index) => (
-                <div key={index} className="flex gap-2">
+                <div key={index} className={colorRowClass}>
                   <ColorPickerPopover
                     value={normalizeHexColor(color)}
                     format={colorFormat}

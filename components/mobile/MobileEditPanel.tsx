@@ -17,6 +17,7 @@ import { customEasing } from "@/lib/motion";
 import { RulerSlider } from "@/components/mobile/RulerSlider";
 import { AdjustDial } from "@/components/mobile/AdjustDial";
 import { ColorPickerPopover } from "@/components/ui/color-picker-popover";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import {
   Select,
   SelectContent,
@@ -265,33 +266,47 @@ export function MobileEditPanel({
                     />
                   ))}
                 </div>
-                <div className="flex gap-2 overflow-x-auto px-5 pb-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-                  {presets.map((preset) => {
-                    const selected = preset.value === selectedPreset;
-                    const PresetIcon = preset.icon;
-                    return (
-                      <Chip
-                        key={preset.value}
-                        selected={selected}
-                        onClick={() => onSelectPreset(preset.value)}
-                      >
-                        {preset.swatches ? (
-                          <span
-                            aria-hidden
-                            className="h-4 w-4 shrink-0 rounded-full border border-black/10"
-                            style={{
-                              background: `linear-gradient(135deg, ${preset.swatches.join(", ")})`,
-                            }}
-                          />
-                        ) : PresetIcon ? (
-                          <PresetIcon size={16} />
-                        ) : null}
-                        <span className="max-w-[8rem] truncate">
-                          {preset.name}
-                        </span>
-                      </Chip>
-                    );
-                  })}
+                {/* Same pill toggle group as the desktop Style picker, kept to
+                    one scrolling row so the tab height stays fixed */}
+                <div className="overflow-x-auto px-5 pb-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                  <ToggleGroup
+                    type="single"
+                    value={selectedPreset}
+                    onValueChange={(value) => {
+                      // Radix allows deselecting the active pill; the palette
+                      // is always something, so ignore empty
+                      if (value) onSelectPreset(value);
+                    }}
+                    aria-label="Preset"
+                    className="w-max flex-nowrap"
+                  >
+                    {presets.map((preset) => {
+                      const PresetIcon = preset.icon;
+                      return (
+                        <ToggleGroupItem
+                          key={preset.value}
+                          value={preset.value}
+                          aria-label={preset.name}
+                          className="shrink-0"
+                        >
+                          {preset.swatches ? (
+                            <span
+                              aria-hidden
+                              className="h-4 w-4 shrink-0 rounded-full border border-black/10"
+                              style={{
+                                background: `linear-gradient(135deg, ${preset.swatches.join(", ")})`,
+                              }}
+                            />
+                          ) : PresetIcon ? (
+                            <PresetIcon size={16} />
+                          ) : null}
+                          <span className="max-w-[8rem] truncate">
+                            {preset.name}
+                          </span>
+                        </ToggleGroupItem>
+                      );
+                    })}
+                  </ToggleGroup>
                 </div>
               </div>
             )}
@@ -413,28 +428,4 @@ const Swatch = ({
     />
     <span className="text-[10px] leading-none text-neutral-500">{label}</span>
   </div>
-);
-
-const Chip = ({
-  selected,
-  onClick,
-  children,
-}: {
-  selected: boolean;
-  onClick: () => void;
-  children: React.ReactNode;
-}) => (
-  <button
-    type="button"
-    aria-pressed={selected}
-    onClick={onClick}
-    className={cn(
-      "flex h-9 shrink-0 items-center gap-2 rounded-full border px-3 text-xs font-medium transition-[color,background-color,border-color,transform] duration-150 active:scale-[0.96]",
-      selected
-        ? "border-neutral-900 bg-neutral-900 text-white"
-        : "border-neutral-200 bg-white text-neutral-700"
-    )}
-  >
-    {children}
-  </button>
 );

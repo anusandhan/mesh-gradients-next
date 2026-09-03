@@ -64,16 +64,24 @@ const applyBlur = (
   createCanvas: CreateCanvas
 ) => {
   if (radius < 1) return;
-  const steps = Math.max(
-    1,
-    Math.min(8, Math.round(Math.log2(Math.max(2, radius / 2))))
-  );
+  // The pyramid can only halve in whole steps, and at these radii it bottoms
+  // out at a handful of pixels, so integer level sizes can't express small
+  // radius changes. Strength is made continuous by blending the results of
+  // the two neighbouring step counts by the fractional part: every slider
+  // value renders differently, and the look changes smoothly through the
+  // range instead of jumping at step boundaries. The chain stops on its own
+  // once a level would drop to 2px, so 4K exports no longer saturate at a
+  // fixed step cap partway up the slider.
+  const exact = Math.log2(Math.max(2, radius / 2));
+  const fullSteps = Math.floor(exact);
+  const fraction = exact - fullSteps;
 
   const levels: HTMLCanvasElement[] = [];
-  let src: HTMLCanvasElement = ctx.canvas as HTMLCanvasElement;
   let w = width;
   let h = height;
-  for (let i = 0; i < steps; i++) {
+  let src: HTMLCanvasElement = ctx.canvas as HTMLCanvasElement;
+  const wanted = fraction > 0.005 ? fullSteps + 1 : fullSteps;
+  for (let i = 0; i < wanted && w > 2 && h > 2; i++) {
     w = Math.max(1, Math.round(w / 2));
     h = Math.max(1, Math.round(h / 2));
     const level = createCanvas(w, h);
@@ -84,17 +92,35 @@ const applyBlur = (
     levels.push(level);
     src = level;
   }
-  // Upscale back through the intermediate sizes to keep the result smooth
-  for (let i = levels.length - 2; i >= 0; i--) {
-    const levelCtx = levels[i].getContext("2d")!;
-    levelCtx.imageSmoothingEnabled = true;
-    levelCtx.imageSmoothingQuality = "high";
-    levelCtx.drawImage(src, 0, 0, levels[i].width, levels[i].height);
-    src = levels[i];
-  }
+  if (levels.length === 0) return;
+
+  // Upscale from a given level back through the intermediate sizes (which
+  // keeps the result smooth), overwriting the shallower levels on the way
+  const upscaleFrom = (index: number) => {
+    let img = levels[index];
+    for (let i = index - 1; i >= 0; i--) {
+      const levelCtx = levels[i].getContext("2d")!;
+      levelCtx.imageSmoothingEnabled = true;
+      levelCtx.imageSmoothingQuality = "high";
+      levelCtx.drawImage(img, 0, 0, levels[i].width, levels[i].height);
+      img = levels[i];
+    }
+    return img;
+  };
+
   ctx.imageSmoothingEnabled = true;
   ctx.imageSmoothingQuality = "high";
-  ctx.drawImage(src, 0, 0, width, height);
+  // Coarser result first (the deeper level, which the upscale pass below
+  // would otherwise overwrite), then the finer one on top
+  const fine = Math.min(fullSteps, levels.length) - 1;
+  const coarse = fine + 1;
+  ctx.drawImage(upscaleFrom(fine), 0, 0, width, height);
+  if (coarse < levels.length) {
+    const previousAlpha = ctx.globalAlpha;
+    ctx.globalAlpha = fraction;
+    ctx.drawImage(upscaleFrom(coarse), 0, 0, width, height);
+    ctx.globalAlpha = previousAlpha;
+  }
 };
 
 // Browser preview fast path. ctx.filter runs contrast()/saturate() on the
