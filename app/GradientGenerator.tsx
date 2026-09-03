@@ -22,6 +22,8 @@ import {
 } from "@/lib/plans";
 import { track } from "@/lib/analytics";
 import { parseStudioParams } from "@/lib/gallery";
+import { FREE_EXPORTS_PER_MONTH } from "@/lib/site";
+import { QuotaMeter } from "@/components/QuotaMeter";
 import Spinner from "@/components/ui/spinner";
 import {
   Tooltip,
@@ -1195,17 +1197,11 @@ const GradientGenerator = () => {
   // to the wordmark instead of text here
   const quotaBadge =
     isSignedIn && quota && quota.plan === "free" ? (
-      <p className="flex items-center justify-center gap-2 font-azeret text-xs tabular-nums text-neutral-500">
-        <span>{`${quota.remaining} of 5 free exports left this month`}</span>
-        <span aria-hidden="true">·</span>
-        <button
-          type="button"
-          onClick={() => setUpgradeOpen("browse")}
-          className="font-medium text-neutral-900 underline-offset-2 hover:underline"
-        >
-          Go Pro
-        </button>
-      </p>
+      <QuotaMeter
+        remaining={quota.remaining ?? 0}
+        total={FREE_EXPORTS_PER_MONTH}
+        onUpgrade={() => setUpgradeOpen("browse")}
+      />
     ) : null;
 
   const proBadge = (
@@ -1893,13 +1889,12 @@ const GradientGenerator = () => {
                         {`Gradients Studio`}
                       </span>
                       {isSignedIn && quota?.plan === "free" && (
-                        <button
-                          type="button"
-                          onClick={() => setUpgradeOpen("browse")}
-                          className="truncate text-left font-azeret text-[10px] tabular-nums leading-tight text-neutral-500"
-                        >
-                          {`${quota.remaining} of 5 exports left · Go Pro`}
-                        </button>
+                        <QuotaMeter
+                          compact
+                          remaining={quota.remaining ?? 0}
+                          total={FREE_EXPORTS_PER_MONTH}
+                          onUpgrade={() => setUpgradeOpen("browse")}
+                        />
                       )}
                     </div>
                   </div>
