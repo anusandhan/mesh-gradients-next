@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { MAKER_NAME, SITE_NAME } from "@/lib/site";
+import { MAKER_NAME, MAKER_URL, SITE_NAME } from "@/lib/site";
 import { SiteFooter, SiteHeader } from "@/components/landing/SiteChrome";
 
 export const metadata: Metadata = {
@@ -34,7 +34,14 @@ export default function AboutPage() {
             in the file.
           </p>
           <p>
-            It is made by {MAKER_NAME}, one person, and priced to match: a
+            It is made by{" "}
+            <a
+              href={MAKER_URL}
+              className="font-medium text-neutral-900 underline underline-offset-2"
+            >
+              {MAKER_NAME}
+            </a>
+            , one person, and priced to match: a
             free tier that is genuinely useful, and a pass you pay for once.
             No subscription, because a tool you use in bursts should not bill
             you every month.

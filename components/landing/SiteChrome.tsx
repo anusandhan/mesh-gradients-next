@@ -1,7 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { MAKER_NAME, SITE_NAME } from "@/lib/site";
+import { MAKER_NAME, MAKER_URL, SITE_NAME } from "@/lib/site";
 import TrackedLink from "./TrackedLink";
 
 // Header and footer shared by the marketing pages (/, /about, /contact).
@@ -45,7 +45,14 @@ export const SiteFooter = () => (
       <div>
         <Wordmark />
         <p className="mt-3 max-w-xs">
-          Mesh gradients with real grain. Made by {MAKER_NAME}.
+          Mesh gradients with real grain. Made by{" "}
+          <a
+            href={MAKER_URL}
+            className="text-neutral-900 underline-offset-2 hover:underline"
+          >
+            {MAKER_NAME}
+          </a>
+          .
         </p>
       </div>
       <div className="grid grid-cols-2 gap-x-12 gap-y-2 sm:grid-cols-3">
