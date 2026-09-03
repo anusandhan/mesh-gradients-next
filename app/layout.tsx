@@ -13,9 +13,19 @@ const azeretMono = Azeret_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Gradients Studio",
+  metadataBase: new URL("https://www.gradients.studio"),
+  title: {
+    default: "Gradients Studio",
+    template: "%s · Gradients Studio",
+  },
   description:
     "Create beautiful, customizable mesh gradients for wallpapers, backgrounds, and designs",
+  openGraph: {
+    siteName: "Gradients Studio",
+    type: "website",
+    images: [{ url: "/landing/og.jpg", width: 1200, height: 630 }],
+  },
+  twitter: { card: "summary_large_image" },
 };
 
 export default function RootLayout({

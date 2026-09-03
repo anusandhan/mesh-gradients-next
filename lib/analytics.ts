@@ -6,6 +6,7 @@ import posthog from "posthog-js";
 // only happens on the production host (or with NEXT_PUBLIC_POSTHOG_FORCE=1).
 
 export type AnalyticsEvent =
+  | "landing_cta_clicked"
   | "export_completed"
   | "export_blocked_quota"
   | "upgrade_dialog_opened"

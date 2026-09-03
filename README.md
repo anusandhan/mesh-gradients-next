@@ -94,6 +94,16 @@ instead of `www.gradients.studio`, so Pro was never granted after payment.
 Applies to: Stripe webhooks, OAuth/SSO callbacks, and any external service
 that calls back into the app.
 
+### Routes
+
+- `/` — server-rendered landing page (`app/page.tsx`). Its imagery in
+  `public/landing/` is produced by the real renderer: regenerate with
+  `npx tsx scripts/render-landing-images.ts` after changing the look.
+- `/app` — the studio (`app/app/page.tsx`, client-only). Stripe's success
+  and cancel URLs point here.
+- `/robots.txt` and `/sitemap.xml` are generated from `app/robots.ts` and
+  `app/sitemap.ts`.
+
 ### Pricing and plans
 
 Defined once in `lib/plans.ts` and shared by checkout, the webhook and the

@@ -63,8 +63,8 @@ export async function POST(request: NextRequest) {
     client_reference_id: clerkUserId,
     customer_email: email,
     metadata: { plan: plan.id },
-    success_url: `${origin}/?upgraded=1`,
-    cancel_url: `${origin}/`,
+    success_url: `${origin}/app?upgraded=1`,
+    cancel_url: `${origin}/app`,
     ...(process.env.STRIPE_AUTOMATIC_TAX === "true"
       ? { automatic_tax: { enabled: true } }
       : {}),
