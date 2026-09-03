@@ -21,6 +21,7 @@ import {
   type PlanId,
 } from "@/lib/plans";
 import { track } from "@/lib/analytics";
+import { parseStudioParams } from "@/lib/gallery";
 import Spinner from "@/components/ui/spinner";
 import {
   Tooltip,
@@ -260,8 +261,13 @@ const presetGradients: PresetGradient[] = [
   // },
 ];
 
+// Values must stay in sync with STUDIO_ASPECT_RATIOS (lib/gallery.ts), which
+// the export API validates against.
 const aspectRatioOptions = [
   { value: "16:9", label: "Desktop", ratio: "16:9", icon: MonitorIcon },
+  { value: "16:10", label: "Mac", ratio: "16:10", icon: MonitorIcon },
+  { value: "1.91:1", label: "Social card", ratio: "1.91:1", icon: TabsIcon },
+  { value: "5:2", label: "Notion cover", ratio: "5:2", icon: RowsIcon },
   { value: "1:1", label: "Square Post", ratio: "1:1", icon: SquareIcon },
   {
     value: "4:3",
@@ -884,6 +890,25 @@ const GradientGenerator = () => {
     refreshQuota();
   }, [refreshQuota]);
 
+  // Deep links from the landing page (/app?style=…&colors=…&plan=…): apply
+  // once on mount, then clean the URL. Defined before the ?upgraded effect
+  // below because that one also rewrites the URL.
+  useEffect(() => {
+    const search = window.location.search;
+    if (!search || new URLSearchParams(search).has("upgraded")) return;
+    const s = parseStudioParams(search);
+    if (s.style) setGradientStyle(s.style);
+    if (s.background) setBackgroundColor(s.background);
+    if (s.colors) setColorInputs(s.colors);
+    if (s.seed !== undefined) setSeed(s.seed);
+    if (s.noise !== undefined) setNoiseAmount([s.noise]);
+    if (s.blur !== undefined) setBlurAmount([s.blur]);
+    if (s.aspectRatio) setAspectRatio(s.aspectRatio);
+    if (s.name) setGradientName(s.name);
+    if (s.plan) setUpgradeOpen("browse");
+    window.history.replaceState(null, "", window.location.pathname);
+  }, []);
+
   // Returning from Stripe Checkout: the webhook may lag a moment, so poll
   // the quota a few times until the Pro badge shows up
   useEffect(() => {
@@ -907,6 +932,11 @@ const GradientGenerator = () => {
       const data = await res.json().catch(() => null);
       if (res.ok && data?.url) {
         window.location.href = data.url;
+        return;
+      }
+      if (res.status === 401) {
+        // Landing-page pricing links can open the dialog before sign-in
+        openSignIn();
         return;
       }
       alert(data?.error ?? "Could not start checkout. Please try again.");

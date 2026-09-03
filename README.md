@@ -96,11 +96,19 @@ that calls back into the app.
 
 ### Routes
 
-- `/` — server-rendered landing page (`app/page.tsx`). Its imagery in
-  `public/landing/` is produced by the real renderer: regenerate with
-  `npx tsx scripts/render-landing-images.ts` after changing the look.
+- `/` — server-rendered landing page (`app/page.tsx`). The hero is the real
+  renderer running in the browser (`components/landing/HeroCanvas.tsx`);
+  the rest of the imagery in `public/landing/` is pre-rendered by the same
+  engine: regenerate with `npx tsx scripts/render-landing-images.ts` after
+  changing the look or the gallery in `lib/gallery.ts`.
 - `/app` — the studio (`app/app/page.tsx`, client-only). Stripe's success
-  and cancel URLs point here.
+  and cancel URLs point here. Accepts deep links built by `buildStudioUrl`
+  in `lib/gallery.ts` (`?style=&bg=&colors=&seed=&noise=&blur=&aspect=&name=`)
+  and `?plan=year|week` to open the upgrade dialog on arrival.
+- `/about`, `/contact` — static marketing pages sharing
+  `components/landing/SiteChrome.tsx`. Contact email lives in `lib/site.ts`.
+- Testimonials (`lib/testimonials.ts`) are empty on purpose; the proof
+  sections render only once real, permissioned quotes exist.
 - `/robots.txt` and `/sitemap.xml` are generated from `app/robots.ts` and
   `app/sitemap.ts`.
 

@@ -3,6 +3,7 @@ import { auth, currentUser } from "@clerk/nextjs/server";
 import { createCanvas } from "@napi-rs/canvas";
 import { z } from "zod";
 import { renderGradient } from "@/lib/gradient-renderer";
+import { STUDIO_ASPECT_RATIOS } from "@/lib/gallery";
 import { getOrCreateUser, isPro, tryConsumeExport, rateLimit } from "@/lib/db";
 
 export const runtime = "nodejs";
@@ -10,7 +11,7 @@ export const maxDuration = 60;
 
 // Fixed aspect allowlist — the client never sends pixel dimensions.
 // Mirrors the UI: landscape at 3840 wide, portrait/square at 2160 tall.
-const ASPECT_RATIOS = ["16:9", "1:1", "4:3", "9:16", "3:4", "4:5"] as const;
+const ASPECT_RATIOS = STUDIO_ASPECT_RATIOS;
 
 const exportDimensions = (aspectRatio: string) => {
   const [w, h] = aspectRatio.split(":").map(Number);
