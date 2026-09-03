@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import Stripe from "stripe";
 import { getOrCreateUser, grantPro, recordStripeEvent } from "@/lib/db";
+import { parsePlanId } from "@/lib/plans";
 
 export const runtime = "nodejs";
 
@@ -50,11 +51,14 @@ export async function POST(request: NextRequest) {
     if (settled && clerkUserId) {
       const email = session.customer_details?.email ?? "";
       const user = await getOrCreateUser(clerkUserId, email);
+      // The checkout route stamps the plan into session metadata; sessions
+      // created before plans existed have none and get the default.
       await grantPro(
         user.id,
         typeof session.payment_intent === "string"
           ? session.payment_intent
-          : null
+          : null,
+        parsePlanId(session.metadata?.plan)
       );
     }
   }

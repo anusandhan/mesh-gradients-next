@@ -94,6 +94,28 @@ instead of `www.gradients.studio`, so Pro was never granted after payment.
 Applies to: Stripe webhooks, OAuth/SSO callbacks, and any external service
 that calls back into the app.
 
+### Pricing and plans
+
+Defined once in `lib/plans.ts` and shared by checkout, the webhook and the
+upgrade dialog. Both plans are one-time payments that never auto-renew; a
+repeat purchase stacks on top of any remaining time.
+
+| Plan | Price | Grants | Stripe Price env var |
+|---|---|---|---|
+| Pro (`year`) | $39 | 365 days unlimited 4K exports + 50 saved palettes | `STRIPE_PRICE_ID` |
+| Week Pass (`week`) | $9 | 7 days unlimited 4K exports | `STRIPE_WEEK_PASS_PRICE_ID` |
+
+Free accounts get `FREE_EXPORTS_PER_MONTH` (5) exports per UTC month and
+`FREE_PRESET_LIMIT` (3) saved palettes. Lapsed Pro keeps read access to all
+saved palettes.
+
+The checkout route stamps `metadata.plan` on the Checkout Session; the
+webhook reads it to pick the grant duration and falls back to `year` when
+it is missing (sessions created before plans existed). Changing a price in
+Stripe means creating a **new** Price object and updating the env var —
+Prices are immutable. The rationale for these numbers is in
+`docs/pricing-research-2026-09.md`.
+
 ### Stripe
 
 - **Webhook endpoint**: `https://www.gradients.studio/api/webhooks/stripe`,

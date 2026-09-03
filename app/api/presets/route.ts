@@ -14,6 +14,7 @@ import {
   presetInputSchema,
   reorderSchema,
 } from "@/lib/presets";
+import { FREE_PRESET_LIMIT } from "@/lib/plans";
 
 export const runtime = "nodejs";
 
@@ -58,16 +59,23 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Invalid request" }, { status: 400 });
   }
 
+  // Free accounts get a small cap so saved palettes become a reason to
+  // upgrade; Pro raises it. The insert itself enforces the cap atomically.
   const dbUser = await getOrCreateUser(clerkUserId, email.emailAddress);
-  if (!(await isPro(dbUser.id))) {
-    return NextResponse.json(
-      { error: "Saving palettes is a Pro feature", code: "pro_required" },
-      { status: 402 }
-    );
-  }
+  const pro = await isPro(dbUser.id);
+  const cap = pro ? MAX_PRESETS_PER_USER : FREE_PRESET_LIMIT;
 
-  const preset = await createPreset(dbUser.id, parsed.data, MAX_PRESETS_PER_USER);
+  const preset = await createPreset(dbUser.id, parsed.data, cap);
   if (!preset) {
+    if (!pro) {
+      return NextResponse.json(
+        {
+          error: `Free accounts can save ${FREE_PRESET_LIMIT} palettes. Go Pro for ${MAX_PRESETS_PER_USER}.`,
+          code: "pro_required",
+        },
+        { status: 402 }
+      );
+    }
     return NextResponse.json(
       {
         error: `Palette limit reached (${MAX_PRESETS_PER_USER})`,

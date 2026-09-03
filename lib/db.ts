@@ -3,6 +3,7 @@ import { neon } from "@neondatabase/serverless";
 // Server-only module: quota and entitlement logic must never reach the
 // client bundle. The client can't be trusted with any of this.
 import "server-only";
+import { DEFAULT_PLAN, PLANS, type PlanId } from "./plans";
 
 export const FREE_EXPORTS_PER_MONTH = 5;
 
@@ -113,18 +114,21 @@ export const recordStripeEvent = async (eventId: string): Promise<boolean> => {
   return rows.length > 0;
 };
 
-// Grant or extend Pro: 6 months on top of the current expiry (if still
-// active) or from now. Called ONLY from the Stripe webhook handler.
+// Grant or extend Pro by the plan's duration, stacked on top of the
+// current expiry (if still active) or from now. Called ONLY from the
+// Stripe webhook handler.
 export const grantPro = async (
   userId: number,
-  stripePaymentId: string | null
+  stripePaymentId: string | null,
+  plan: PlanId = DEFAULT_PLAN
 ): Promise<void> => {
   const sql = getSql();
+  const days = PLANS[plan].days;
   await sql`
     INSERT INTO entitlements (user_id, pro_until, stripe_payment_id)
-    VALUES (${userId}, now() + interval '6 months', ${stripePaymentId})
+    VALUES (${userId}, now() + make_interval(days => ${days}::int), ${stripePaymentId})
     ON CONFLICT (user_id) DO UPDATE SET
-      pro_until = GREATEST(entitlements.pro_until, now()) + interval '6 months',
+      pro_until = GREATEST(entitlements.pro_until, now()) + make_interval(days => ${days}::int),
       stripe_payment_id = EXCLUDED.stripe_payment_id,
       updated_at = now()
   `;

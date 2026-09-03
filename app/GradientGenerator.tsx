@@ -14,6 +14,12 @@ import { Kbd } from "@/components/ui/kbd";
 import { Label } from "@/components/ui/label";
 import { ColorPickerPopover } from "@/components/ui/color-picker-popover";
 import { cn } from "@/lib/utils";
+import {
+  FREE_PRESET_LIMIT,
+  PLANS,
+  formatPrice,
+  type PlanId,
+} from "@/lib/plans";
 import Spinner from "@/components/ui/spinner";
 import {
   Tooltip,
@@ -799,8 +805,12 @@ const GradientGenerator = () => {
     aspectRatio: string;
     gradientName: string;
   } | null>(null);
-  const [upgradeOpen, setUpgradeOpen] = useState(false);
-  const [checkoutLoading, setCheckoutLoading] = useState(false);
+  // Why the upgrade dialog opened drives its headline: out of exports,
+  // palette cap hit, or the user just clicked "Go Pro"
+  const [upgradeOpen, setUpgradeOpen] = useState<
+    false | "exports" | "presets" | "browse"
+  >(false);
+  const [checkoutLoading, setCheckoutLoading] = useState<PlanId | null>(null);
   const [quota, setQuota] = useState<{
     plan: "free" | "pro";
     remaining: number | null;
@@ -871,10 +881,14 @@ const GradientGenerator = () => {
     return () => timers.forEach(clearTimeout);
   }, [refreshQuota]);
 
-  const startCheckout = async () => {
-    setCheckoutLoading(true);
+  const startCheckout = async (plan: PlanId) => {
+    setCheckoutLoading(plan);
     try {
-      const res = await fetch("/api/checkout", { method: "POST" });
+      const res = await fetch("/api/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ plan }),
+      });
       const data = await res.json().catch(() => null);
       if (res.ok && data?.url) {
         window.location.href = data.url;
@@ -884,7 +898,7 @@ const GradientGenerator = () => {
     } catch {
       alert("Could not start checkout. Please check your connection.");
     } finally {
-      setCheckoutLoading(false);
+      setCheckoutLoading(null);
     }
   };
 
@@ -1079,7 +1093,7 @@ const GradientGenerator = () => {
       }
       if (res.status === 402) {
         setQuota((prev) => (prev ? { ...prev, remaining: 0 } : prev));
-        setUpgradeOpen(true);
+        setUpgradeOpen("exports");
         return;
       }
       if (res.status === 429) {
@@ -1126,8 +1140,16 @@ const GradientGenerator = () => {
   // to the wordmark instead of text here
   const quotaBadge =
     isSignedIn && quota && quota.plan === "free" ? (
-      <p className="text-center font-azeret text-xs tabular-nums text-neutral-500">
-        {`${quota.remaining} of 5 free exports left this month`}
+      <p className="flex items-center justify-center gap-2 font-azeret text-xs tabular-nums text-neutral-500">
+        <span>{`${quota.remaining} of 5 free exports left this month`}</span>
+        <span aria-hidden="true">·</span>
+        <button
+          type="button"
+          onClick={() => setUpgradeOpen("browse")}
+          className="font-medium text-neutral-900 underline-offset-2 hover:underline"
+        >
+          Go Pro
+        </button>
       </p>
     ) : null;
 
@@ -1397,17 +1419,15 @@ const GradientGenerator = () => {
       openSignIn();
       return;
     }
-    if (!isProUser) {
-      setUpgradeOpen(true);
-      return;
-    }
+    // Free accounts may save a few palettes; the server enforces the cap
+    // and answers pro_required once it's hit
     setPresetDraftName(
       dedupeName(
         (gradientName.trim() || "My Preset").slice(0, 40),
         userPresets.map((p) => p.name)
       )
     );
-  }, [isSignedIn, isProUser, openSignIn, gradientName, userPresets]);
+  }, [isSignedIn, openSignIn, gradientName, userPresets]);
 
   const commitSavePreset = useCallback(async () => {
     if (savingPreset) return;
@@ -1428,7 +1448,7 @@ const GradientGenerator = () => {
       setPresetDraftName(null);
     } else if (result.code === "pro_required") {
       setPresetDraftName(null);
-      setUpgradeOpen(true);
+      setUpgradeOpen("presets");
     } else if (result.code === "preset_cap") {
       setPresetDraftName(null);
       toast("Preset limit reached (50)");
@@ -1475,47 +1495,94 @@ const GradientGenerator = () => {
                   className="fixed inset-0 z-[60] bg-black/50"
                   onClick={() => setUpgradeOpen(false)}
                 />
-                <div className="fixed left-1/2 top-1/2 z-[70] w-[90vw] max-w-sm -translate-x-1/2 -translate-y-1/2 rounded-2xl bg-white p-6 shadow-xl">
-                  <h2 className="text-lg font-semibold text-neutral-900">
-                    You&apos;re out of free exports
+                <div
+                  role="dialog"
+                  aria-labelledby="upgrade-title"
+                  className="fixed left-1/2 top-1/2 z-[70] w-[90vw] max-w-sm -translate-x-1/2 -translate-y-1/2 rounded-2xl bg-white p-6 shadow-xl"
+                >
+                  <h2
+                    id="upgrade-title"
+                    className="text-lg font-semibold text-neutral-900"
+                  >
+                    {upgradeOpen === "exports"
+                      ? "You're out of free exports"
+                      : upgradeOpen === "presets"
+                        ? "Save more palettes with Pro"
+                        : "Go Pro"}
                   </h2>
                   <p className="mt-2 text-sm text-neutral-600">
-                    You&apos;ve used all 5 free exports this month. Go Pro for
-                    6 months of unlimited 4K exports.
+                    {upgradeOpen === "exports"
+                      ? "You've used all 5 free exports this month. Pro removes the limit."
+                      : upgradeOpen === "presets"
+                        ? `Free accounts keep ${FREE_PRESET_LIMIT} palettes. Pro keeps 50 and removes the export limit.`
+                        : "Unlimited 4K exports and 50 saved palettes. Pay once, no subscription."}
                   </p>
-                  <div className="mt-4 rounded-xl border border-neutral-200 p-4">
-                    <div className="flex items-baseline gap-1">
-                      <span className="text-2xl font-semibold text-neutral-900">
-                        $38
-                      </span>
-                      <span className="text-sm text-neutral-500">
-                        / 6 months
+
+                  {/* Headline pass */}
+                  <div className="mt-4 rounded-xl border-2 border-neutral-900 p-4">
+                    <div className="flex items-baseline justify-between gap-2">
+                      <div className="flex items-baseline gap-1">
+                        <span className="text-2xl font-semibold text-neutral-900">
+                          {formatPrice(PLANS.year)}
+                        </span>
+                        <span className="text-sm text-neutral-500">
+                          {`/ ${PLANS.year.durationLabel}`}
+                        </span>
+                      </div>
+                      <span className="rounded-full bg-neutral-900 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-white">
+                        Best value
                       </span>
                     </div>
                     <ul className="mt-2 space-y-1 text-sm text-neutral-600">
                       <li>Unlimited 4K exports</li>
-                      <li>All aspect ratios</li>
-                      <li>One-time payment — no subscription</li>
+                      <li>Save up to 50 palettes</li>
+                      <li>One payment, never auto-renews</li>
                     </ul>
+                    <Button
+                      className="mt-3 w-full"
+                      onClick={() => startCheckout("year")}
+                      disabled={checkoutLoading !== null}
+                    >
+                      {checkoutLoading === "year"
+                        ? "Redirecting…"
+                        : `Get ${PLANS.year.name}`}
+                    </Button>
                   </div>
-                  <div className="mt-4 flex gap-2">
+
+                  {/* Burst pass for one-project users */}
+                  <div className="mt-2 flex items-center justify-between gap-3 rounded-xl border border-neutral-200 px-4 py-3">
+                    <div className="min-w-0">
+                      <div className="flex items-baseline gap-1">
+                        <span className="text-base font-semibold text-neutral-900">
+                          {formatPrice(PLANS.week)}
+                        </span>
+                        <span className="text-xs text-neutral-500">
+                          {`/ ${PLANS.week.durationLabel}`}
+                        </span>
+                      </div>
+                      <p className="text-xs text-neutral-500">
+                        {PLANS.week.name}: unlimited exports for one project
+                      </p>
+                    </div>
                     <Button
                       variant="outline"
-                      className="flex-1"
-                      onClick={() => setUpgradeOpen(false)}
+                      className="h-8 shrink-0 px-3 text-xs"
+                      onClick={() => startCheckout("week")}
+                      disabled={checkoutLoading !== null}
                     >
-                      Maybe later
-                    </Button>
-                    <Button
-                      className="flex-1"
-                      onClick={startCheckout}
-                      disabled={checkoutLoading}
-                    >
-                      {checkoutLoading ? "Redirecting…" : "Upgrade"}
+                      {checkoutLoading === "week" ? "Redirecting…" : "Get pass"}
                     </Button>
                   </div>
-                  {quota?.resetsAt && (
-                    <p className="mt-3 text-center text-xs text-neutral-400">
+
+                  <button
+                    type="button"
+                    className="mt-4 w-full text-center text-sm text-neutral-500 hover:text-neutral-800"
+                    onClick={() => setUpgradeOpen(false)}
+                  >
+                    Maybe later
+                  </button>
+                  {upgradeOpen === "exports" && quota?.resetsAt && (
+                    <p className="mt-2 text-center text-xs text-neutral-400">
                       Free exports reset on{" "}
                       {new Date(quota.resetsAt).toLocaleDateString()}
                     </p>
@@ -1769,9 +1836,13 @@ const GradientGenerator = () => {
                         {`Gradients Studio`}
                       </span>
                       {isSignedIn && quota?.plan === "free" && (
-                        <span className="truncate font-azeret text-[10px] tabular-nums leading-tight text-neutral-500">
-                          {`${quota.remaining} of 5 exports left`}
-                        </span>
+                        <button
+                          type="button"
+                          onClick={() => setUpgradeOpen("browse")}
+                          className="truncate text-left font-azeret text-[10px] tabular-nums leading-tight text-neutral-500"
+                        >
+                          {`${quota.remaining} of 5 exports left · Go Pro`}
+                        </button>
                       )}
                     </div>
                   </div>
