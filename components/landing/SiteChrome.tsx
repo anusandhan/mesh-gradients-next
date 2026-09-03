@@ -48,6 +48,8 @@ export const SiteFooter = () => (
           Mesh gradients with real grain. Made by{" "}
           <a
             href={MAKER_URL}
+            target="_blank"
+            rel="noopener noreferrer"
             className="text-neutral-900 underline-offset-2 hover:underline"
           >
             {MAKER_NAME}

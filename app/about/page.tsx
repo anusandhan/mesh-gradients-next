@@ -37,6 +37,8 @@ export default function AboutPage() {
             It is made by{" "}
             <a
               href={MAKER_URL}
+              target="_blank"
+              rel="noopener noreferrer"
               className="font-medium text-neutral-900 underline underline-offset-2"
             >
               {MAKER_NAME}
