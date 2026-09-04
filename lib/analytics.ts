@@ -9,6 +9,7 @@ export type AnalyticsEvent =
   | "landing_cta_clicked"
   | "landing_hero_interacted"
   | "landing_gallery_clicked"
+  | "wallpaper_downloaded"
   | "export_completed"
   | "export_blocked_quota"
   | "upgrade_dialog_opened"

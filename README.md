@@ -108,6 +108,16 @@ that calls back into the app.
   (Pixel dot-matrix, palette Dither) are post-processes in
   `lib/gradient-renderer.ts`; the export API validates `effect`,
   `effectSize` (8–64 px) and `effectStrength` (0–2).
+- `/wallpapers`, `/wallpapers/[slug]`, `/wallpapers/style/[style]`,
+  `/wallpapers/color/[tag]` — free-download pages for the collection in
+  `lib/gallery.ts` (tags live there too). Files are rendered on demand by
+  `/api/wallpaper/[slug]?size=desktop|mac|phone|preview&v=N` with the real
+  renderer, no sign-in, immutable and CDN-cached. Bump `WALLPAPER_VERSION`
+  in `lib/wallpapers.ts` after any renderer or palette change so the CDN
+  re-renders. Curated slugs only, so it can't bypass the export quota.
+- `/grainy-gradient`, `/blurry-gradient`, `/aurora-gradient` — SEO landing
+  pages built from `components/landing/StyleLanding.tsx`; each opens the
+  studio pre-set to that look.
 - `/about`, `/contact` — static marketing pages sharing
   `components/landing/SiteChrome.tsx`. Contact email lives in `lib/site.ts`.
 - Testimonials (`lib/testimonials.ts`) are empty on purpose; the proof

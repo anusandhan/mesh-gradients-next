@@ -16,6 +16,8 @@ export type GalleryPreset = {
   seed: number;
   // Short line for alt text and the preset page
   mood: string;
+  // Colour words for the wallpaper tag pages (/wallpapers/color/[tag])
+  tags: string[];
 };
 
 export const GALLERY: GalleryPreset[] = [
@@ -28,6 +30,7 @@ export const GALLERY: GalleryPreset[] = [
     colors: ["#FE7A04", "#FE4F1A", "#F35CBE", "#7472FC"],
     seed: 42,
     mood: "orange, pink and violet glowing on near-black",
+    tags: ["dark", "orange", "pink", "purple"],
   },
   {
     slug: "peach-fuzz",
@@ -37,6 +40,7 @@ export const GALLERY: GalleryPreset[] = [
     colors: ["#FFB68A", "#FF8E57", "#FFC099", "#F7D6E0"],
     seed: 5,
     mood: "soft peach and blush pastels",
+    tags: ["light", "peach", "pastel"],
   },
   {
     slug: "lavender-haze",
@@ -46,6 +50,7 @@ export const GALLERY: GalleryPreset[] = [
     colors: ["#A78BFA", "#7C3AED", "#F0ABFC", "#818CF8"],
     seed: 8,
     mood: "lilac, violet and periwinkle mist",
+    tags: ["light", "purple", "pastel"],
   },
   {
     slug: "deep-sea",
@@ -55,6 +60,7 @@ export const GALLERY: GalleryPreset[] = [
     colors: ["#0E5A8A", "#1B8FBF", "#22D3EE", "#0B3C5D"],
     seed: 21,
     mood: "navy, ocean blue and a teal glow",
+    tags: ["dark", "blue", "teal"],
   },
   // Stripes: flowing fibres with sheen
   {
@@ -65,6 +71,7 @@ export const GALLERY: GalleryPreset[] = [
     colors: ["#2AF598", "#009EFD", "#7B2FF7", "#00F0FF"],
     seed: 19,
     mood: "green, blue and violet northern lights",
+    tags: ["dark", "green", "blue", "purple"],
   },
   {
     slug: "solar",
@@ -74,6 +81,7 @@ export const GALLERY: GalleryPreset[] = [
     colors: ["#FFB347", "#FF6B6B", "#FFD166", "#F4A261"],
     seed: 31,
     mood: "warm sunrise amber and coral",
+    tags: ["light", "yellow", "orange"],
   },
   {
     slug: "silk-rose",
@@ -83,6 +91,7 @@ export const GALLERY: GalleryPreset[] = [
     colors: ["#F472B6", "#E11D48", "#FDA4AF", "#FB7185"],
     seed: 12,
     mood: "rose, pink and blush silk",
+    tags: ["light", "pink"],
   },
   {
     slug: "ice-fibre",
@@ -92,6 +101,7 @@ export const GALLERY: GalleryPreset[] = [
     colors: ["#38BDF8", "#67E8F9", "#818CF8", "#E0F2FE"],
     seed: 27,
     mood: "icy sky blue, cyan and white threads",
+    tags: ["light", "blue", "cyan"],
   },
   // Clouds: billowing volumes
   {
@@ -102,6 +112,7 @@ export const GALLERY: GalleryPreset[] = [
     colors: ["#7FB0F5", "#DCEBFF", "#FFFFFF"],
     seed: 3,
     mood: "white cumulus on a clear blue sky",
+    tags: ["blue", "white"],
   },
   {
     slug: "sunset",
@@ -111,6 +122,7 @@ export const GALLERY: GalleryPreset[] = [
     colors: ["#7B2A8C", "#E8506B", "#FFA24C", "#FFD6A5"],
     seed: 14,
     mood: "violet dusk into coral and gold",
+    tags: ["purple", "orange", "pink"],
   },
   {
     slug: "midnight",
@@ -120,6 +132,7 @@ export const GALLERY: GalleryPreset[] = [
     colors: ["#0F1B3D", "#1E2A5A", "#3B4A8C", "#0B0F19"],
     seed: 23,
     mood: "deep indigo night clouds",
+    tags: ["dark", "blue", "black"],
   },
   {
     slug: "storm",
@@ -129,6 +142,7 @@ export const GALLERY: GalleryPreset[] = [
     colors: ["#3E4C59", "#7B8794", "#CBD2D9", "#52606D"],
     seed: 9,
     mood: "slate and silver storm front",
+    tags: ["dark", "gray"],
   },
 ];
 
