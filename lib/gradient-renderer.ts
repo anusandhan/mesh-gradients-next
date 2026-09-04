@@ -346,6 +346,22 @@ const renderStripes = (
           (0.35 + (w.grow * (x + diag)) / (2 * diag)),
       0
     );
+  // Analytic dy/dx of waveOffset, so each fibre can be drawn as cubic
+  // Hermite segments with exact tangents instead of a polyline. That is
+  // what keeps the curves smooth: a polyline's corners survive the blur
+  // and read as kinks, especially where several fibres share the same x.
+  const waveSlope = (x: number, t: number) =>
+    waviness *
+    waves.reduce((acc, w) => {
+      const arg = w.freq * x + w.phase + t * 5;
+      const envelope = 0.35 + (w.grow * (x + diag)) / (2 * diag);
+      return (
+        acc +
+        w.amp *
+          (w.freq * Math.cos(arg) * envelope +
+            (Math.sin(arg) * w.grow) / (2 * diag))
+      );
+    }, 0);
 
   // Base bands: linear gradient perpendicular to the flow
   ctx.save();
@@ -375,14 +391,32 @@ const renderStripes = (
   // palette near their band position with a brightness push; folds are
   // broad white/black bands whose luminance modulation gives the sheet
   // its 3D drape. Same counts at every resolution for an identical look.
-  const SEGMENTS = 28;
+  // Cubic Hermite segments: y and dy/dx are exact at every knot, so the
+  // stroke is C1-smooth no matter how few knots there are.
+  const SEGMENTS = 32;
   const strokeWave = (t: number, baseY: number, fan: number) => {
+    const step = (2 * diag) / SEGMENTS;
+    const third = step / 3;
+    let x0 = -diag;
+    let y0 = baseY + waveOffset(x0, t) + fan * x0;
+    let m0 = waveSlope(x0, t) + fan;
     ctx.beginPath();
-    for (let s = 0; s <= SEGMENTS; s++) {
-      const x = -diag + (2 * diag * s) / SEGMENTS;
-      const y = baseY + waveOffset(x, t) + fan * x;
-      if (s === 0) ctx.moveTo(x, y);
-      else ctx.lineTo(x, y);
+    ctx.moveTo(x0, y0);
+    for (let s = 1; s <= SEGMENTS; s++) {
+      const x1 = -diag + step * s;
+      const y1 = baseY + waveOffset(x1, t) + fan * x1;
+      const m1 = waveSlope(x1, t) + fan;
+      ctx.bezierCurveTo(
+        x0 + third,
+        y0 + m0 * third,
+        x1 - third,
+        y1 - m1 * third,
+        x1,
+        y1
+      );
+      x0 = x1;
+      y0 = y1;
+      m0 = m1;
     }
     ctx.stroke();
   };
@@ -470,10 +504,66 @@ const renderStripes = (
   ctx.globalAlpha = 1;
 };
 
-// "Clouds": fbm noise mapped through the palette. Value noise comes from
-// seeded coarse random grids upscaled with bilinear smoothing; summing
-// octaves gives the fractal cloud field. A seeded directional ramp biases
-// the field so one side stays denser, like a real sky.
+// --- Smooth 2D noise for the clouds -----------------------------------------
+// Seeded, hash-based gradient (Perlin-style) noise with a quintic fade.
+// Evaluated per pixel in resolution-independent units, so every canvas
+// size shows the same sky and there is no upscaled grid to leave blocks.
+
+const hash2 = (x: number, y: number, seed: number) => {
+  let h = Math.imul(x, 374761393) ^ Math.imul(y, 668265263) ^ seed;
+  h = Math.imul(h ^ (h >>> 13), 1274126177);
+  return h ^ (h >>> 16);
+};
+
+// Eight unit-ish gradient directions; picking by hash bits avoids trig
+const GRAD_X = [1, -1, 0, 0, 0.7071, -0.7071, 0.7071, -0.7071];
+const GRAD_Y = [0, 0, 1, -1, 0.7071, 0.7071, -0.7071, -0.7071];
+
+const fade = (t: number) => t * t * t * (t * (t * 6 - 15) + 10);
+
+// Returns roughly [-1, 1]
+const gradientNoise = (x: number, y: number, seed: number) => {
+  const xi = Math.floor(x);
+  const yi = Math.floor(y);
+  const xf = x - xi;
+  const yf = y - yi;
+  const u = fade(xf);
+  const v = fade(yf);
+  const g00 = hash2(xi, yi, seed) & 7;
+  const g10 = hash2(xi + 1, yi, seed) & 7;
+  const g01 = hash2(xi, yi + 1, seed) & 7;
+  const g11 = hash2(xi + 1, yi + 1, seed) & 7;
+  const n00 = GRAD_X[g00] * xf + GRAD_Y[g00] * yf;
+  const n10 = GRAD_X[g10] * (xf - 1) + GRAD_Y[g10] * yf;
+  const n01 = GRAD_X[g01] * xf + GRAD_Y[g01] * (yf - 1);
+  const n11 = GRAD_X[g11] * (xf - 1) + GRAD_Y[g11] * (yf - 1);
+  const nx0 = n00 + (n10 - n00) * u;
+  const nx1 = n01 + (n11 - n01) * u;
+  return nx0 + (nx1 - nx0) * v;
+};
+
+// Fractal sum of octaves; weights are normalised by the caller
+const fbm = (
+  x: number,
+  y: number,
+  seed: number,
+  weights: number[],
+  weightSum: number
+) => {
+  let sum = 0;
+  let f = 1;
+  for (let o = 0; o < weights.length; o++) {
+    sum += weights[o] * gradientNoise(x * f, y * f, seed + o * 7919);
+    f *= 2;
+  }
+  return sum / weightSum;
+};
+
+// "Clouds": domain-warped fractal noise mapped through the palette. The
+// warp bends the field so cloud edges wisp and curl instead of blobbing;
+// a seeded directional ramp keeps one side of the sky denser, like a real
+// one. Softness is a final blur; detail scales the fine octaves; coverage
+// biases the whole mapping toward the highlight colours.
 const renderClouds = (
   ctx: CanvasRenderingContext2D,
   width: number,
@@ -482,69 +572,37 @@ const renderClouds = (
   random: () => number
 ) => {
   const stops = [opts.backgroundColor, ...opts.colors].map(hexToRgbTuple);
-  const aspect = width / height;
 
-  // The field is smooth (bilinear-upscaled grids) and gets softened after
-  // mapping, so the preview maps it through the palette at a capped size
-  // and upscales — the per-pixel loop is the only real cost here. Export
-  // (blurScale 1) maps every pixel at full resolution.
-  const MAP_PIXEL_BUDGET = 360_000;
-  const mapScale =
-    opts.blurScale < 1
-      ? Math.min(1, Math.sqrt(MAP_PIXEL_BUDGET / (width * height)))
-      : 1;
+  // The field is smooth and gets softened afterwards, so it is evaluated
+  // at a capped size and upscaled. Preview stays interactive; export maps
+  // ~2M pixels, which the blur then carries to 4K without visible loss.
+  const MAP_PIXEL_BUDGET = opts.blurScale < 1 ? 300_000 : 2_100_000;
+  const mapScale = Math.min(1, Math.sqrt(MAP_PIXEL_BUDGET / (width * height)));
   const mapW = Math.max(1, Math.round(width * mapScale));
   const mapH = Math.max(1, Math.round(height * mapScale));
-
-  // Octave value-noise: coarse seeded grids, bilinear-upscaled. Grid sizes
-  // are resolution-independent so every canvas size shows the same clouds.
-  const field = opts.createCanvas(mapW, mapH);
-  const fieldCtx = field.getContext("2d")!;
-  fieldCtx.fillStyle = "#000000";
-  fieldCtx.fillRect(0, 0, mapW, mapH);
-  fieldCtx.globalCompositeOperation = "lighter";
-  fieldCtx.imageSmoothingEnabled = true;
-  fieldCtx.imageSmoothingQuality = "high";
 
   const coverage = opts.coverage ?? 1;
   const softness = opts.softness ?? 1;
   const detail = opts.detail ?? 1;
 
-  const OCTAVES = 5;
-  // Detail scales the high-frequency octaves; the noise value gets
-  // renormalized by the total weight during mapping
-  const baseWeights = [0.55, 0.3, 0.1, 0.05, 0.025];
-  const weights = baseWeights.map((w, o) => (o < 2 ? w : w * detail));
-  const weightSum = weights.reduce((a, b) => a + b, 0);
-  for (let o = 0; o < OCTAVES; o++) {
-    const gw = Math.max(2, Math.round(3 * 2 ** o * aspect));
-    const gh = Math.max(2, 3 * 2 ** o);
-    const grid = opts.createCanvas(gw, gh);
-    const gridCtx = grid.getContext("2d")!;
-    const cells = gridCtx.createImageData(gw, gh);
-    for (let i = 0; i < cells.data.length; i += 4) {
-      const v = Math.round(random() * 255);
-      cells.data[i] = v;
-      cells.data[i + 1] = v;
-      cells.data[i + 2] = v;
-      cells.data[i + 3] = 255;
-    }
-    gridCtx.putImageData(cells, 0, 0);
-
-    fieldCtx.globalAlpha = weights[o];
-    fieldCtx.drawImage(grid, 0, 0, mapW, mapH);
-  }
-  fieldCtx.globalAlpha = 1;
-  fieldCtx.globalCompositeOperation = "source-over";
-
-  // Directional ramp for the macro composition (denser toward one corner)
+  // Seeds and composition are drawn from the RNG in a fixed order so the
+  // same seed always gives the same sky at any size
+  const seedA = Math.floor(random() * 2 ** 31);
+  const seedB = Math.floor(random() * 2 ** 31);
+  const seedC = Math.floor(random() * 2 ** 31);
   const rampAngle = random() * Math.PI * 2;
+  const offsetX = random() * 64;
+  const offsetY = random() * 64;
   const rdx = Math.cos(rampAngle);
   const rdy = Math.sin(rampAngle);
-  // Ramp is expressed in map-space; it's scale-invariant so the look is
-  // identical at any mapping size
-  const rampSpan = Math.abs(rdx * mapW) + Math.abs(rdy * mapH) || 1;
-  const rampBase = (Math.min(0, rdx * mapW) + Math.min(0, rdy * mapH)) * -1;
+
+  // Octave weights: the two coarse octaves carry the masses, the rest add
+  // texture and answer to the detail dial
+  const baseWeights = [0.6, 0.25, 0.1, 0.04, 0.015];
+  const weights = baseWeights.map((w, o) => (o < 2 ? w : w * detail));
+  const weightSum = weights.reduce((a, b) => a + b, 0);
+  const warpWeights = [0.6, 0.4];
+  const warpSum = warpWeights.reduce((a, b) => a + b, 0);
 
   // Palette lookup table: t quantized to 1/1023, well under 8-bit output
   // precision, so the loop does an index instead of an interpolation
@@ -557,44 +615,56 @@ const renderClouds = (
     lut[k * 3 + 2] = b;
   }
 
-  // Map field + ramp through the palette, per pixel
-  const fieldData = fieldCtx.getImageData(0, 0, mapW, mapH).data;
+  const field = opts.createCanvas(mapW, mapH);
+  const fieldCtx = field.getContext("2d")!;
   const out = fieldCtx.createImageData(mapW, mapH);
   const outData = out.data;
-  const noiseK = 1 / 255 / weightSum;
-  const rampK = 1 / rampSpan;
+
+  // Base frequency: a couple of cells across the height, so masses stay big
+  const FREQ = 2.2;
+  const WARP = 0.35;
+  const unit = FREQ / mapH;
+  // Ramp spans the canvas along its direction, in [0, 1]
+  const rampSpan = Math.abs(rdx * mapW) + Math.abs(rdy * mapH) || 1;
+  const rampBase = -(Math.min(0, rdx * mapW) + Math.min(0, rdy * mapH));
   const coverageBias = (coverage - 1) * 0.3;
+
   for (let y = 0; y < mapH; y++) {
+    const py = y * unit + offsetY;
     const rowRamp = rampBase + rdy * y;
     for (let x = 0; x < mapW; x++) {
+      const px = x * unit + offsetX;
+      // Domain warp: displace the lookup by a coarser noise pair
+      const qx = fbm(px + 5.2, py + 1.3, seedB, warpWeights, warpSum);
+      const qy = fbm(px + 1.7, py + 9.2, seedC, warpWeights, warpSum);
+      const n = fbm(px + WARP * qx, py + WARP * qy, seedA, weights, weightSum);
+      const ramp = (rowRamp + rdx * x) / rampSpan;
+      // Gradient noise sits mostly within ±0.6; open it up gently rather
+      // than clipping, so masses separate from sky but edges stay soft
+      let t = 0.5 + n * 0.8 + (ramp - 0.5) * 0.6 + coverageBias;
+      t = t < 0 ? 0 : t > 1 ? 1 : t;
+      // Smoothstep for a soft shoulder at both palette ends
+      t = t * t * (3 - 2 * t);
+      const k = (t * (LUT_SIZE - 1) + 0.5) | 0;
       const i = (y * mapW + x) * 4;
-      const noise = fieldData[i] * noiseK;
-      const ramp = (rowRamp + rdx * x) * rampK;
-      // Push contrast so cloud masses separate from sky and the palette
-      // extremes (deep background, bright highlights) actually appear.
-      // Coverage biases the whole mapping toward the highlight colors.
-      let t = 0.45 * (0.5 + (noise - 0.5) * 2.3) + 0.55 * ramp + coverageBias;
-      t = (t - 0.5) * 1.5 + 0.5;
-      const k = (Math.max(0, Math.min(1, t)) * (LUT_SIZE - 1) + 0.5) | 0;
       outData[i] = lut[k * 3];
       outData[i + 1] = lut[k * 3 + 1];
       outData[i + 2] = lut[k * 3 + 2];
       outData[i + 3] = 255;
     }
   }
-  // Reuse the field canvas (its pixels are already read out) as the
-  // mapped image, then scale it onto the target
+
   fieldCtx.putImageData(out, 0, 0);
   ctx.imageSmoothingEnabled = true;
   ctx.imageSmoothingQuality = "high";
   ctx.drawImage(field, 0, 0, width, height);
 
-  // Gentle soften to melt any bilinear grid artifacts into mist
+  // Softness: a light final blur turns fine texture into mist
   applyBlur(
     ctx,
     width,
     height,
-    44 * softness * (height / 2160),
+    28 * softness * (height / 2160),
     opts.createCanvas
   );
 };
