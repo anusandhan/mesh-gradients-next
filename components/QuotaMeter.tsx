@@ -2,12 +2,13 @@
 
 import { memo } from "react";
 import { ArrowRightIcon } from "@phosphor-icons/react";
+import PixelHeart from "@/components/icons/PixelHeart";
 import { cn } from "@/lib/utils";
 
-// Free-tier export meter shown next to the wordmark. Five pills stand for
-// the monthly allowance; a pill dims when an export is spent (a colour
-// transition, so a decrement reads as "one used" rather than a repaint).
-// The count is a state cue on its own; the meter is the glanceable version.
+// Free-tier export meter shown next to the wordmark. Five pixel hearts are
+// the month's "lives". Both heart states stay in the DOM; spending an export
+// crossfades the filled heart out (opacity, scale, blur) so it reads as a
+// life lost rather than a repaint. The count is the static cue.
 
 type Props = {
   remaining: number;
@@ -15,6 +16,8 @@ type Props = {
   onUpgrade: () => void;
   compact?: boolean;
 };
+
+const HEART_SIZE = 14;
 
 export const QuotaMeter = memo(function QuotaMeter({
   remaining,
@@ -24,30 +27,48 @@ export const QuotaMeter = memo(function QuotaMeter({
 }: Props) {
   const left = Math.max(0, Math.min(total, remaining));
   const empty = left === 0;
-  // The compact variant sits in the mobile bottom bar next to three buttons
+  // Short on purpose: the hearts say "exports", the aria-label says it all.
+  // The compact variant sits in the mobile bottom bar next to three buttons.
   const label = empty
-    ? "No free exports left"
+    ? "No exports left"
     : compact
-      ? `${left} of ${total} left`
-      : `${left} of ${total} exports left`;
+      ? `${left} left`
+      : `${left} of ${total} left`;
 
   return (
     <div className="flex items-center justify-between gap-3">
       <div className="flex min-w-0 items-center gap-2">
         <div
-          className="flex shrink-0 items-center gap-[3px]"
+          className="flex shrink-0 items-center gap-0.5"
           role="img"
           aria-label={`${left} of ${total} free exports left this month`}
         >
-          {Array.from({ length: total }, (_, i) => (
-            <span
-              key={i}
-              className={cn(
-                "h-1.5 w-2 rounded-full transition-colors duration-200 ease-out",
-                i < left ? "bg-neutral-800" : "bg-neutral-200"
-              )}
-            />
-          ))}
+          {Array.from({ length: total }, (_, i) => {
+            const alive = i < left;
+            return (
+              <span
+                key={i}
+                className="relative block"
+                style={{ width: HEART_SIZE, height: HEART_SIZE * (536 / 583) }}
+              >
+                <PixelHeart
+                  filled={false}
+                  size={HEART_SIZE}
+                  className="absolute inset-0"
+                />
+                <PixelHeart
+                  filled
+                  size={HEART_SIZE}
+                  className={cn(
+                    "absolute inset-0 transition-[opacity,transform,filter] duration-300 [transition-timing-function:cubic-bezier(0.2,0,0,1)]",
+                    alive
+                      ? "scale-100 opacity-100 blur-0"
+                      : "scale-[0.25] opacity-0 blur-[4px]"
+                  )}
+                />
+              </span>
+            );
+          })}
         </div>
         <span
           className={cn(
