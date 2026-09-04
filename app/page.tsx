@@ -75,7 +75,7 @@ const faqs = [
   },
   {
     q: "What resolution and formats do I get?",
-    a: "Landscape exports are 3840 pixels wide, portrait and square are 2160 pixels tall. Files are JPEG by default, or PNG if you prefer. Every plan exports at the same resolution.",
+    a: "Landscape exports are 3840 pixels wide, portrait and square are 2160 pixels tall. Files are high-quality JPEG. Every plan exports at the same resolution.",
   },
   {
     q: "Is Pro a subscription?",

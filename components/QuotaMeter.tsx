@@ -1,7 +1,6 @@
 "use client";
 
 import { memo } from "react";
-import { ArrowRightIcon } from "@phosphor-icons/react";
 import PixelHeart from "@/components/icons/PixelHeart";
 import { cn } from "@/lib/utils";
 
@@ -9,7 +8,7 @@ import { cn } from "@/lib/utils";
 // the month's "lives" and the whole row is the upgrade control. Both heart
 // states stay in the DOM; spending an export crossfades the filled heart
 // out (opacity, scale, blur) so it reads as a life lost. The count is the
-// static cue; the arrow and hover tint say "this goes somewhere".
+// static cue; the hover tint says "this goes somewhere".
 
 type Props = {
   remaining: number;
@@ -47,13 +46,12 @@ export const QuotaMeter = memo(function QuotaMeter({
       className={cn(
         // Negative margins keep the content aligned with the column while
         // the hover tint and hit area extend past it
-        "group -mx-1.5 flex w-[calc(100%+0.75rem)] items-center justify-between gap-3 rounded-md px-1.5 py-1 text-left",
+        "group -mx-1.5 flex w-[calc(100%+0.75rem)] items-center justify-center gap-2 rounded-md px-1.5 py-1",
         "transition-[background-color,scale] duration-150 ease-out hover:bg-neutral-100 active:scale-[0.98]",
         "focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-neutral-900"
       )}
     >
-      <span className="flex min-w-0 items-center gap-2">
-        <span className="flex shrink-0 items-center gap-0.5" aria-hidden="true">
+      <span className="flex shrink-0 items-center gap-0.5" aria-hidden="true">
           {Array.from({ length: total }, (_, i) => {
             const alive = i < left;
             return (
@@ -91,15 +89,6 @@ export const QuotaMeter = memo(function QuotaMeter({
         >
           {labelFor(left, compact)}
         </span>
-      </span>
-      <ArrowRightIcon
-        weight="bold"
-        aria-hidden="true"
-        className={cn(
-          "size-3 shrink-0 transition-[transform,color] duration-150 ease-out group-hover:translate-x-0.5 group-hover:text-neutral-900",
-          empty ? "text-neutral-900" : "text-neutral-400"
-        )}
-      />
     </button>
   );
 });

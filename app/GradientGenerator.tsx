@@ -1788,11 +1788,11 @@ const GradientGenerator = () => {
                             className="w-4 h-4 mr-2"
                           />
                         )}
-                        Download
+                        Export
                       </Button>
                     </TooltipTrigger>
                     <TooltipContent>
-                      <p>Download as JPG image</p>
+                      <p>Export a 4K JPG</p>
                     </TooltipContent>
                   </Tooltip>
                 </div>
@@ -1912,7 +1912,7 @@ const GradientGenerator = () => {
                     onClick={downloadCanvasAsImage}
                     disabled={isExporting}
                     className="h-9 w-9 p-0"
-                    aria-label="Download image"
+                    aria-label="Export image"
                   >
                     {isExporting ? (
                       <Spinner size={16} />
