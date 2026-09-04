@@ -104,7 +104,10 @@ that calls back into the app.
 - `/app` — the studio (`app/app/page.tsx`, client-only). Stripe's success
   and cancel URLs point here. Accepts deep links built by `buildStudioUrl`
   in `lib/gallery.ts` (`?style=&bg=&colors=&seed=&noise=&blur=&aspect=&name=`)
-  and `?plan=year|week` to open the upgrade dialog on arrival.
+  and `?plan=year|week` to open the upgrade dialog on arrival. Finishes
+  (Pixel dot-matrix, palette Dither) are post-processes in
+  `lib/gradient-renderer.ts`; the export API validates `effect`,
+  `effectSize` (8–64 px) and `effectStrength` (0–2).
 - `/about`, `/contact` — static marketing pages sharing
   `components/landing/SiteChrome.tsx`. Contact email lives in `lib/site.ts`.
 - Testimonials (`lib/testimonials.ts`) are empty on purpose; the proof

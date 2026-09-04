@@ -10,6 +10,9 @@ import {
   CirclesThreeIcon,
   WaveSineIcon,
   CloudIcon,
+  ProhibitIcon,
+  GridFourIcon,
+  HashIcon,
 } from "@phosphor-icons/react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
@@ -26,7 +29,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { COLOR_FORMATS, type ColorFormat } from "@/lib/color-format";
-import type { GradientStyle } from "@/lib/gradient-renderer";
+import type { GradientEffect, GradientStyle } from "@/lib/gradient-renderer";
 
 // Photos-app style edit mode for small screens. The preview stays visible
 // above; this panel replaces the bottom bar with a tab strip (Adjust, Colors,
@@ -65,10 +68,16 @@ export type EditAspectRatio = {
 };
 
 const TABS: { key: EditTab; label: string; icon: Icon }[] = [
-  { key: "adjust", label: "Effects", icon: SlidersIcon },
+  { key: "adjust", label: "Controls", icon: SlidersIcon },
   { key: "colors", label: "Colors", icon: SwatchesIcon },
   { key: "style", label: "Style", icon: StackIcon },
   { key: "size", label: "Size", icon: CropIcon },
+];
+
+const EFFECTS: { value: GradientEffect; label: string; icon: Icon }[] = [
+  { value: "none", label: "None", icon: ProhibitIcon },
+  { value: "pixel", label: "Pixel", icon: GridFourIcon },
+  { value: "dither", label: "Dither", icon: HashIcon },
 ];
 
 const STYLES: { value: GradientStyle; label: string; icon: Icon }[] = [
@@ -129,6 +138,8 @@ type MobileEditPanelProps = {
 
   style: GradientStyle;
   onStyleChange: (style: GradientStyle) => void;
+  effect: GradientEffect;
+  onEffectChange: (effect: GradientEffect) => void;
 
   aspectRatio: string;
   aspectRatioOptions: EditAspectRatio[];
@@ -152,6 +163,8 @@ export function MobileEditPanel({
   onSelectPreset,
   style,
   onStyleChange,
+  effect,
+  onEffectChange,
   aspectRatio,
   aspectRatioOptions,
   onAspectRatioChange,
@@ -312,7 +325,8 @@ export function MobileEditPanel({
             )}
 
             {tab === "style" && (
-              <div className="flex h-full items-center justify-center gap-3 px-5">
+              <div className="flex h-full flex-col justify-center gap-3 px-5">
+              <div className="flex items-center justify-center gap-3">
                 {STYLES.map((s) => {
                   const selected = s.value === style;
                   return (
@@ -333,6 +347,30 @@ export function MobileEditPanel({
                     </button>
                   );
                 })}
+              </div>
+              {/* Finish: none / pixel / dither. Its dials live in Controls. */}
+              <div className="flex items-center justify-center gap-2">
+                {EFFECTS.map((e) => {
+                  const selected = e.value === effect;
+                  return (
+                    <button
+                      key={e.value}
+                      type="button"
+                      aria-pressed={selected}
+                      onClick={() => onEffectChange(e.value)}
+                      className={cn(
+                        "flex h-9 flex-1 items-center justify-center gap-1.5 rounded-lg border text-xs font-medium transition-[color,background-color,border-color,transform] duration-150 active:scale-[0.96]",
+                        selected
+                          ? "border-neutral-900 bg-neutral-900 text-white"
+                          : "border-neutral-200 bg-white text-neutral-600"
+                      )}
+                    >
+                      <e.icon size={16} weight={selected ? "fill" : "regular"} />
+                      {e.label}
+                    </button>
+                  );
+                })}
+              </div>
               </div>
             )}
 

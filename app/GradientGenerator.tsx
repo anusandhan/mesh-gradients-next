@@ -20,8 +20,9 @@ import {
   formatPrice,
   type PlanId,
 } from "@/lib/plans";
+import type { Icon } from "@phosphor-icons/react";
 import { track } from "@/lib/analytics";
-import { GALLERY, STYLE_LABELS, parseStudioParams } from "@/lib/gallery";
+import { GALLERY, parseStudioParams } from "@/lib/gallery";
 import { FREE_EXPORTS_PER_MONTH } from "@/lib/site";
 import { QuotaMeter } from "@/components/QuotaMeter";
 import Spinner from "@/components/ui/spinner";
@@ -68,6 +69,10 @@ import {
   SunDimIcon,
   FeatherIcon,
   SparkleIcon,
+  ProhibitIcon,
+  GridFourIcon,
+  HashIcon,
+  ArrowsOutSimpleIcon,
 } from "@phosphor-icons/react";
 import { RulerSlider } from "@/components/mobile/RulerSlider";
 import {
@@ -99,6 +104,9 @@ import { ChannelNumberInput } from "@/components/ui/channel-color-picker";
 import {
   renderGradient,
   normalizeHexColor,
+  EFFECT_SIZE_DEFAULT,
+  EFFECT_STRENGTH_DEFAULT,
+  type GradientEffect,
   type GradientStyle,
 } from "@/lib/gradient-renderer";
 import { SignInButton, UserButton, useAuth, useClerk } from "@clerk/nextjs";
@@ -285,6 +293,57 @@ const presetGradients: PresetGradient[] = [
 const PALETTE_GROUP_LABEL =
   "px-2 py-1.5 text-[11px] font-medium tracking-wide text-neutral-500";
 
+// The untouched starting palette. Switching style while it is still in
+// place (or while a collection palette is selected) swaps in the new
+// style's first collection palette; custom colours and saved presets stay.
+const DEFAULT_BACKGROUND = "#f8fafc";
+const DEFAULT_COLORS = ["#3b82f6", "#8b5cf6", "#ec4899", "#f59e0b"];
+
+const EFFECTS: { value: GradientEffect; label: string; icon: Icon }[] = [
+  { value: "none", label: "None", icon: ProhibitIcon },
+  { value: "pixel", label: "Pixel", icon: GridFourIcon },
+  { value: "dither", label: "Dither", icon: HashIcon },
+];
+
+// Finish picker: none, dot-matrix pixels, palette dither
+const EffectSection = memo(function EffectSection({
+  effect,
+  onChange,
+  children,
+}: {
+  effect: GradientEffect;
+  onChange: (effect: GradientEffect) => void;
+  children?: React.ReactNode;
+}) {
+  return (
+    <div className="select-none space-y-4">
+      <div className="space-y-1">
+        <h3 className="flex items-center gap-2 text-base font-medium text-neutral-800">
+          <SparkleIcon className="w-6 h-6" />
+          Effects
+        </h3>
+      </div>
+      <ToggleGroup
+        type="single"
+        value={effect}
+        onValueChange={(value) => {
+          if (value) onChange(value as GradientEffect);
+        }}
+        aria-label="Finish"
+        className="w-full"
+      >
+        {EFFECTS.map((item) => (
+          <ToggleGroupItem key={item.value} value={item.value} aria-label={item.label}>
+            <item.icon size={16} weight="fill" />
+            {item.label}
+          </ToggleGroupItem>
+        ))}
+      </ToggleGroup>
+      {children}
+    </div>
+  );
+});
+
 // Values must stay in sync with STUDIO_ASPECT_RATIOS (lib/gallery.ts), which
 // the export API validates against.
 const aspectRatioOptions = [
@@ -457,6 +516,7 @@ const ColorsSection = memo(function ColorsSection({
 });
 
 const PresetsSection = memo(function PresetsSection({
+  gradientStyle,
   selectedPresetValue,
   presetSelectOpen,
   onPresetSelectOpenChange,
@@ -470,6 +530,7 @@ const PresetsSection = memo(function PresetsSection({
   presetSelected,
   onManagePresets,
 }: {
+  gradientStyle: GradientStyle;
   selectedPresetValue: string;
   presetSelectOpen: boolean;
   onPresetSelectOpenChange: (open: boolean) => void;
@@ -536,31 +597,28 @@ const PresetsSection = memo(function PresetsSection({
                   <SelectLabel className={PALETTE_GROUP_LABEL}>
                     COLLECTION
                   </SelectLabel>
-                  {collectionPresets.map((preset) => (
-                    <SelectItem
-                      key={preset.name}
-                      value={preset.name}
-                      indicator="dot"
-                    >
-                      <div className="flex items-center gap-2">
-                        <span
-                          aria-hidden
-                          className="h-4 w-4 shrink-0 rounded-full border border-black/10"
-                          style={{
-                            background: `linear-gradient(135deg, ${preset.colors.join(", ")})`,
-                          }}
-                        />
-                        <span className="max-w-[10rem] truncate">
-                          {preset.name}
-                        </span>
-                        {preset.style && (
-                          <span className="ml-auto pl-3 text-[11px] text-neutral-400">
-                            {STYLE_LABELS[preset.style]}
+                  {collectionPresets
+                    .filter((preset) => preset.style === gradientStyle)
+                    .map((preset) => (
+                      <SelectItem
+                        key={preset.name}
+                        value={preset.name}
+                        indicator="dot"
+                      >
+                        <div className="flex items-center gap-2">
+                          <span
+                            aria-hidden
+                            className="h-4 w-4 shrink-0 rounded-full border border-black/10"
+                            style={{
+                              background: `linear-gradient(135deg, ${preset.colors.join(", ")})`,
+                            }}
+                          />
+                          <span className="max-w-[10rem] truncate">
+                            {preset.name}
                           </span>
-                        )}
-                      </div>
-                    </SelectItem>
-                  ))}
+                        </div>
+                      </SelectItem>
+                    ))}
                 </SelectGroup>
                 <SelectSeparator />
                 <SelectGroup>
@@ -828,12 +886,12 @@ const PreviewBadges = memo(function PreviewBadges({
 const GradientGenerator = () => {
   const { isLoaded, isSignedIn } = useAuth();
   const { openSignIn } = useClerk();
-  const [backgroundColor, setBackgroundColor] = useState("#f8fafc");
-  const [colorInputs, setColorInputs] = useState([
-    "#3b82f6",
-    "#8b5cf6",
-    "#ec4899",
-    "#f59e0b",
+  const [backgroundColor, setBackgroundColor] = useState(DEFAULT_BACKGROUND);
+  const [colorInputs, setColorInputs] = useState(DEFAULT_COLORS);
+  const [effect, setEffect] = useState<GradientEffect>("none");
+  const [effectSize, setEffectSize] = useState([EFFECT_SIZE_DEFAULT]);
+  const [effectStrength, setEffectStrength] = useState([
+    EFFECT_STRENGTH_DEFAULT,
   ]);
   const [blurAmount, setBlurAmount] = useState([700]);
   const [noiseAmount, setNoiseAmount] = useState([0.2]);
@@ -871,6 +929,9 @@ const GradientGenerator = () => {
     coverage: number[];
     softness: number[];
     detail: number[];
+    effect: GradientEffect;
+    effectSize: number[];
+    effectStrength: number[];
     aspectRatio: string;
     gradientName: string;
   } | null>(null);
@@ -1095,6 +1156,9 @@ const GradientGenerator = () => {
       coverage: coverage[0],
       softness: softness[0],
       detail: detail[0],
+      effect,
+      effectSize: effectSize[0],
+      effectStrength: effectStrength[0],
       createCanvas: domCreateCanvas,
     }),
     [
@@ -1113,6 +1177,9 @@ const GradientGenerator = () => {
       coverage,
       softness,
       detail,
+      effect,
+      effectSize,
+      effectStrength,
     ]
   );
 
@@ -1190,6 +1257,9 @@ const GradientGenerator = () => {
           coverage: coverage[0],
           softness: softness[0],
           detail: detail[0],
+          effect,
+          effectSize: effectSize[0],
+          effectStrength: effectStrength[0],
           format: "jpeg",
         }),
       });
@@ -1344,17 +1414,51 @@ const GradientGenerator = () => {
 
   const openManagePresets = useCallback(() => setManagePresetsOpen(true), []);
 
+  // Style switch: a saved preset, an inspired palette or hand-picked
+  // colours survive; the untouched default or a collection palette (which
+  // belongs to the old style) gives way to the new style's first palette.
+  const handleStyleChange = useCallback(
+    (style: GradientStyle) => {
+      setGradientStyle(style);
+      if (activeUserPreset) return;
+      const bg = normalizeHexColor(backgroundColor);
+      const colors = colorInputs.map(normalizeHexColor);
+      const matches = (p: { background: string; colors: string[] }) =>
+        paletteMatchesPreset(
+          {
+            background: normalizeHexColor(p.background),
+            colors: p.colors.map(normalizeHexColor),
+          },
+          bg,
+          colors
+        );
+      const replaceable =
+        matches({ background: DEFAULT_BACKGROUND, colors: DEFAULT_COLORS }) ||
+        collectionPresets.some(matches);
+      if (!replaceable) return;
+      const next = collectionPresets.find((p) => p.style === style);
+      if (!next) return;
+      setBackgroundColor(next.background);
+      setColorInputs(next.colors);
+      setGradientName(next.name);
+      if (next.seed !== undefined) setSeed(next.seed);
+    },
+    [activeUserPreset, backgroundColor, colorInputs]
+  );
+
   const mobilePresets = [
     ...userPresets.map((p) => ({
       value: `user:${p.id}`,
       name: p.name,
       swatches: p.colors,
     })),
-    ...presetGradients.map((p) =>
-      p.icon
-        ? { value: p.name, name: p.name, icon: p.icon }
-        : { value: p.name, name: p.name, swatches: p.colors }
-    ),
+    ...presetGradients
+      .filter((p) => p.group !== "collection" || p.style === gradientStyle)
+      .map((p) =>
+        p.icon
+          ? { value: p.name, name: p.name, icon: p.icon }
+          : { value: p.name, name: p.name, swatches: p.colors }
+      ),
   ];
 
   // Dials for the mobile Adjust tab; mirrors the sidebar's Effects section
@@ -1480,6 +1584,33 @@ const GradientGenerator = () => {
     ),
   ];
 
+  // Finish dials, shown only while a finish is active. Cell size is in
+  // export pixels; the second dial means dot size for Pixel and symbol
+  // density for Dither.
+  const effectDials: Adjustment[] =
+    effect === "none"
+      ? []
+      : [
+          dial(
+            "effectSize",
+            "Cell size",
+            "Cell",
+            ArrowsOutSimpleIcon,
+            [effectSize, setEffectSize],
+            { min: 8, max: 64, step: 2, defaultValue: EFFECT_SIZE_DEFAULT },
+            (v) => `${v}px`
+          ),
+          dial(
+            "effectStrength",
+            effect === "pixel" ? "Dot size" : "Density",
+            effect === "pixel" ? "Dot" : "Density",
+            effect === "pixel" ? GridFourIcon : HashIcon,
+            [effectStrength, setEffectStrength],
+            { min: 0.2, max: 2, step: 0.05, defaultValue: EFFECT_STRENGTH_DEFAULT },
+            percent
+          ),
+        ];
+
   const openEditMode = () => {
     editSnapshotRef.current = {
       backgroundColor,
@@ -1495,6 +1626,9 @@ const GradientGenerator = () => {
       coverage,
       softness,
       detail,
+      effect,
+      effectSize,
+      effectStrength,
       aspectRatio,
       gradientName,
     };
@@ -1517,6 +1651,9 @@ const GradientGenerator = () => {
       setCoverage(s.coverage);
       setSoftness(s.softness);
       setDetail(s.detail);
+      setEffect(s.effect);
+      setEffectSize(s.effectSize);
+      setEffectStrength(s.effectStrength);
       setAspectRatio(s.aspectRatio);
       setGradientName(s.gradientName);
     }
@@ -1761,7 +1898,7 @@ const GradientGenerator = () => {
               <div className="flex-1 overflow-y-auto p-6 space-y-10">
                 <StyleSection
                   gradientStyle={gradientStyle}
-                  onChange={setGradientStyle}
+                  onChange={handleStyleChange}
                 />
 
                 <ColorsSection
@@ -1774,6 +1911,7 @@ const GradientGenerator = () => {
                 />
 
                 <PresetsSection
+                  gradientStyle={gradientStyle}
                   selectedPresetValue={selectedPresetValue}
                   presetSelectOpen={presetSelectOpen}
                   onPresetSelectOpenChange={setPresetSelectOpen}
@@ -1788,12 +1926,48 @@ const GradientGenerator = () => {
                   onManagePresets={openManagePresets}
                 />
 
-                {/* Effect Controls */}
+                {/* Finish: none / pixel / dither, plus its dials */}
+                <EffectSection effect={effect} onChange={setEffect}>
+                  {effectDials.length > 0 && (
+                    <div className="space-y-5">
+                      {effectDials.map((a) => (
+                        <div key={a.key} className="space-y-1">
+                          <div className="flex items-baseline justify-between">
+                            <Label className="text-sm">{a.label}</Label>
+                            <button
+                              type="button"
+                              disabled={a.value === a.defaultValue}
+                              onClick={() => a.onChange(a.defaultValue)}
+                              aria-label={`Reset ${a.label}`}
+                              title="Reset to default"
+                              className="rounded font-azeret text-xs tabular-nums text-neutral-800 transition-colors hover:text-neutral-950 disabled:text-muted-foreground"
+                            >
+                              {a.format(a.value)}
+                            </button>
+                          </div>
+                          <RulerSlider
+                            value={a.value}
+                            min={a.min}
+                            max={a.max}
+                            step={a.step}
+                            defaultValue={a.defaultValue}
+                            onChange={a.onChange}
+                            aria-label={a.label}
+                            aria-valuetext={a.format(a.value)}
+                            className="h-10"
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </EffectSection>
+
+                {/* Controls: blur, grain, contrast, saturation + style dials */}
                 <div className="select-none space-y-4">
                   <div className="space-y-2">
                     <h3 className="flex items-center gap-2 text-base font-medium text-neutral-800">
                       <SlidersIcon className="w-6 h-6" />
-                      Effects
+                      Controls
                     </h3>
                   </div>
 
@@ -1929,7 +2103,9 @@ const GradientGenerator = () => {
                   <MobileEditPanel
                     tab={editTab}
                     onTabChange={setEditTab}
-                    adjustments={adjustments}
+                    adjustments={[...effectDials, ...adjustments]}
+                    effect={effect}
+                    onEffectChange={setEffect}
                     activeAdjustmentKey={activeAdjustmentKey}
                     onActiveAdjustmentChange={setActiveAdjustmentKey}
                     backgroundColor={normalizeHexColor(backgroundColor)}
@@ -1942,7 +2118,7 @@ const GradientGenerator = () => {
                     selectedPreset={selectedPresetValue}
                     onSelectPreset={selectPreset}
                     style={gradientStyle}
-                    onStyleChange={setGradientStyle}
+                    onStyleChange={handleStyleChange}
                     aspectRatio={aspectRatio}
                     aspectRatioOptions={aspectRatioOptions}
                     onAspectRatioChange={setAspectRatio}

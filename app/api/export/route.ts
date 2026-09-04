@@ -40,6 +40,9 @@ const bodySchema = z.object({
   coverage: z.number().min(0).max(2).default(1),
   softness: z.number().min(0).max(2).default(1),
   detail: z.number().min(0).max(2).default(1),
+  effect: z.enum(["none", "pixel", "dither"]).default("none"),
+  effectSize: z.number().min(8).max(64).default(24),
+  effectStrength: z.number().min(0).max(2).default(1),
   // JPEG default: the grain makes PNGs huge (~16MB at 4K) and slow to
   // encode/transfer; JPEG at q92 is visually identical here and ~8x smaller
   format: z.enum(["jpeg", "png"]).default("jpeg"),
@@ -123,6 +126,9 @@ export async function POST(request: NextRequest) {
     coverage: input.coverage,
     softness: input.softness,
     detail: input.detail,
+    effect: input.effect,
+    effectSize: input.effectSize,
+    effectStrength: input.effectStrength,
     blurScale: 1,
     createCanvas: nodeCreateCanvas,
   });

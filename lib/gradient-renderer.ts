@@ -239,6 +239,10 @@ const applyAdjustments = (
 };
 
 export type GradientStyle = "blobs" | "stripes" | "clouds";
+// Post-process finishes applied after colour and grain
+export type GradientEffect = "none" | "pixel" | "dither";
+export const EFFECT_SIZE_DEFAULT = 24; // cell size in export pixels
+export const EFFECT_STRENGTH_DEFAULT = 1;
 
 export type RenderOptions = {
   backgroundColor: string;
@@ -260,6 +264,12 @@ export type RenderOptions = {
   coverage?: number;
   softness?: number;
   detail?: number;
+  // Finish: none, dot-matrix pixels, or palette-quantised symbol dither.
+  // effectSize is the grid cell in export pixels (scaled by blurScale);
+  // effectStrength is a 0..2 multiplier (dot size / symbol density).
+  effect?: GradientEffect;
+  effectSize?: number;
+  effectStrength?: number;
 };
 
 const hexToRgbTuple = (hex: string): [number, number, number] => {
@@ -669,6 +679,168 @@ const renderClouds = (
   );
 };
 
+// --- Finishes -----------------------------------------------------------------
+// Both finishes read the rendered image once, then repaint it on a grid.
+// Cells are sampled at their centre: the underlying gradient is smooth, so
+// a single sample is as good as an average and far cheaper.
+
+const BAYER_4 = [
+  [0, 8, 2, 10],
+  [12, 4, 14, 6],
+  [3, 11, 1, 9],
+  [15, 7, 13, 5],
+];
+
+const cellHash = (x: number, y: number) => {
+  let h = Math.imul(x, 73856093) ^ Math.imul(y, 19349663);
+  h = Math.imul(h ^ (h >>> 13), 1274126177);
+  return (h ^ (h >>> 16)) >>> 0;
+};
+
+// "Pixel": a dot matrix. Each cell becomes a square dot in the colour the
+// gradient had there, on the background colour, like a status-page grid.
+const applyPixel = (
+  ctx: CanvasRenderingContext2D,
+  width: number,
+  height: number,
+  cell: number,
+  strength: number,
+  background: string
+) => {
+  const src = ctx.getImageData(0, 0, width, height).data;
+  ctx.fillStyle = normalizeHexColor(background);
+  ctx.fillRect(0, 0, width, height);
+  // Dot spans 0..84% of the cell across the strength range; the rest is gutter
+  const dot = Math.max(1, cell * 0.42 * strength);
+  const inset = (cell - dot) / 2;
+  const cols = Math.ceil(width / cell);
+  const rows = Math.ceil(height / cell);
+  for (let cy = 0; cy < rows; cy++) {
+    const sy = Math.min(height - 1, Math.floor(cy * cell + cell / 2));
+    for (let cx = 0; cx < cols; cx++) {
+      const sx = Math.min(width - 1, Math.floor(cx * cell + cell / 2));
+      const i = (sy * width + sx) * 4;
+      ctx.fillStyle = `rgb(${src[i]},${src[i + 1]},${src[i + 2]})`;
+      ctx.fillRect(cx * cell + inset, cy * cell + inset, dot, dot);
+    }
+  }
+};
+
+// "Dither": every cell snaps to its nearest palette colour; where the
+// gradient sits between two palette colours, an ordered (Bayer) threshold
+// decides whether the cell also carries a symbol in the second colour, so
+// transitions turn into fields of bars, crosses, rings and dots.
+const applyDither = (
+  ctx: CanvasRenderingContext2D,
+  width: number,
+  height: number,
+  cell: number,
+  strength: number,
+  palette: [number, number, number][]
+) => {
+  const src = ctx.getImageData(0, 0, width, height).data;
+  const cols = Math.ceil(width / cell);
+  const rows = Math.ceil(height / cell);
+  const css = palette.map((p) => `rgb(${p[0]},${p[1]},${p[2]})`);
+  // Fill with the background colour, then only paint cells that differ
+  ctx.fillStyle = css[0];
+  ctx.fillRect(0, 0, width, height);
+
+  const bar = Math.max(1, cell * 0.18);
+  const arm = cell * 0.6;
+  const ring = cell * 0.26;
+
+  for (let cy = 0; cy < rows; cy++) {
+    const sy = Math.min(height - 1, Math.floor(cy * cell + cell / 2));
+    for (let cx = 0; cx < cols; cx++) {
+      const sx = Math.min(width - 1, Math.floor(cx * cell + cell / 2));
+      const i = (sy * width + sx) * 4;
+      const r = src[i];
+      const g = src[i + 1];
+      const b = src[i + 2];
+      // Two nearest palette colours
+      let best = 0;
+      let bestD = Infinity;
+      let second = 0;
+      let secondD = Infinity;
+      for (let p = 0; p < palette.length; p++) {
+        const dr = palette[p][0] - r;
+        const dg = palette[p][1] - g;
+        const db = palette[p][2] - b;
+        const d = dr * dr + dg * dg + db * db;
+        if (d < bestD) {
+          second = best;
+          secondD = bestD;
+          best = p;
+          bestD = d;
+        } else if (d < secondD) {
+          second = p;
+          secondD = d;
+        }
+      }
+      const x0 = cx * cell;
+      const y0 = cy * cell;
+      if (best !== 0) {
+        ctx.fillStyle = css[best];
+        ctx.fillRect(x0, y0, cell + 0.5, cell + 0.5);
+      }
+      if (palette.length < 2) continue;
+      // How far this cell sits toward the second colour, 0..0.5
+      const mix = Math.sqrt(bestD) / (Math.sqrt(bestD) + Math.sqrt(secondD) + 1e-6);
+      const threshold = (BAYER_4[cy & 3][cx & 3] + 0.5) / 16;
+      if (mix * 2 * strength <= threshold) continue;
+
+      ctx.fillStyle = css[second];
+      const midX = x0 + cell / 2;
+      const midY = y0 + cell / 2;
+      switch (cellHash(cx, cy) & 3) {
+        case 0: // bar
+          ctx.fillRect(midX - bar / 2, midY - arm / 2, bar, arm);
+          break;
+        case 1: // cross
+          ctx.fillRect(midX - bar / 2, midY - arm / 2, bar, arm);
+          ctx.fillRect(midX - arm / 2, midY - bar / 2, arm, bar);
+          break;
+        case 2: // ring
+          ctx.beginPath();
+          ctx.arc(midX, midY, ring, 0, Math.PI * 2);
+          ctx.arc(midX, midY, Math.max(0.5, ring - bar), 0, Math.PI * 2, true);
+          ctx.fill();
+          break;
+        default: // dot
+          ctx.fillRect(midX - bar, midY - bar, bar * 2, bar * 2);
+      }
+    }
+  }
+};
+
+const applyEffect = (
+  ctx: CanvasRenderingContext2D,
+  width: number,
+  height: number,
+  opts: RenderOptions
+) => {
+  const effect = opts.effect ?? "none";
+  if (effect === "none") return;
+  const cell = Math.max(
+    2,
+    Math.round((opts.effectSize ?? EFFECT_SIZE_DEFAULT) * opts.blurScale)
+  );
+  const strength = opts.effectStrength ?? EFFECT_STRENGTH_DEFAULT;
+  if (effect === "pixel") {
+    applyPixel(ctx, width, height, cell, strength, opts.backgroundColor);
+  } else {
+    applyDither(
+      ctx,
+      width,
+      height,
+      cell,
+      strength,
+      [opts.backgroundColor, ...opts.colors].map(hexToRgbTuple)
+    );
+  }
+};
+
 export const renderGradient = (
   ctx: CanvasRenderingContext2D,
   width: number,
@@ -692,6 +864,7 @@ export const renderGradient = (
       opts.saturation,
       opts.noise
     );
+    applyEffect(ctx, width, height, opts);
     return;
   }
 
@@ -763,4 +936,5 @@ export const renderGradient = (
     opts.saturation,
     opts.noise
   );
+  applyEffect(ctx, width, height, opts);
 };
