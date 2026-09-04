@@ -1571,9 +1571,17 @@ const GradientGenerator = () => {
                         : "Unlimited 4K exports and 50 saved palettes. Pay once, no subscription."}
                   </p>
 
-                  {/* Headline pass */}
-                  <div className="mt-4 rounded-xl border-2 border-neutral-900 p-4">
-                    <div className="flex items-baseline justify-between gap-2">
+                  {/* Headline pass: same ring as the landing-page Pro card
+                      (8px radial stroke + 8px halo, concentric radii) */}
+                  <div
+                    className="mt-6 rounded-[20px] p-2 shadow-[0_0_0_8px_#F4F4F4]"
+                    style={{
+                      background:
+                        "radial-gradient(ellipse farthest-corner at center, #8487FF 0%, #F6CCFD 33%, #C3EFED 66%, #8487FF 100%)",
+                    }}
+                  >
+                  <div className="rounded-xl bg-white p-4">
+                    <div className="flex items-center justify-between gap-2">
                       <div className="flex items-baseline gap-1">
                         <span className="text-2xl font-semibold text-neutral-900">
                           {formatPrice(PLANS.year)}
@@ -1582,9 +1590,13 @@ const GradientGenerator = () => {
                           {`/ ${PLANS.year.durationLabel}`}
                         </span>
                       </div>
-                      <span className="rounded-full bg-neutral-900 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-white">
-                        Best value
-                      </span>
+                      <Image
+                        src="/best-value-badge.png"
+                        alt="Best value"
+                        width={1449}
+                        height={423}
+                        className="h-6 w-auto"
+                      />
                     </div>
                     <ul className="mt-2 space-y-1 text-sm text-neutral-600">
                       <li>Unlimited 4K exports</li>
@@ -1601,9 +1613,10 @@ const GradientGenerator = () => {
                         : `Get ${PLANS.year.name}`}
                     </Button>
                   </div>
+                  </div>
 
-                  {/* Burst pass for one-project users */}
-                  <div className="mt-2 flex items-center justify-between gap-3 rounded-xl border border-neutral-200 px-4 py-3">
+                  {/* Burst pass for one-project users (mt clears the halo) */}
+                  <div className="mt-6 flex items-center justify-between gap-3 rounded-xl border border-neutral-200 px-4 py-3">
                     <div className="min-w-0">
                       <div className="flex items-baseline gap-1">
                         <span className="text-base font-semibold text-neutral-900">
