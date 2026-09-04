@@ -412,7 +412,7 @@ export default function LandingPage() {
               title="Pricing"
               lead="Pay once for the time you need. Nothing auto-renews, and commercial use is included on every plan."
             />
-            <div className="mt-8 grid gap-4 md:grid-cols-3">
+            <div className="mt-8 grid gap-6 md:grid-cols-3">
               {/* Free */}
               <div className="flex flex-col rounded-2xl border border-neutral-200 bg-white p-6">
                 <div className="text-sm font-medium text-neutral-500">Free</div>
@@ -431,15 +431,30 @@ export default function LandingPage() {
                 </Button>
               </div>
 
-              {/* Pro */}
-              <div className="flex flex-col rounded-2xl border-2 border-neutral-900 bg-white p-6">
+              {/* Pro. Figma spec: 8px outside stroke with a radial gradient,
+                  plus an 8px #F4F4F4 spread shadow. The ring is a padded
+                  wrapper with negative margin so the white card lines up
+                  with its neighbours and the ring grows into the gaps.
+                  Radii are concentric: 16px card + 8px ring = 24px. */}
+              <div
+                className="-m-2 rounded-[24px] p-2 shadow-[0_0_0_8px_#F4F4F4]"
+                style={{
+                  background:
+                    "radial-gradient(ellipse farthest-corner at center, #8487FF 0%, #F6CCFD 33%, #C3EFED 66%, #8487FF 100%)",
+                }}
+              >
+              <div className="flex h-full flex-col rounded-2xl bg-white p-6">
                 <div className="flex items-center justify-between">
                   <div className="text-sm font-medium text-neutral-500">
                     {PLANS.year.name}
                   </div>
-                  <span className="rounded-full bg-neutral-900 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-white">
-                    Best value
-                  </span>
+                  <Image
+                    src="/best-value-badge.png"
+                    alt="Best value"
+                    width={1449}
+                    height={423}
+                    className="h-7 w-auto"
+                  />
                 </div>
                 <div className="mt-2 flex items-baseline gap-1">
                   <span className="text-3xl font-semibold">
@@ -462,6 +477,7 @@ export default function LandingPage() {
                     {`Get ${PLANS.year.name}`}
                   </TrackedLink>
                 </Button>
+              </div>
               </div>
 
               {/* Week pass */}
