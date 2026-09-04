@@ -1,6 +1,9 @@
 import type { GradientStyle } from "./gradient-renderer";
 
-// Curated presets shown on the landing page and (later) at /gradients/[slug].
+// The collection: twelve named palettes, four per style, shown on the
+// landing page, offered in the studio's preset menu and (later) served at
+// /gradients/[slug]. Names describe the result, not a reference, so they
+// read the same to a designer and to someone hunting for a wallpaper.
 // Server/client neutral. Thumbnails are rendered by
 // scripts/render-landing-images.ts into public/landing/gallery/<slug>.jpg.
 
@@ -16,23 +19,15 @@ export type GalleryPreset = {
 };
 
 export const GALLERY: GalleryPreset[] = [
+  // Blobs: soft overlapping fields
   {
-    slug: "lovable",
-    name: "Lovable",
+    slug: "ember",
+    name: "Ember",
     style: "blobs",
     background: "#1A1B1D",
     colors: ["#FE7A04", "#FE4F1A", "#F35CBE", "#7472FC"],
     seed: 42,
-    mood: "orange, pink and violet on near-black",
-  },
-  {
-    slug: "aurora",
-    name: "Aurora",
-    style: "stripes",
-    background: "#06111F",
-    colors: ["#2AF598", "#009EFD", "#7B2FF7", "#00F0FF"],
-    seed: 19,
-    mood: "green, blue and violet northern lights",
+    mood: "orange, pink and violet glowing on near-black",
   },
   {
     slug: "peach-fuzz",
@@ -44,40 +39,32 @@ export const GALLERY: GalleryPreset[] = [
     mood: "soft peach and blush pastels",
   },
   {
-    slug: "raycast",
-    name: "Raycast",
-    style: "clouds",
-    background: "#07090B",
-    colors: ["#CF1627", "#08243A", "#0F8B92", "#D54F63"],
-    seed: 3,
-    mood: "deep red and teal smoke on black",
+    slug: "lavender-haze",
+    name: "Lavender Haze",
+    style: "blobs",
+    background: "#E9E2FF",
+    colors: ["#A78BFA", "#7C3AED", "#F0ABFC", "#818CF8"],
+    seed: 8,
+    mood: "lilac, violet and periwinkle mist",
   },
   {
-    slug: "stripe",
-    name: "Stripe",
+    slug: "deep-sea",
+    name: "Deep Sea",
+    style: "blobs",
+    background: "#062A3F",
+    colors: ["#0E5A8A", "#1B8FBF", "#22D3EE", "#0B3C5D"],
+    seed: 21,
+    mood: "navy, ocean blue and a teal glow",
+  },
+  // Stripes: flowing fibres with sheen
+  {
+    slug: "aurora",
+    name: "Aurora",
     style: "stripes",
-    background: "#635BFF",
-    colors: ["#F15372", "#FFCA3B", "#76E2FF", "#B5DAB9"],
-    seed: 11,
-    mood: "coral, yellow and sky on violet",
-  },
-  {
-    slug: "midnight-oled",
-    name: "Midnight OLED",
-    style: "blobs",
-    background: "#000000",
-    colors: ["#1B1B3A", "#3A1B5C", "#0F3D5C", "#111111"],
-    seed: 23,
-    mood: "dim indigo and teal glow on pure black",
-  },
-  {
-    slug: "dia",
-    name: "Dia",
-    style: "blobs",
-    background: "#0358F7",
-    colors: ["#C679C4", "#FA3D1D", "#FFB005", "#E1E1FE"],
-    seed: 7,
-    mood: "electric blue with magenta and amber",
+    background: "#06111F",
+    colors: ["#2AF598", "#009EFD", "#7B2FF7", "#00F0FF"],
+    seed: 19,
+    mood: "green, blue and violet northern lights",
   },
   {
     slug: "solar",
@@ -89,45 +76,70 @@ export const GALLERY: GalleryPreset[] = [
     mood: "warm sunrise amber and coral",
   },
   {
-    slug: "lagoon",
-    name: "Lagoon",
+    slug: "silk-rose",
+    name: "Silk Rose",
+    style: "stripes",
+    background: "#F9C5D1",
+    colors: ["#F472B6", "#E11D48", "#FDA4AF", "#FB7185"],
+    seed: 12,
+    mood: "rose, pink and blush silk",
+  },
+  {
+    slug: "ice-fibre",
+    name: "Ice Fibre",
+    style: "stripes",
+    background: "#BAE6FD",
+    colors: ["#38BDF8", "#67E8F9", "#818CF8", "#E0F2FE"],
+    seed: 27,
+    mood: "icy sky blue, cyan and white threads",
+  },
+  // Clouds: billowing volumes
+  {
+    slug: "blue-sky",
+    name: "Blue Sky",
     style: "clouds",
-    background: "#041F2B",
-    colors: ["#00B4D8", "#90E0EF", "#0077B6", "#CAF0F8"],
+    background: "#2F6BE8",
+    colors: ["#7FB0F5", "#DCEBFF", "#FFFFFF"],
+    seed: 3,
+    mood: "white cumulus on a clear blue sky",
+  },
+  {
+    slug: "sunset",
+    name: "Sunset",
+    style: "clouds",
+    background: "#2B1055",
+    colors: ["#7B2A8C", "#E8506B", "#FFA24C", "#FFD6A5"],
+    seed: 14,
+    mood: "violet dusk into coral and gold",
+  },
+  {
+    slug: "midnight",
+    name: "Midnight",
+    style: "clouds",
+    background: "#05070F",
+    colors: ["#0F1B3D", "#1E2A5A", "#3B4A8C", "#0B0F19"],
+    seed: 23,
+    mood: "deep indigo night clouds",
+  },
+  {
+    slug: "storm",
+    name: "Storm",
+    style: "clouds",
+    background: "#1F2933",
+    colors: ["#3E4C59", "#7B8794", "#CBD2D9", "#52606D"],
     seed: 9,
-    mood: "aqua and ice blue on deep navy",
-  },
-  {
-    slug: "arc",
-    name: "Arc",
-    style: "blobs",
-    background: "#140080",
-    colors: ["#0229C9", "#FF526B", "#FF9598", "#EE4A5F"],
-    seed: 13,
-    mood: "royal blue and coral",
-  },
-  {
-    slug: "comet",
-    name: "Comet",
-    style: "clouds",
-    background: "#101013",
-    colors: ["#5099A1", "#733138", "#53969F", "#C17B55"],
-    seed: 17,
-    mood: "muted teal and rust smoke",
-  },
-  {
-    slug: "devin",
-    name: "Devin",
-    style: "clouds",
-    background: "#11131D",
-    colors: ["#2A6DCE", "#1796E2", "#1DC19C", "#3FA9DD"],
-    seed: 29,
-    mood: "blue and mint clouds on charcoal",
+    mood: "slate and silver storm front",
   },
 ];
 
 export const findPreset = (slug: string) =>
   GALLERY.find((preset) => preset.slug === slug) ?? null;
+
+export const STYLE_LABELS: Record<GradientStyle, string> = {
+  blobs: "Blobs",
+  stripes: "Stripes",
+  clouds: "Clouds",
+};
 
 // ---------------------------------------------------------------------------
 // Deep links into the studio. The landing page (and any future SEO page)

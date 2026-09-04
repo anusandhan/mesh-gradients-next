@@ -21,7 +21,7 @@ import {
   type PlanId,
 } from "@/lib/plans";
 import { track } from "@/lib/analytics";
-import { parseStudioParams } from "@/lib/gallery";
+import { GALLERY, STYLE_LABELS, parseStudioParams } from "@/lib/gallery";
 import { FREE_EXPORTS_PER_MONTH } from "@/lib/site";
 import { QuotaMeter } from "@/components/QuotaMeter";
 import Spinner from "@/components/ui/spinner";
@@ -134,7 +134,13 @@ type PresetGradient = {
   name: string;
   background: string;
   colors: string[];
-  icon: React.ComponentType<{ className?: string; size?: number }>;
+  // Collection palettes belong to a style and carry the seed that produced
+  // their gallery tile, so picking one reproduces the tile exactly.
+  // "Inspired by" palettes are colours only, shown with the brand mark.
+  group: "collection" | "inspired";
+  style?: GradientStyle;
+  seed?: number;
+  icon?: React.ComponentType<{ className?: string; size?: number }>;
 };
 
 // Color value input in the selected format. Hex renders one text field that
@@ -208,60 +214,76 @@ const ColorField = ({
   );
 };
 
-const presetGradients: PresetGradient[] = [
-  // {
-  //   name: "Heatwaves",
-  //   background: "#f8fafc",
-  //   colors: ["#3b82f6", "#8b5cf6", "#ec4899", "#f59e0b"],
-  // },
+// The collection (lib/gallery.ts) leads; the brand-inspired palettes stay
+// as a second group for people who arrive wanting "the Raycast look".
+const collectionPresets: PresetGradient[] = GALLERY.map((p) => ({
+  name: p.name,
+  background: p.background,
+  colors: p.colors,
+  group: "collection",
+  style: p.style,
+  seed: p.seed,
+}));
+
+const inspiredPresets: PresetGradient[] = [
   {
     name: "Lovable",
     background: "#1A1B1D",
     colors: ["#FE7A04", "#FE4F1A", "#F35CBE", "#7472FC"],
+    group: "inspired",
     icon: LovableIcon,
   },
   {
     name: "Dia",
     background: "#0358f7",
     colors: ["#c679c4", "#fa3d1d", "#ffb005", "#e1e1fe"],
+    group: "inspired",
     icon: DiaIcon,
   },
   {
     name: "Raycast",
     background: "#07090B",
     colors: ["#CF1627", "#08243A", "#0F8B92", "#D54F63"],
+    group: "inspired",
     icon: RaycastIcon,
   },
   {
     name: "Stripe",
     background: "#635BFF",
     colors: ["#F15372", "#FFCA3B", "#76E2FF", "#B5DAB9"],
+    group: "inspired",
     icon: StripeIcon,
   },
   {
     name: "Arc",
     background: "#140080",
     colors: ["#0229C9", "#FF526B", "#FF9598", "#EE4A5F"],
+    group: "inspired",
     icon: ArcIcon,
   },
   {
     name: "Comet",
     background: "#101013",
     colors: ["#5099A1", "#733138", "#53969F", "#C17B55"],
+    group: "inspired",
     icon: CometIcon,
   },
   {
     name: "Devin",
     background: "#11131D",
     colors: ["#2A6DCE", "#1796E2", "#1DC19C", "#3FA9DD"],
+    group: "inspired",
     icon: DevinIcon,
   },
-  // {
-  //   name: "Creem",
-  //   background: "#18120E",
-  //   colors: ["#FFC099", "#FFB68A", "#FF8E57", "#B39A8D"],
-  // },
 ];
+
+const presetGradients: PresetGradient[] = [
+  ...collectionPresets,
+  ...inspiredPresets,
+];
+
+const PALETTE_GROUP_LABEL =
+  "px-2 py-1.5 text-[11px] font-medium tracking-wide text-neutral-500";
 
 // Values must stay in sync with STUDIO_ASPECT_RATIOS (lib/gallery.ts), which
 // the export API validates against.
@@ -510,24 +532,62 @@ const PresetsSection = memo(function PresetsSection({
                     <SelectSeparator />
                   </SelectGroup>
                 )}
-                {presetGradients.map((preset, index) => {
-                  const IconComponent = preset.icon;
-                  return (
+                <SelectGroup>
+                  <SelectLabel className={PALETTE_GROUP_LABEL}>
+                    COLLECTION
+                  </SelectLabel>
+                  {collectionPresets.map((preset) => (
                     <SelectItem
-                      key={index}
+                      key={preset.name}
                       value={preset.name}
                       indicator="dot"
                     >
                       <div className="flex items-center gap-2">
-                        <IconComponent
-                          size={16}
-                          className="text-neutral-600"
+                        <span
+                          aria-hidden
+                          className="h-4 w-4 shrink-0 rounded-full border border-black/10"
+                          style={{
+                            background: `linear-gradient(135deg, ${preset.colors.join(", ")})`,
+                          }}
                         />
-                        {preset.name}
+                        <span className="max-w-[10rem] truncate">
+                          {preset.name}
+                        </span>
+                        {preset.style && (
+                          <span className="ml-auto pl-3 text-[11px] text-neutral-400">
+                            {STYLE_LABELS[preset.style]}
+                          </span>
+                        )}
                       </div>
                     </SelectItem>
-                  );
-                })}
+                  ))}
+                </SelectGroup>
+                <SelectSeparator />
+                <SelectGroup>
+                  <SelectLabel className={PALETTE_GROUP_LABEL}>
+                    INSPIRED BY
+                  </SelectLabel>
+                  {inspiredPresets.map((preset) => {
+                    const IconComponent = preset.icon;
+                    return (
+                      <SelectItem
+                        key={preset.name}
+                        value={preset.name}
+                        indicator="dot"
+                      >
+                        <div className="flex items-center gap-2">
+                          {IconComponent && (
+                            <IconComponent
+                              size={16}
+                              className="text-neutral-600"
+                            />
+                          )}
+                          {preset.name}
+                        </div>
+                      </SelectItem>
+                    );
+                  })}
+                </SelectGroup>
                 {userPresets.length > 0 && (
                   <>
                     <SelectSeparator />
@@ -1273,6 +1333,10 @@ const GradientGenerator = () => {
         setBackgroundColor(preset.background);
         setColorInputs(preset.colors);
         setGradientName(preset.name);
+        // Collection palettes reproduce their gallery tile: same style,
+        // same seed. User and inspired palettes only change colours.
+        if ("style" in preset && preset.style) setGradientStyle(preset.style);
+        if ("seed" in preset && preset.seed !== undefined) setSeed(preset.seed);
       }
     },
     [userPresets]
@@ -1286,11 +1350,11 @@ const GradientGenerator = () => {
       name: p.name,
       swatches: p.colors,
     })),
-    ...presetGradients.map((p) => ({
-      value: p.name,
-      name: p.name,
-      icon: p.icon,
-    })),
+    ...presetGradients.map((p) =>
+      p.icon
+        ? { value: p.name, name: p.name, icon: p.icon }
+        : { value: p.name, name: p.name, swatches: p.colors }
+    ),
   ];
 
   // Dials for the mobile Adjust tab; mirrors the sidebar's Effects section

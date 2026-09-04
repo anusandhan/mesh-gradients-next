@@ -29,8 +29,16 @@ describe("gallery presets", () => {
   });
 
   test("findPreset", () => {
-    expect(findPreset("lovable")?.name).toBe("Lovable");
+    expect(findPreset("ember")?.name).toBe("Ember");
     expect(findPreset("nope")).toBeNull();
+  });
+
+  test("four palettes per style, names unique", () => {
+    for (const style of ["blobs", "stripes", "clouds"] as const) {
+      expect(GALLERY.filter((p) => p.style === style)).toHaveLength(4);
+    }
+    const names = GALLERY.map((p) => p.name);
+    expect(new Set(names).size).toBe(names.length);
   });
 });
 

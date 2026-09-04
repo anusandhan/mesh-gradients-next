@@ -29,7 +29,7 @@ const STYLES: { value: GradientStyle; label: string }[] = [
 ];
 
 // Four palettes that read well in every style
-const PALETTES: GalleryPreset[] = ["lovable", "aurora", "peach-fuzz", "lagoon"]
+const PALETTES: GalleryPreset[] = ["ember", "aurora", "peach-fuzz", "blue-sky"]
   .map((slug) => GALLERY.find((p) => p.slug === slug))
   .filter((p): p is GalleryPreset => Boolean(p));
 
