@@ -1646,8 +1646,8 @@ const GradientGenerator = () => {
 
             {/* Controls Panel - desktop sidebar; mobile uses the edit mode below the preview */}
             <div className="hidden lg:flex flex-col bg-white lg:w-80 lg:flex-shrink-0 lg:min-h-0 lg:border-r lg:border-neutral-200">
-              {/* Logo + account */}
-              <div className="flex items-center justify-between gap-2 p-6 pb-0">
+              {/* Logo + account: mirrors the bottom action bar (p-6 pt-4 + border-t) */}
+              <div className="flex items-center justify-between gap-2 p-6 pb-4 border-b border-neutral-200">
                 <div className="flex items-center gap-2 min-w-0">
                   {isProUser ? (
                     <Image
@@ -1666,7 +1666,7 @@ const GradientGenerator = () => {
                       className="block w-10 h-auto shrink-0"
                     />
                   )}
-                  <span className="truncate text-md font-medium text-neutral-800">
+                  <span className="truncate text-md font-medium text-neutral-800 user-select-none">
                     {`Gradients Studio`}
                   </span>
                   {isProUser && proBadge}
