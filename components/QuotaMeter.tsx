@@ -6,9 +6,10 @@ import PixelHeart from "@/components/icons/PixelHeart";
 import { cn } from "@/lib/utils";
 
 // Free-tier export meter shown next to the wordmark. Five pixel hearts are
-// the month's "lives". Both heart states stay in the DOM; spending an export
-// crossfades the filled heart out (opacity, scale, blur) so it reads as a
-// life lost rather than a repaint. The count is the static cue.
+// the month's "lives" and the whole row is the upgrade control. Both heart
+// states stay in the DOM; spending an export crossfades the filled heart
+// out (opacity, scale, blur) so it reads as a life lost. The count is the
+// static cue; the arrow and hover tint say "this goes somewhere".
 
 type Props = {
   remaining: number;
@@ -19,6 +20,15 @@ type Props = {
 
 const HEART_SIZE = 14;
 
+// Copy tracks the moment: "free" names the tier you're on, the last heart
+// gets its own line (honest scarcity), and empty states the problem the
+// dialog solves. The hearts already show the total, so "of 5" is dropped.
+const labelFor = (left: number, compact: boolean) => {
+  if (left <= 0) return compact ? "Out of exports" : "Out of free exports";
+  if (left === 1) return compact ? "Last one" : "Last free export";
+  return compact ? `${left} left` : `${left} free exports left`;
+};
+
 export const QuotaMeter = memo(function QuotaMeter({
   remaining,
   total,
@@ -27,22 +37,23 @@ export const QuotaMeter = memo(function QuotaMeter({
 }: Props) {
   const left = Math.max(0, Math.min(total, remaining));
   const empty = left === 0;
-  // Short on purpose: the hearts say "exports", the aria-label says it all.
-  // The compact variant sits in the mobile bottom bar next to three buttons.
-  const label = empty
-    ? "No exports left"
-    : compact
-      ? `${left} left`
-      : `${left} of ${total} left`;
 
   return (
-    <div className="flex items-center justify-between gap-3">
-      <div className="flex min-w-0 items-center gap-2">
-        <div
-          className="flex shrink-0 items-center gap-0.5"
-          role="img"
-          aria-label={`${left} of ${total} free exports left this month`}
-        >
+    <button
+      type="button"
+      onClick={onUpgrade}
+      title="Go Pro for unlimited exports"
+      aria-label={`${left} of ${total} free exports left this month. Go Pro for unlimited exports.`}
+      className={cn(
+        // Negative margins keep the content aligned with the column while
+        // the hover tint and hit area extend past it
+        "group -mx-1.5 flex w-[calc(100%+0.75rem)] items-center justify-between gap-3 rounded-md px-1.5 py-1 text-left",
+        "transition-[background-color,scale] duration-150 ease-out hover:bg-neutral-100 active:scale-[0.98]",
+        "focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-neutral-900"
+      )}
+    >
+      <span className="flex min-w-0 items-center gap-2">
+        <span className="flex shrink-0 items-center gap-0.5" aria-hidden="true">
           {Array.from({ length: total }, (_, i) => {
             const alive = i < left;
             return (
@@ -69,34 +80,26 @@ export const QuotaMeter = memo(function QuotaMeter({
               </span>
             );
           })}
-        </div>
+        </span>
         <span
           className={cn(
             "truncate tabular-nums",
             compact ? "text-[11px]" : "text-xs",
-            empty ? "font-medium text-neutral-900" : "text-neutral-500"
+            empty ? "font-medium text-neutral-900" : "text-neutral-500",
+            "transition-colors duration-150 group-hover:text-neutral-900"
           )}
         >
-          {label}
+          {labelFor(left, compact)}
         </span>
-      </div>
-      <button
-        type="button"
-        onClick={onUpgrade}
+      </span>
+      <ArrowRightIcon
+        weight="bold"
+        aria-hidden="true"
         className={cn(
-          // Visible pill is small; the ::before hitbox brings it to ~40px tall
-          "group relative -mr-1.5 flex shrink-0 items-center gap-0.5 rounded-md px-1.5 py-1 font-medium text-neutral-900",
-          "before:absolute before:-inset-x-1 before:-inset-y-2 before:content-['']",
-          "transition-[background-color,scale] duration-150 ease-out hover:bg-neutral-100 active:scale-[0.96]",
-          compact ? "text-[11px]" : "text-xs"
+          "size-3 shrink-0 transition-[transform,color] duration-150 ease-out group-hover:translate-x-0.5 group-hover:text-neutral-900",
+          empty ? "text-neutral-900" : "text-neutral-400"
         )}
-      >
-        Go Pro
-        <ArrowRightIcon
-          weight="bold"
-          className="size-3 transition-transform duration-150 ease-out group-hover:translate-x-0.5"
-        />
-      </button>
-    </div>
+      />
+    </button>
   );
 });
