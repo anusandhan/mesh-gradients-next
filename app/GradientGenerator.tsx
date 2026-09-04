@@ -171,7 +171,7 @@ const ColorField = ({
         onKeyDown={(e) => {
           if (e.key === "Enter") e.currentTarget.blur();
         }}
-        className="h-9 flex-1 rounded-lg border-black/[0.04] bg-neutral-50 px-2 text-center font-azeret text-xs text-neutral-700 shadow-none"
+        className="h-9 flex-1 rounded-lg border-black/[0.04] bg-neutral-50 px-2 text-center font-azeret text-xs text-neutral-700 shadow-none transition-colors duration-150 focus-visible:border-neutral-800 focus-visible:bg-white focus-visible:ring-0"
         placeholder={placeholder}
       />
     );
@@ -183,7 +183,7 @@ const ColorField = ({
   return (
     // Figma "Color Picker" fields: one 8px-radius well with hairline
     // dividers between the channel cells
-    <div className="flex h-9 flex-1 min-w-0 items-center rounded-lg border border-black/[0.04] bg-neutral-50">
+    <div className="flex h-9 flex-1 min-w-0 items-center rounded-lg border border-black/[0.04] bg-neutral-50 transition-colors duration-150 focus-within:border-neutral-800 focus-within:bg-white">
       {defs.map((def, index) => (
         <div
           key={def.key}
