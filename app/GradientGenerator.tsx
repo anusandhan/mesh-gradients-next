@@ -1666,7 +1666,7 @@ const GradientGenerator = () => {
                       className="block w-10 h-auto shrink-0"
                     />
                   )}
-                  <span className="truncate text-md font-medium text-neutral-800 user-select-none">
+                  <span className="truncate text-md font-medium text-neutral-800 select-none">
                     {`Gradients Studio`}
                   </span>
                   {isProUser && proBadge}
@@ -1885,7 +1885,7 @@ const GradientGenerator = () => {
                       className="block w-8 h-auto shrink-0"
                     />
                     <div className="flex min-w-0 flex-col">
-                      <span className="hidden min-[400px]:block truncate text-sm font-medium text-neutral-800">
+                      <span className="hidden min-[400px]:block truncate text-sm font-medium text-neutral-800 select-none">
                         {`Gradients Studio`}
                       </span>
                       {isSignedIn && quota?.plan === "free" && (
