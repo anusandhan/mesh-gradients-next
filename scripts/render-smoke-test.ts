@@ -16,7 +16,7 @@ const HEIGHT = 2160;
 const nodeCreateCanvas = (width: number, height: number) =>
   createCanvas(width, height) as unknown as HTMLCanvasElement;
 
-const baseOptions: Omit<RenderOptions, "noise"> = {
+const baseOptions: Omit<RenderOptions, "grain"> = {
   backgroundColor: "#1A1B1D",
   colors: ["#FE7A04", "#FE4F1A", "#F35CBE", "#7472FC"],
   blur: 700,
@@ -28,10 +28,10 @@ const baseOptions: Omit<RenderOptions, "noise"> = {
   createCanvas: nodeCreateCanvas,
 };
 
-const render = (noise: number) => {
+const render = (grain: number) => {
   const canvas = createCanvas(WIDTH, HEIGHT);
   const ctx = canvas.getContext("2d") as unknown as CanvasRenderingContext2D;
-  renderGradient(ctx, WIDTH, HEIGHT, { ...baseOptions, noise });
+  renderGradient(ctx, WIDTH, HEIGHT, { ...baseOptions, grain });
   return { canvas, ctx };
 };
 
@@ -68,10 +68,10 @@ for (let sx = 0; sx < 20; sx++) {
 }
 check("not a solid color", samples.size > 50, `${samples.size}/400 distinct samples`);
 
-// Determinism: same seed with noise disabled must be byte-identical
+// Determinism: same seed with grain disabled must be byte-identical
 const bufferA = render(0).canvas.toBuffer("image/png");
 const bufferB = render(0).canvas.toBuffer("image/png");
-check("same seed renders byte-identical (noise off)", bufferA.equals(bufferB));
+check("same seed renders byte-identical (grain off)", bufferA.equals(bufferB));
 
 // Different seed must differ
 const other = createCanvas(WIDTH, HEIGHT);
@@ -79,7 +79,7 @@ renderGradient(
   other.getContext("2d") as unknown as CanvasRenderingContext2D,
   WIDTH,
   HEIGHT,
-  { ...baseOptions, noise: 0, seed: 43 }
+  { ...baseOptions, grain: 0, seed: 43 }
 );
 check("different seed renders differently", !other.toBuffer("image/png").equals(bufferA));
 
@@ -92,7 +92,7 @@ const renderBlur = (blur: number, scale = 1) => {
   const c = createCanvas(w, h);
   renderGradient(c.getContext("2d") as unknown as CanvasRenderingContext2D, w, h, {
     ...baseOptions,
-    noise: 0,
+    grain: 0,
     blur,
     blurScale: scale,
   });

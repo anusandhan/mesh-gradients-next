@@ -14,7 +14,7 @@ A beautiful, modern web application for creating customizable mesh gradients usi
 ### 🎛️ **Advanced Controls**
 
 - **Color Customization**: 4 gradient colors + background color
-- **Visual Effects**: Adjustable blur, noise, contrast, and saturation
+- **Visual Effects**: Adjustable blur, grain, contrast, and saturation
 - **Real-time Preview**: See changes instantly as you adjust settings
 - **Color Picker Integration**: Both hex input and visual color pickers
 
@@ -59,7 +59,7 @@ A beautiful, modern web application for creating customizable mesh gradients usi
 ## How to Use
 
 1. **Choose Colors**: Use the color pickers or hex inputs to set your gradient colors
-2. **Adjust Effects**: Fine-tune blur, noise, contrast, and saturation with the sliders
+2. **Adjust Effects**: Fine-tune blur, grain, contrast, and saturation with the sliders
 3. **Try Presets**: Click on preset buttons for quick-start beautiful gradients
 4. **Randomize**: Generate unique gradients with the randomize button
 5. **Download**: Save your creation as a high-quality PNG image
@@ -68,7 +68,7 @@ A beautiful, modern web application for creating customizable mesh gradients usi
 
 - ✅ Converted to light mode design
 - ✅ Integrated shadcn/ui components
-- ✅ Added advanced effect controls (blur, noise, contrast, saturation)
+- ✅ Added advanced effect controls (blur, grain, contrast, saturation)
 - ✅ Implemented preset gradients
 - ✅ Enhanced responsive layout
 - ✅ Added tooltips for better UX
@@ -103,7 +103,7 @@ that calls back into the app.
   changing the look or the gallery in `lib/gallery.ts`.
 - `/app` — the studio (`app/app/page.tsx`, client-only). Stripe's success
   and cancel URLs point here. Accepts deep links built by `buildStudioUrl`
-  in `lib/gallery.ts` (`?style=&bg=&colors=&seed=&noise=&blur=&aspect=&name=`)
+  in `lib/gallery.ts` (`?style=&bg=&colors=&seed=&grain=&blur=&aspect=&name=`)
   and `?plan=year|week` to open the upgrade dialog on arrival. Finishes
   (Pixel dot-matrix, palette Dither) are post-processes in
   `lib/gradient-renderer.ts`; the export API validates `effect`,
@@ -181,7 +181,7 @@ both. Migrating prod: run the SQL in the Vercel → Storage → Query console
 ## Testing the Improvements
 
 1. **Color Controls**: Try changing colors using both hex inputs and color pickers
-2. **Effect Sliders**: Adjust blur, noise, contrast, and saturation to see real-time changes
+2. **Effect Sliders**: Adjust blur, grain, contrast, and saturation to see real-time changes
 3. **Presets**: Click different preset buttons to see instant gradient changes
 4. **Randomize**: Click the randomize button to generate unique gradients
 5. **Download**: Test the download functionality to save your gradients
@@ -193,7 +193,7 @@ both. Migrating prod: run the SQL in the Vercel → Storage → Query console
 
 - Convert to light mode design with modern UI
 - Integrate shadcn/ui components for professional look
-- Add advanced effect controls (blur, noise, contrast, saturation)
+- Add advanced effect controls (blur, grain, contrast, saturation)
 - Implement preset gradients for quick-start options
 - Enhance responsive layout and accessibility
 - Add tooltips and better visual feedback

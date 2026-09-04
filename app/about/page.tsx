@@ -27,7 +27,7 @@ export default function AboutPage() {
           </p>
           <p>
             The renderer draws real grain into the image instead of pasting a
-            noise layer on top, so the export holds up at full size and in
+            grain layer on top, so the export holds up at full size and in
             print. The three styles, blobs, stripes and clouds, each have their
             own dials, but colour, blur, contrast and saturation work the same
             way everywhere. Everything you see in the editor is what you get

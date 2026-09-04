@@ -894,7 +894,7 @@ const GradientGenerator = () => {
     EFFECT_STRENGTH_DEFAULT,
   ]);
   const [blurAmount, setBlurAmount] = useState([700]);
-  const [noiseAmount, setNoiseAmount] = useState([0.2]);
+  const [grainAmount, setGrainAmount] = useState([0.2]);
   const [contrastAmount, setContrastAmount] = useState([130]);
   const [saturationAmount, setSaturationAmount] = useState([110]);
   const [gradientName, setGradientName] = useState("New Gradient");
@@ -919,7 +919,7 @@ const GradientGenerator = () => {
     backgroundColor: string;
     colorInputs: string[];
     blurAmount: number[];
-    noiseAmount: number[];
+    grainAmount: number[];
     contrastAmount: number[];
     saturationAmount: number[];
     gradientStyle: GradientStyle;
@@ -1024,7 +1024,7 @@ const GradientGenerator = () => {
     if (s.background) setBackgroundColor(s.background);
     if (s.colors) setColorInputs(s.colors);
     if (s.seed !== undefined) setSeed(s.seed);
-    if (s.noise !== undefined) setNoiseAmount([s.noise]);
+    if (s.grain !== undefined) setGrainAmount([s.grain]);
     if (s.blur !== undefined) setBlurAmount([s.blur]);
     if (s.aspectRatio) setAspectRatio(s.aspectRatio);
     if (s.name) setGradientName(s.name);
@@ -1144,7 +1144,7 @@ const GradientGenerator = () => {
       backgroundColor,
       colors: colorInputs,
       blur: blurAmount[0],
-      noise: noiseAmount[0],
+      grain: grainAmount[0],
       contrast: contrastAmount[0],
       saturation: saturationAmount[0],
       seed,
@@ -1165,7 +1165,7 @@ const GradientGenerator = () => {
       backgroundColor,
       colorInputs,
       blurAmount,
-      noiseAmount,
+      grainAmount,
       contrastAmount,
       saturationAmount,
       seed,
@@ -1246,7 +1246,7 @@ const GradientGenerator = () => {
           backgroundColor: normalizeHexColor(backgroundColor),
           colors: colorInputs.map(normalizeHexColor),
           blur: blurAmount[0],
-          noise: noiseAmount[0],
+          grain: grainAmount[0],
           contrast: contrastAmount[0],
           saturation: saturationAmount[0],
           aspectRatio,
@@ -1556,11 +1556,11 @@ const GradientGenerator = () => {
   const adjustments: Adjustment[] = [
     ...styleDials,
     dial(
-      "noise",
-      "Noise",
-      "Noise",
+      "grain",
+      "Grain",
+      "Grain",
       DotsNineIcon,
-      [noiseAmount, setNoiseAmount],
+      [grainAmount, setGrainAmount],
       { min: 0, max: 0.8, step: 0.01, defaultValue: 0.2 },
       percent
     ),
@@ -1616,7 +1616,7 @@ const GradientGenerator = () => {
       backgroundColor,
       colorInputs,
       blurAmount,
-      noiseAmount,
+      grainAmount,
       contrastAmount,
       saturationAmount,
       gradientStyle,
@@ -1641,7 +1641,7 @@ const GradientGenerator = () => {
       setBackgroundColor(s.backgroundColor);
       setColorInputs(s.colorInputs);
       setBlurAmount(s.blurAmount);
-      setNoiseAmount(s.noiseAmount);
+      setGrainAmount(s.grainAmount);
       setContrastAmount(s.contrastAmount);
       setSaturationAmount(s.saturationAmount);
       setGradientStyle(s.gradientStyle);

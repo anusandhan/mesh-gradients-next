@@ -44,7 +44,7 @@ export default function HeroCanvas() {
   const [style, setStyle] = useState<GradientStyle>("blobs");
   const [palette, setPalette] = useState<GalleryPreset>(PALETTES[0]);
   const [seed, setSeed] = useState(PALETTES[0].seed);
-  const [grain, setGrain] = useState(true);
+  const [grainOn, setGrainOn] = useState(true);
   const [ready, setReady] = useState(false);
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -57,10 +57,10 @@ export default function HeroCanvas() {
         background: palette.background,
         colors: palette.colors,
         seed,
-        noise: grain ? GRAIN : 0,
+        grain: grainOn ? GRAIN : 0,
         name: palette.name,
       }),
-    [style, palette, seed, grain]
+    [style, palette, seed, grainOn]
   );
 
   const render = useCallback(() => {
@@ -80,7 +80,7 @@ export default function HeroCanvas() {
       backgroundColor: palette.background,
       colors: palette.colors,
       blur: 700,
-      noise: grain ? GRAIN : 0,
+      grain: grainOn ? GRAIN : 0,
       contrast: 130,
       saturation: 110,
       seed,
@@ -90,7 +90,7 @@ export default function HeroCanvas() {
       style,
     });
     setReady(true);
-  }, [palette, grain, seed, style]);
+  }, [palette, grainOn, seed, style]);
 
   // Coalesce renders onto the next frame; clouds can take a few hundred ms
   useEffect(() => {
@@ -211,20 +211,20 @@ export default function HeroCanvas() {
             <Button
               variant="outline"
               size="sm"
-              aria-pressed={grain}
+              aria-pressed={grainOn}
               onClick={() => {
-                setGrain((g) => !g);
-                interact("grain", grain ? "off" : "on");
+                setGrainOn((g) => !g);
+                interact("grain", grainOn ? "off" : "on");
               }}
             >
-              {grain ? "Grain on" : "Grain off"}
+              {grainOn ? "Grain on" : "Grain off"}
             </Button>
             <div className="flex-1" />
             <Button asChild size="sm">
               <TrackedLink
                 href={studioUrl}
                 location="hero_canvas"
-                properties={{ style, palette: palette.slug, grain }}
+                properties={{ style, palette: palette.slug, grain: grainOn }}
               >
                 Open in the studio
               </TrackedLink>

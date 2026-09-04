@@ -124,14 +124,14 @@ const applyBlur = (
 };
 
 // Browser preview fast path. ctx.filter runs contrast()/saturate() on the
-// GPU, and the grain is a pre-generated noise tile composited with
+// GPU, and the grain is a pre-generated grain tile composited with
 // "lighter" (additive, scaled by globalAlpha), which is exactly what the
 // per-pixel loop below computes — without the getImageData round trip
 // that dominates preview render time. Export (Node canvas) and browsers
 // where ctx.filter is a no-op (iOS Safari < 18) keep the pixel loop.
-const NOISE_TILE_SIZE = 1024;
+const GRAIN_TILE_SIZE = 1024;
 let fastPathSupported: boolean | null = null;
-let noiseTile: HTMLCanvasElement | null = null;
+let grainTile: HTMLCanvasElement | null = null;
 
 const detectFastPath = () => {
   if (fastPathSupported !== null) return fastPathSupported;
@@ -155,13 +155,13 @@ const detectFastPath = () => {
   return fastPathSupported;
 };
 
-const getNoiseTile = () => {
-  if (noiseTile) return noiseTile;
+const getGrainTile = () => {
+  if (grainTile) return grainTile;
   const tile = document.createElement("canvas");
-  tile.width = NOISE_TILE_SIZE;
-  tile.height = NOISE_TILE_SIZE;
+  tile.width = GRAIN_TILE_SIZE;
+  tile.height = GRAIN_TILE_SIZE;
   const t = tile.getContext("2d")!;
-  const img = t.createImageData(NOISE_TILE_SIZE, NOISE_TILE_SIZE);
+  const img = t.createImageData(GRAIN_TILE_SIZE, GRAIN_TILE_SIZE);
   const d = img.data;
   for (let i = 0; i < d.length; i += 4) {
     const v = (Math.random() * 256) | 0;
@@ -171,7 +171,7 @@ const getNoiseTile = () => {
     d[i + 3] = 255;
   }
   t.putImageData(img, 0, 0);
-  noiseTile = tile;
+  grainTile = tile;
   return tile;
 };
 
@@ -181,7 +181,7 @@ const applyAdjustmentsFast = (
   height: number,
   contrastK: number,
   saturationK: number,
-  noise: number
+  grain: number
 ) => {
   ctx.save();
   if (contrastK !== 1 || saturationK !== 1) {
@@ -190,16 +190,16 @@ const applyAdjustmentsFast = (
     ctx.drawImage(ctx.canvas, 0, 0, width, height);
     ctx.filter = "none";
   }
-  if (noise > 0) {
+  if (grain > 0) {
     ctx.globalCompositeOperation = "lighter";
-    ctx.globalAlpha = noise;
-    ctx.fillStyle = ctx.createPattern(getNoiseTile(), "repeat")!;
+    ctx.globalAlpha = grain;
+    ctx.fillStyle = ctx.createPattern(getGrainTile(), "repeat")!;
     ctx.fillRect(0, 0, width, height);
   }
   ctx.restore();
 };
 
-// Contrast, saturation, and film-grain noise in one per-pixel pass,
+// Contrast, saturation, and film grain in one per-pixel pass,
 // matching the CSS filter definitions of contrast() and saturate()
 const applyAdjustments = (
   ctx: CanvasRenderingContext2D,
@@ -207,14 +207,14 @@ const applyAdjustments = (
   height: number,
   contrast: number,
   saturation: number,
-  noise: number
+  grain: number
 ) => {
   const contrastK = contrast / 100;
   const saturationK = saturation / 100;
-  if (contrastK === 1 && saturationK === 1 && noise <= 0) return;
+  if (contrastK === 1 && saturationK === 1 && grain <= 0) return;
 
   if (detectFastPath()) {
-    applyAdjustmentsFast(ctx, width, height, contrastK, saturationK, noise);
+    applyAdjustmentsFast(ctx, width, height, contrastK, saturationK, grain);
     return;
   }
 
@@ -230,25 +230,25 @@ const applyAdjustments = (
     g = luma + (g - luma) * saturationK;
     b = luma + (b - luma) * saturationK;
 
-    const grain = noise > 0 ? Math.random() * 255 * noise : 0;
-    data[i] = r + grain;
-    data[i + 1] = g + grain;
-    data[i + 2] = b + grain;
+    const speckle = grain > 0 ? Math.random() * 255 * grain : 0;
+    data[i] = r + speckle;
+    data[i + 1] = g + speckle;
+    data[i + 2] = b + speckle;
   }
   ctx.putImageData(imageData, 0, 0);
 };
 
 export type GradientStyle = "blobs" | "stripes" | "clouds";
-// Post-process finishes applied after colour and grain
+// Post-process finishes applied after colour and speckle
 export type GradientEffect = "none" | "pixel" | "dither";
-export const EFFECT_SIZE_DEFAULT = 24; // cell size in export pixels
-export const EFFECT_STRENGTH_DEFAULT = 1;
+export const EFFECT_SIZE_DEFAULT = 16; // cell size in export pixels
+export const EFFECT_STRENGTH_DEFAULT = 0.9;
 
 export type RenderOptions = {
   backgroundColor: string;
   colors: string[];
   blur: number; // defined relative to export resolution
-  noise: number;
+  grain: number;
   contrast: number;
   saturation: number;
   seed: number;
@@ -862,7 +862,7 @@ export const renderGradient = (
       height,
       opts.contrast,
       opts.saturation,
-      opts.noise
+      opts.grain
     );
     applyEffect(ctx, width, height, opts);
     return;
@@ -934,7 +934,7 @@ export const renderGradient = (
     height,
     opts.contrast,
     opts.saturation,
-    opts.noise
+    opts.grain
   );
   applyEffect(ctx, width, height, opts);
 };

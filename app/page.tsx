@@ -378,7 +378,7 @@ export default function LandingPage() {
                 Grain is rendered, not pasted
               </h3>
               <p className="mt-1">
-                The noise is drawn into the gradient at export resolution, so
+                The grain is drawn into the gradient at export resolution, so
                 it survives JPEG compression, scaling and print instead of
                 turning to mush.
               </p>

@@ -26,7 +26,7 @@ type Shot = {
   colors: string[];
   seed: number;
   quality?: number;
-  noise?: number;
+  grain?: number;
 };
 
 const LOVABLE = GALLERY[0];
@@ -97,7 +97,7 @@ const baseOptions = (shot: Shot, width: number): RenderOptions => ({
   backgroundColor: shot.background,
   colors: shot.colors,
   blur: 700,
-  noise: shot.noise ?? 0.2,
+  grain: shot.grain ?? 0.2,
   contrast: 130,
   saturation: 110,
   seed: shot.seed,
@@ -134,7 +134,7 @@ const grainShot: Shot = {
   colors: ["#1E2A5A", "#2B1E4A", "#1B3B4A", "#14213D"],
   seed: 77,
 };
-for (const [file, noise] of [
+for (const [file, grain] of [
   ["grain-off.jpg", 0],
   ["grain-on.jpg", 0.12],
 ] as const) {
@@ -142,7 +142,7 @@ for (const [file, noise] of [
   const ctx = full.getContext("2d") as unknown as CanvasRenderingContext2D;
   renderGradient(ctx, grainShot.width, grainShot.height, {
     ...baseOptions(grainShot, grainShot.width),
-    noise,
+    grain,
   });
   const cropW = 720;
   const cropH = 450;

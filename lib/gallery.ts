@@ -169,7 +169,7 @@ export type StudioState = {
   background?: string;
   colors?: string[];
   seed?: number;
-  noise?: number;
+  grain?: number;
   blur?: number;
   aspectRatio?: StudioAspectRatio;
   name?: string;
@@ -184,7 +184,7 @@ export const buildStudioUrl = (state: StudioState): string => {
   if (state.background) params.set("bg", stripHash(state.background));
   if (state.colors?.length) params.set("colors", state.colors.map(stripHash).join(","));
   if (state.seed !== undefined) params.set("seed", String(state.seed));
-  if (state.noise !== undefined) params.set("noise", String(state.noise));
+  if (state.grain !== undefined) params.set("grain", String(state.grain));
   if (state.blur !== undefined) params.set("blur", String(state.blur));
   if (state.aspectRatio) params.set("aspect", state.aspectRatio);
   if (state.name) params.set("name", state.name);
@@ -230,8 +230,8 @@ export const parseStudioParams = (search: string): StudioState => {
     state.seed = seed;
   }
 
-  const noise = Number(params.get("noise"));
-  if (params.has("noise") && inRange(noise, 0, 0.8)) state.noise = noise;
+  const grain = Number(params.get("grain"));
+  if (params.has("grain") && inRange(grain, 0, 0.8)) state.grain = grain;
 
   const blur = Number(params.get("blur"));
   if (params.has("blur") && inRange(blur, 0, 1000)) state.blur = blur;

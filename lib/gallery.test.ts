@@ -68,14 +68,14 @@ describe("studio deep links", () => {
 
   test("drops invalid values instead of throwing", () => {
     const parsed = parseStudioParams(
-      "?style=neon&bg=zzz&colors=FF0000,nothex&seed=-1&noise=9&blur=5000&aspect=2:1&plan=lifetime"
+      "?style=neon&bg=zzz&colors=FF0000,nothex&seed=-1&grain=9&blur=5000&aspect=2:1&plan=lifetime"
     );
     expect(parsed).toEqual({});
   });
 
   test("accepts the bounds the export API accepts", () => {
-    const parsed = parseStudioParams("?noise=0.8&blur=1000&seed=4294967295");
-    expect(parsed).toEqual({ noise: 0.8, blur: 1000, seed: 4294967295 });
+    const parsed = parseStudioParams("?grain=0.8&blur=1000&seed=4294967295");
+    expect(parsed).toEqual({ grain: 0.8, blur: 1000, seed: 4294967295 });
   });
 
   test("truncates long names", () => {
