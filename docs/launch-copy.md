@@ -1,6 +1,6 @@
 # Launch copy: Reddit posts and directory listings
 
-Ready-to-paste copy for the first two steps of the distribution plan. Every link goes to a page that exists today. Replace nothing except where marked `[…]`.
+Ready-to-paste copy for the first two steps of the distribution plan. The X (Twitter) plan, with its own post templates and calendar, is in `x-strategy.md`. Every link goes to a page that exists today. Replace nothing except where marked `[…]`.
 
 Ground rules that apply to all of the Reddit posts:
 
