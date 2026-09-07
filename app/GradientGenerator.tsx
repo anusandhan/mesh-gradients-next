@@ -316,8 +316,26 @@ const EffectSection = memo(function EffectSection({
   onChange: (effect: GradientEffect) => void;
   children?: React.ReactNode;
 }) {
+  const sectionRef = useRef<HTMLDivElement>(null);
+  const previousEffect = useRef(effect);
+  // The section sits at the bottom of the sidebar, so dials that expand
+  // beneath the toggle can land below the fold unnoticed. Once the
+  // collapse has made room, bring the whole section into view.
+  useEffect(() => {
+    const wasOff = previousEffect.current === "none";
+    previousEffect.current = effect;
+    if (!wasOff || effect === "none") return;
+    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const timer = setTimeout(() => {
+      sectionRef.current?.scrollIntoView({
+        block: "end",
+        behavior: reduced ? "auto" : "smooth",
+      });
+    }, 320);
+    return () => clearTimeout(timer);
+  }, [effect]);
   return (
-    <div className="select-none space-y-4">
+    <div ref={sectionRef} className="select-none space-y-4 scroll-mb-6">
       <div className="space-y-1">
         <h3 className="flex items-center gap-2 text-base font-medium text-neutral-800">
           <SparkleIcon className="w-6 h-6" />
@@ -431,6 +449,7 @@ const colorRowClass =
   "flex items-center gap-1 rounded-xl border border-black/10 bg-white p-1";
 
 const ColorsSection = memo(function ColorsSection({
+  children,
   colorFormat,
   onColorFormatChange,
   backgroundColor,
@@ -438,6 +457,7 @@ const ColorsSection = memo(function ColorsSection({
   onBackgroundChange,
   onColorChange,
 }: {
+  children?: React.ReactNode;
   colorFormat: ColorFormat;
   onColorFormatChange: (format: ColorFormat) => void;
   backgroundColor: string;
@@ -472,6 +492,7 @@ const ColorsSection = memo(function ColorsSection({
           </div>
 
           <div className="space-y-4">
+            {children}
             <div className="space-y-2">
               <Label
                 htmlFor="backgroundColor"
@@ -549,13 +570,8 @@ const PresetsSection = memo(function PresetsSection({
   onManagePresets: () => void;
 }) {
   return (
-        <div className="space-y-4">
-          <div className="space-y-1">
-            <h3 className="flex items-center gap-2 text-base font-medium text-neutral-800">
-              <TabsIcon className="w-6 h-6" />
-              Preset
-            </h3>
-          </div>
+        <div className="space-y-2">
+          <Label className="text-sm font-medium">Preset</Label>
 
           <div className="flex items-center gap-2">
             {presetDraftName === null ? (
@@ -1584,8 +1600,8 @@ const GradientGenerator = () => {
           ),
           dial(
             "effectStrength",
-            effect === "pixel" ? "Dot size" : "Density",
-            effect === "pixel" ? "Dot" : "Density",
+            "Density",
+            "Density",
             effect === "pixel" ? GridFourIcon : HashIcon,
             [effectStrength, setEffectStrength],
             { min: 0.2, max: 2, step: 0.05, defaultValue: EFFECT_STRENGTH_DEFAULT },
@@ -1842,9 +1858,8 @@ const GradientGenerator = () => {
                   colorInputs={colorInputs}
                   onBackgroundChange={handleBackgroundColorChange}
                   onColorChange={handleColorInputChange}
-                />
-
-                <PresetsSection
+                >
+                  <PresetsSection
                   gradientStyle={gradientStyle}
                   selectedPresetValue={selectedPresetValue}
                   presetSelectOpen={presetSelectOpen}
@@ -1859,6 +1874,7 @@ const GradientGenerator = () => {
                   presetSelected={presetSelected}
                   onManagePresets={openManagePresets}
                 />
+                </ColorsSection>
 
                 {/* Finish: none / pixel / dither. Dials make room only
                     while a finish is on. */}

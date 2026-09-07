@@ -97,7 +97,8 @@ const EFFECTS: { value: GradientEffect; label: string; icon: Icon }[] = [
 
 const tabLabel = (tab: EditTab) => TABS.find((t) => t.key === tab)?.label;
 
-// One-row segmented picker, identical for styles and finishes
+// One-row pill picker: the same ToggleGroup the desktop sidebar uses, so
+// styles and finishes look identical on both screens
 function SegmentedRow<T extends string>({
   options,
   value,
@@ -110,28 +111,24 @@ function SegmentedRow<T extends string>({
   label: string;
 }) {
   return (
-    <div role="group" aria-label={label} className="flex items-center gap-2 px-5">
-      {options.map((o) => {
-        const selected = o.value === value;
-        return (
-          <button
-            key={o.value}
-            type="button"
-            aria-pressed={selected}
-            onClick={() => onChange(o.value)}
-            className={cn(
-              "flex h-9 flex-1 items-center justify-center gap-1.5 rounded-lg border text-xs font-medium transition-[color,background-color,border-color,transform] duration-150 active:scale-[0.96]",
-              selected
-                ? "border-neutral-900 bg-neutral-900 text-white"
-                : "border-neutral-200 bg-white text-neutral-600"
-            )}
-          >
-            <o.icon size={16} weight={selected ? "fill" : "regular"} />
-            {o.label}
-          </button>
-        );
-      })}
-    </div>
+    <ToggleGroup
+      type="single"
+      value={value}
+      onValueChange={(next) => {
+        // Radix allows deselecting the active pill; a choice is always
+        // required, so ignore empty
+        if (next) onChange(next as T);
+      }}
+      aria-label={label}
+      className="justify-center px-5"
+    >
+      {options.map((o) => (
+        <ToggleGroupItem key={o.value} value={o.value} aria-label={o.label}>
+          <o.icon size={16} weight="fill" />
+          {o.label}
+        </ToggleGroupItem>
+      ))}
+    </ToggleGroup>
   );
 }
 
@@ -379,9 +376,10 @@ export function MobileEditPanel({
 
             {tab === "colors" && (
               <div className="flex h-full flex-col justify-between pt-2">
+                {/* Preset first: pick a palette, then adjust its colours */}
                 <div className="flex items-center justify-between px-5">
                   <span className="text-xs font-medium uppercase tracking-wide text-neutral-500">
-                    Colors
+                    Preset
                   </span>
                   <Select
                     value={colorFormat}
@@ -404,30 +402,9 @@ export function MobileEditPanel({
                     </SelectContent>
                   </Select>
                 </div>
-                <div className="flex items-start justify-center gap-4 px-5">
-                  <Swatch
-                    label="Background"
-                    value={backgroundColor}
-                    format={colorFormat}
-                    onChange={onBackgroundColorChange}
-                  />
-                  <span
-                    aria-hidden
-                    className="mt-3 h-5 w-px shrink-0 bg-neutral-200"
-                  />
-                  {colors.map((color, index) => (
-                    <Swatch
-                      key={index}
-                      label={`Color ${index + 1}`}
-                      value={color}
-                      format={colorFormat}
-                      onChange={(hex) => onColorChange(index, hex)}
-                    />
-                  ))}
-                </div>
-                {/* Same pill toggle group as the desktop Style picker, kept to
-                    one scrolling row so the tab height stays fixed */}
-                <div className="overflow-x-auto px-5 pb-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                {/* Same pill toggle group as the desktop picker, kept to one
+                    scrolling row so the tab height stays fixed */}
+                <div className="overflow-x-auto px-5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
                   <ToggleGroup
                     type="single"
                     value={selectedPreset}
@@ -466,6 +443,27 @@ export function MobileEditPanel({
                       );
                     })}
                   </ToggleGroup>
+                </div>
+                <div className="flex items-start justify-center gap-4 px-5 pb-3">
+                  <Swatch
+                    label="Background"
+                    value={backgroundColor}
+                    format={colorFormat}
+                    onChange={onBackgroundColorChange}
+                  />
+                  <span
+                    aria-hidden
+                    className="mt-3 h-5 w-px shrink-0 bg-neutral-200"
+                  />
+                  {colors.map((color, index) => (
+                    <Swatch
+                      key={index}
+                      label={`Color ${index + 1}`}
+                      value={color}
+                      format={colorFormat}
+                      onChange={(hex) => onColorChange(index, hex)}
+                    />
+                  ))}
                 </div>
               </div>
             )}
