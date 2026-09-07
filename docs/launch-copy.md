@@ -4,7 +4,9 @@ Ready-to-paste copy for the first two steps of the distribution plan. Every link
 
 Ground rules that apply to all of the Reddit posts:
 
-- **Post the image, not a link.** Image posts get the reach. Upload the file itself (or a gallery of two to four), then put the tool link in your first comment. Posting a link to your own site as the post body gets removed as self-promotion on every one of these subs.
+- **Post the image, not a link.** Image posts get the reach. Upload the file itself (or a gallery of two to four).
+- **Wallpaper subs are giveaways, not launches.** r/iphonewallpapers, r/wallpapers, r/MacOS and r/wallpaperdump all forbid promoting or selling your designs. So: no link in the post, no link in the first comment, no mention of a tool or a site. Put `gradients.studio` in your Reddit profile bio once, and only share a link when someone asks in the comments. A reply to a genuine question is allowed everywhere; an unprompted link is what gets removed.
+- **r/Notion and the web subs are different.** They allow resources and write-ups, so the links stay in those posts.
 - **One sub per day, different palettes.** The same image across five subs on the same day reads as spam and gets reported. Rotate palettes.
 - **Read the sidebar before each post.** Most wallpaper subs require the resolution in the title and an "OC" flair. Some require the exact pixel size in brackets. The titles below already follow that convention.
 - **Reply to every comment for the first two hours.** That is what pushes a post up.
@@ -21,12 +23,11 @@ Flair: OC. Upload a gallery of the four phone files for Sunset, Midnight, Aurora
 **Title**
 `I made four grainy gradient wallpapers for iPhone (1290×2796) [OC]`
 
-**First comment**
-> Rendered these with a small gradient tool I've been building. The grain is drawn into the image at full size, so they don't band on OLED, which was the whole reason I started making my own.
->
-> Full-size downloads and eight more palettes here, no sign-up: https://www.gradients.studio/wallpapers
->
-> If you want different colours, each one has a "Customise" button that opens the same scene in the editor.
+**First comment** (no link, no product mention)
+> Made these myself. The grain is rendered into the image at full size, so they don't band on OLED. If anyone wants a different colour, say which and I'll render it.
+
+**If someone asks where they're from or for more:** reply with the wallpapers page and nothing else.
+> All twelve are free here, no sign-up: https://www.gradients.studio/wallpapers
 
 ### r/wallpapers
 
@@ -37,10 +38,11 @@ Flair: OC or Original Content. Titles here must carry the resolution.
 
 Upload: Deep Sea, Storm, Blue Sky, Lavender Haze desktop files.
 
-**First comment**
-> All four plus eight more, free at 4K and 5K, no sign-up: https://www.gradients.studio/wallpapers
->
-> The grain isn't a noise layer on top. It's rendered into the gradient at 3840 wide, so the texture is real at 100% instead of turning to mush when it's scaled.
+**First comment** (no link, no product mention)
+> Rendered at 3840×2160 with the grain drawn in at that size, so it stays real at 100% instead of turning to mush when scaled. Happy to do other palettes if there's interest.
+
+**If asked for more:**
+> Twelve of them, free at 4K and 5K, no sign-up: https://www.gradients.studio/wallpapers
 
 ### r/MacOS
 
@@ -51,12 +53,11 @@ Flair: Wallpaper (if the sub has it; otherwise Discussion). This sub likes macOS
 
 Upload: Blue Sky, Peach Fuzz, Ice Fibre, Midnight Mac files.
 
-**First comment**
-> These are rendered at 5120×2880 specifically, not upscaled from 4K. Grain is baked in so the soft parts stay smooth on the Retina panel.
->
-> Twelve palettes, free, no sign-up: https://www.gradients.studio/wallpapers/style/clouds
->
-> Happy to render other colours if there's a look people want.
+**First comment** (no link, no product mention)
+> These are rendered at 5120×2880 specifically, not upscaled from 4K, so the soft parts stay smooth on the Retina panel. Say if you'd like a different colour and I'll render it.
+
+**If asked for more:**
+> There's a set of twelve, free, no sign-up: https://www.gradients.studio/wallpapers/style/clouds
 
 ### r/wallpaperdump
 
@@ -65,10 +66,11 @@ This sub is for batches. Post all twelve desktop files as one gallery.
 **Title**
 `12 grainy gradient wallpapers, 4K, three styles (blobs, stripes, clouds) [OC]`
 
-**First comment**
-> 5K Mac and phone versions of every one of these are here, free, no sign-up: https://www.gradients.studio/wallpapers
->
-> Made with a gradient tool I built. The three styles are soft blobs, silk-like stripes, and clouds with real depth. The grain is what stops the dark ones from banding.
+**First comment** (no link, no product mention)
+> Three styles in here: soft blobs, silk-like stripes, and clouds with real depth. The grain is what stops the dark ones from banding. All 4K.
+
+**If asked for phone or Mac sizes:**
+> 5K Mac and phone versions of every one are here, free, no sign-up: https://www.gradients.studio/wallpapers
 
 ### r/Notion
 
