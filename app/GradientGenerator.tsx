@@ -25,6 +25,8 @@ import { track } from "@/lib/analytics";
 import { GALLERY, parseStudioParams } from "@/lib/gallery";
 import { FREE_EXPORTS_PER_MONTH } from "@/lib/site";
 import { QuotaMeter } from "@/components/QuotaMeter";
+import { DialList } from "@/components/DialList";
+import { Collapse } from "@/components/ui/collapse";
 import Spinner from "@/components/ui/spinner";
 import {
   Tooltip,
@@ -76,7 +78,6 @@ import {
 } from "@phosphor-icons/react";
 import { RulerSlider } from "@/components/mobile/RulerSlider";
 import {
-  MobileEditHeader,
   MobileEditPanel,
   type Adjustment,
   type EditTab,
@@ -381,12 +382,14 @@ const aspectRatioOptions = [
 const StyleSection = memo(function StyleSection({
   gradientStyle,
   onChange,
+  children,
 }: {
   gradientStyle: GradientStyle;
   onChange: (style: GradientStyle) => void;
+  children?: React.ReactNode;
 }) {
   return (
-        <div className="space-y-4">
+        <div className="select-none space-y-4">
           <div className="space-y-1">
             <h3 className="flex items-center gap-2 text-base font-medium text-neutral-800">
               <StackIcon className="w-6 h-6" />
@@ -417,6 +420,7 @@ const StyleSection = memo(function StyleSection({
               Clouds
             </ToggleGroupItem>
           </ToggleGroup>
+          {children}
         </div>
   );
 });
@@ -911,30 +915,8 @@ const GradientGenerator = () => {
   const [colorFormat, setColorFormat] = useState<ColorFormat>("oklch");
   const [isExporting, setIsExporting] = useState(false);
   const [controlsOpen, setControlsOpen] = useState(false);
-  const [editTab, setEditTab] = useState<EditTab>("adjust");
+  const [editTab, setEditTab] = useState<EditTab>("style");
   const [activeAdjustmentKey, setActiveAdjustmentKey] = useState("blur");
-  // Everything the mobile edit mode can touch, captured on open so Cancel
-  // can put it back
-  const editSnapshotRef = useRef<{
-    backgroundColor: string;
-    colorInputs: string[];
-    blurAmount: number[];
-    grainAmount: number[];
-    contrastAmount: number[];
-    saturationAmount: number[];
-    gradientStyle: GradientStyle;
-    fiberDensity: number[];
-    waviness: number[];
-    sheen: number[];
-    coverage: number[];
-    softness: number[];
-    detail: number[];
-    effect: GradientEffect;
-    effectSize: number[];
-    effectStrength: number[];
-    aspectRatio: string;
-    gradientName: string;
-  } | null>(null);
   // Why the upgrade dialog opened drives its headline: out of exports,
   // palette cap hit, or the user just clicked "Go Pro"
   const [upgradeOpen, setUpgradeOpen] = useState<
@@ -1611,60 +1593,9 @@ const GradientGenerator = () => {
           ),
         ];
 
-  const openEditMode = () => {
-    editSnapshotRef.current = {
-      backgroundColor,
-      colorInputs,
-      blurAmount,
-      grainAmount,
-      contrastAmount,
-      saturationAmount,
-      gradientStyle,
-      fiberDensity,
-      waviness,
-      sheen,
-      coverage,
-      softness,
-      detail,
-      effect,
-      effectSize,
-      effectStrength,
-      aspectRatio,
-      gradientName,
-    };
-    setControlsOpen(true);
-  };
-
-  const cancelEditMode = () => {
-    const s = editSnapshotRef.current;
-    if (s) {
-      setBackgroundColor(s.backgroundColor);
-      setColorInputs(s.colorInputs);
-      setBlurAmount(s.blurAmount);
-      setGrainAmount(s.grainAmount);
-      setContrastAmount(s.contrastAmount);
-      setSaturationAmount(s.saturationAmount);
-      setGradientStyle(s.gradientStyle);
-      setFiberDensity(s.fiberDensity);
-      setWaviness(s.waviness);
-      setSheen(s.sheen);
-      setCoverage(s.coverage);
-      setSoftness(s.softness);
-      setDetail(s.detail);
-      setEffect(s.effect);
-      setEffectSize(s.effectSize);
-      setEffectStrength(s.effectStrength);
-      setAspectRatio(s.aspectRatio);
-      setGradientName(s.gradientName);
-    }
-    editSnapshotRef.current = null;
-    setControlsOpen(false);
-  };
-
-  const doneEditMode = () => {
-    editSnapshotRef.current = null;
-    setControlsOpen(false);
-  };
+  // Mobile edit mode: every change is live, so opening is the whole
+  // ceremony and closing is the only exit
+  const openEditMode = () => setControlsOpen(true);
 
   const startSavingPreset = useCallback(() => {
     if (!isSignedIn) {
@@ -1896,10 +1827,13 @@ const GradientGenerator = () => {
               </div>
               {/* Scrollable Controls */}
               <div className="flex-1 overflow-y-auto p-6 space-y-10">
+                {/* Style: which look, then every dial that shapes it */}
                 <StyleSection
                   gradientStyle={gradientStyle}
                   onChange={handleStyleChange}
-                />
+                >
+                  <DialList dials={adjustments} />
+                </StyleSection>
 
                 <ColorsSection
                   colorFormat={colorFormat}
@@ -1926,83 +1860,15 @@ const GradientGenerator = () => {
                   onManagePresets={openManagePresets}
                 />
 
-                {/* Finish: none / pixel / dither, plus its dials */}
+                {/* Finish: none / pixel / dither. Dials make room only
+                    while a finish is on. */}
                 <EffectSection effect={effect} onChange={setEffect}>
-                  {effectDials.length > 0 && (
-                    <div className="space-y-5">
-                      {effectDials.map((a) => (
-                        <div key={a.key} className="space-y-1">
-                          <div className="flex items-baseline justify-between">
-                            <Label className="text-sm">{a.label}</Label>
-                            <button
-                              type="button"
-                              disabled={a.value === a.defaultValue}
-                              onClick={() => a.onChange(a.defaultValue)}
-                              aria-label={`Reset ${a.label}`}
-                              title="Reset to default"
-                              className="rounded font-azeret text-xs tabular-nums text-neutral-800 transition-colors hover:text-neutral-950 disabled:text-muted-foreground"
-                            >
-                              {a.format(a.value)}
-                            </button>
-                          </div>
-                          <RulerSlider
-                            value={a.value}
-                            min={a.min}
-                            max={a.max}
-                            step={a.step}
-                            defaultValue={a.defaultValue}
-                            onChange={a.onChange}
-                            aria-label={a.label}
-                            aria-valuetext={a.format(a.value)}
-                            className="h-10"
-                          />
-                        </div>
-                      ))}
+                  <Collapse open={effectDials.length > 0}>
+                    <div className="pt-1">
+                      <DialList dials={effectDials} />
                     </div>
-                  )}
+                  </Collapse>
                 </EffectSection>
-
-                {/* Controls: blur, grain, contrast, saturation + style dials */}
-                <div className="select-none space-y-4">
-                  <div className="space-y-2">
-                    <h3 className="flex items-center gap-2 text-base font-medium text-neutral-800">
-                      <SlidersIcon className="w-6 h-6" />
-                      Controls
-                    </h3>
-                  </div>
-
-                  <div className="space-y-5">
-                    {adjustments.map((a) => (
-                      <div key={a.key} className="space-y-1">
-                        <div className="flex items-baseline justify-between">
-                          <Label className="text-sm">{a.label}</Label>
-                          <button
-                            type="button"
-                            disabled={a.value === a.defaultValue}
-                            onClick={() => a.onChange(a.defaultValue)}
-                            aria-label={`Reset ${a.label}`}
-                            title="Reset to default"
-                            className="rounded font-azeret text-xs tabular-nums text-neutral-800 transition-colors hover:text-neutral-950 disabled:text-muted-foreground"
-                          >
-                            {a.format(a.value)}
-                          </button>
-                        </div>
-                        <RulerSlider
-                          value={a.value}
-                          min={a.min}
-                          max={a.max}
-                          step={a.step}
-                          defaultValue={a.defaultValue}
-                          onChange={a.onChange}
-                          aria-label={a.label}
-                          aria-valuetext={a.format(a.value)}
-                          className="h-10"
-                        />
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
               </div>
 
               {/* Fixed Action Buttons - desktop sidebar only; mobile has icon buttons in the bottom bar */}
@@ -2053,15 +1919,6 @@ const GradientGenerator = () => {
 
             {/* Canvas Preview - fills remaining space; mobile adds a bottom bar */}
             <div className="flex-1 min-w-0 flex flex-col">
-              {controlsOpen && (
-                <div className="lg:hidden">
-                  <MobileEditHeader
-                    tab={editTab}
-                    onCancel={cancelEditMode}
-                    onDone={doneEditMode}
-                  />
-                </div>
-              )}
               <div
                 ref={previewContainerRef}
                 className="flex-1 min-h-0 flex items-center justify-center p-4 lg:p-6"
@@ -2103,7 +1960,12 @@ const GradientGenerator = () => {
                   <MobileEditPanel
                     tab={editTab}
                     onTabChange={setEditTab}
-                    adjustments={[...effectDials, ...adjustments]}
+                    onClose={() => setControlsOpen(false)}
+                    onRandomize={handleRandomize}
+                    onExport={downloadCanvasAsImage}
+                    isExporting={isExporting}
+                    styleDials={adjustments}
+                    effectDials={effectDials}
                     effect={effect}
                     onEffectChange={setEffect}
                     activeAdjustmentKey={activeAdjustmentKey}

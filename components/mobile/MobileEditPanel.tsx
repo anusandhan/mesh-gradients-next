@@ -5,7 +5,7 @@ import type { Icon } from "@phosphor-icons/react";
 import {
   SlidersIcon,
   SwatchesIcon,
-  StackIcon,
+  SparkleIcon,
   CropIcon,
   CirclesThreeIcon,
   WaveSineIcon,
@@ -13,10 +13,15 @@ import {
   ProhibitIcon,
   GridFourIcon,
   HashIcon,
+  ShuffleIcon,
+  DownloadIcon,
+  XIcon,
 } from "@phosphor-icons/react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { customEasing } from "@/lib/motion";
+import { Button } from "@/components/ui/button";
+import Spinner from "@/components/ui/spinner";
 import { RulerSlider } from "@/components/mobile/RulerSlider";
 import { AdjustDial } from "@/components/mobile/AdjustDial";
 import { ColorPickerPopover } from "@/components/ui/color-picker-popover";
@@ -31,11 +36,15 @@ import {
 import { COLOR_FORMATS, type ColorFormat } from "@/lib/color-format";
 import type { GradientEffect, GradientStyle } from "@/lib/gradient-renderer";
 
-// Photos-app style edit mode for small screens. The preview stays visible
-// above; this panel replaces the bottom bar with a tab strip (Adjust, Colors,
-// Style, Size) and the header carries Cancel / Done.
+// Edit panel for small screens. Every change is live in the preview, so
+// there is nothing to confirm: the panel opens, you work, you close it.
+// Randomize and Export sit in the panel header because the loop we saw in
+// replays is edit → regenerate → edit, and that should cost zero taps.
+//
+// Tabs are grouped by intent: Style (which look, and its dials), Effects
+// (which finish, and its dials), Colors, Size.
 
-export type EditTab = "adjust" | "colors" | "style" | "size";
+export type EditTab = "style" | "effects" | "colors" | "size";
 
 export type Adjustment = {
   key: string;
@@ -68,16 +77,10 @@ export type EditAspectRatio = {
 };
 
 const TABS: { key: EditTab; label: string; icon: Icon }[] = [
-  { key: "adjust", label: "Controls", icon: SlidersIcon },
+  { key: "style", label: "Style", icon: SlidersIcon },
+  { key: "effects", label: "Effects", icon: SparkleIcon },
   { key: "colors", label: "Colors", icon: SwatchesIcon },
-  { key: "style", label: "Style", icon: StackIcon },
   { key: "size", label: "Size", icon: CropIcon },
-];
-
-const EFFECTS: { value: GradientEffect; label: string; icon: Icon }[] = [
-  { value: "none", label: "None", icon: ProhibitIcon },
-  { value: "pixel", label: "Pixel", icon: GridFourIcon },
-  { value: "dither", label: "Dither", icon: HashIcon },
 ];
 
 const STYLES: { value: GradientStyle; label: string; icon: Icon }[] = [
@@ -86,34 +89,119 @@ const STYLES: { value: GradientStyle; label: string; icon: Icon }[] = [
   { value: "clouds", label: "Clouds", icon: CloudIcon },
 ];
 
+const EFFECTS: { value: GradientEffect; label: string; icon: Icon }[] = [
+  { value: "none", label: "None", icon: ProhibitIcon },
+  { value: "pixel", label: "Pixel", icon: GridFourIcon },
+  { value: "dither", label: "Dither", icon: HashIcon },
+];
+
 const tabLabel = (tab: EditTab) => TABS.find((t) => t.key === tab)?.label;
 
-type MobileEditHeaderProps = {
-  tab: EditTab;
-  onCancel: () => void;
-  onDone: () => void;
-};
-
-export function MobileEditHeader({ tab, onCancel, onDone }: MobileEditHeaderProps) {
+// One-row segmented picker, identical for styles and finishes
+function SegmentedRow<T extends string>({
+  options,
+  value,
+  onChange,
+  label,
+}: {
+  options: { value: T; label: string; icon: Icon }[];
+  value: T;
+  onChange: (value: T) => void;
+  label: string;
+}) {
   return (
-    <div className="flex h-12 shrink-0 select-none items-center justify-between border-b border-neutral-200 bg-white px-2">
-      <button
-        type="button"
-        onClick={onCancel}
-        className="h-11 rounded-lg px-3 text-sm text-neutral-600 transition-[color,transform] active:scale-[0.96]"
-      >
-        Cancel
-      </button>
-      <span className="text-sm font-medium text-neutral-800">
-        {tabLabel(tab)}
-      </span>
-      <button
-        type="button"
-        onClick={onDone}
-        className="h-11 rounded-lg px-3 text-sm font-semibold text-neutral-900 transition-transform active:scale-[0.96]"
-      >
-        Done
-      </button>
+    <div role="group" aria-label={label} className="flex items-center gap-2 px-5">
+      {options.map((o) => {
+        const selected = o.value === value;
+        return (
+          <button
+            key={o.value}
+            type="button"
+            aria-pressed={selected}
+            onClick={() => onChange(o.value)}
+            className={cn(
+              "flex h-9 flex-1 items-center justify-center gap-1.5 rounded-lg border text-xs font-medium transition-[color,background-color,border-color,transform] duration-150 active:scale-[0.96]",
+              selected
+                ? "border-neutral-900 bg-neutral-900 text-white"
+                : "border-neutral-200 bg-white text-neutral-600"
+            )}
+          >
+            <o.icon size={16} weight={selected ? "fill" : "regular"} />
+            {o.label}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+// Slider + dial strip for a list of adjustments
+function DialPane({
+  dials,
+  activeKey,
+  onActiveChange,
+  stripKey,
+}: {
+  dials: Adjustment[];
+  activeKey: string;
+  onActiveChange: (key: string) => void;
+  /** Changes when the dial set changes, to crossfade the strip */
+  stripKey: string;
+}) {
+  const active = dials.find((a) => a.key === activeKey) ?? dials[0];
+  if (!active) return null;
+  return (
+    <div className="flex flex-1 flex-col justify-between pt-2">
+      <div className="flex items-baseline justify-between px-5">
+        <span className="text-xs font-medium uppercase tracking-wide text-neutral-500">
+          {active.label}
+        </span>
+        <button
+          type="button"
+          disabled={active.value === active.defaultValue}
+          onClick={() => active.onChange(active.defaultValue)}
+          aria-label={`Reset ${active.label}`}
+          className="min-w-[3.5rem] rounded-md text-right font-azeret text-sm tabular-nums text-neutral-900 transition-colors disabled:text-neutral-500"
+        >
+          {active.format(active.value)}
+        </button>
+      </div>
+      <RulerSlider
+        key={active.key}
+        value={active.value}
+        min={active.min}
+        max={active.max}
+        step={active.step}
+        defaultValue={active.defaultValue}
+        onChange={active.onChange}
+        aria-label={active.label}
+        aria-valuetext={active.format(active.value)}
+      />
+      <div className="snap-x overflow-x-auto px-3 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        {/* Centered while it fits, scrolls once it overflows. A style
+            change swaps the dial set, so the strip crossfades. */}
+        <AnimatePresence initial={false} mode="popLayout">
+          <motion.div
+            key={stripKey}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.15, ease: customEasing.easeOutQuad }}
+            className="mx-auto flex w-max"
+          >
+            {dials.map((a) => (
+              <AdjustDial
+                key={a.key}
+                label={a.shortLabel}
+                icon={a.icon}
+                progress={(a.value - a.min) / (a.max - a.min)}
+                active={a.key === active.key}
+                onClick={() => onActiveChange(a.key)}
+              />
+            ))}
+          </motion.div>
+        </AnimatePresence>
+      </div>
     </div>
   );
 }
@@ -121,8 +209,13 @@ export function MobileEditHeader({ tab, onCancel, onDone }: MobileEditHeaderProp
 type MobileEditPanelProps = {
   tab: EditTab;
   onTabChange: (tab: EditTab) => void;
+  onClose: () => void;
+  onRandomize: () => void;
+  onExport: () => void;
+  isExporting: boolean;
 
-  adjustments: Adjustment[];
+  styleDials: Adjustment[];
+  effectDials: Adjustment[];
   activeAdjustmentKey: string;
   onActiveAdjustmentChange: (key: string) => void;
 
@@ -149,7 +242,12 @@ type MobileEditPanelProps = {
 export function MobileEditPanel({
   tab,
   onTabChange,
-  adjustments,
+  onClose,
+  onRandomize,
+  onExport,
+  isExporting,
+  styleDials,
+  effectDials,
   activeAdjustmentKey,
   onActiveAdjustmentChange,
   backgroundColor,
@@ -169,14 +267,45 @@ export function MobileEditPanel({
   aspectRatioOptions,
   onAspectRatioChange,
 }: MobileEditPanelProps) {
-  // Fall back to the first tool when the style change removed the active one
-  const active =
-    adjustments.find((a) => a.key === activeAdjustmentKey) ?? adjustments[0];
-
   return (
     <div className="flex shrink-0 select-none flex-col border-t border-neutral-200 bg-white pb-[env(safe-area-inset-bottom)]">
+      {/* Header: what you're editing, and the two actions the loop needs */}
+      <div className="flex h-12 items-center justify-between border-b border-neutral-100 pl-5 pr-2">
+        <span className="text-sm font-medium text-neutral-800">{tabLabel(tab)}</span>
+        <div className="flex items-center gap-1">
+          <Button
+            variant="outline"
+            onClick={onRandomize}
+            className="h-9 w-9 p-0"
+            aria-label="Randomize gradient"
+          >
+            <ShuffleIcon weight="bold" className="h-4 w-4" />
+          </Button>
+          <Button
+            onClick={onExport}
+            disabled={isExporting}
+            className="h-9 w-9 p-0"
+            aria-label="Export image"
+          >
+            {isExporting ? (
+              <Spinner size={16} />
+            ) : (
+              <DownloadIcon weight="bold" className="h-4 w-4" />
+            )}
+          </Button>
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Close editor"
+            className="ml-1 flex h-11 w-11 items-center justify-center rounded-lg text-neutral-500 transition-[color,transform] duration-150 hover:text-neutral-900 active:scale-[0.96]"
+          >
+            <XIcon size={18} weight="bold" />
+          </button>
+        </div>
+      </div>
+
       {/* Fixed-height content area so the preview doesn't jump between tabs */}
-      <div className="relative h-40 overflow-hidden">
+      <div className="relative h-56 overflow-hidden">
         <AnimatePresence initial={false} mode="popLayout">
           <motion.div
             key={tab}
@@ -186,47 +315,64 @@ export function MobileEditPanel({
             transition={{ duration: 0.18, ease: customEasing.easeOutQuad }}
             className="absolute inset-0 flex flex-col"
           >
-            {tab === "adjust" && active && (
-              <div className="flex h-full flex-col justify-between pt-3">
-                <div className="flex items-baseline justify-between px-5">
-                  <span className="text-xs font-medium uppercase tracking-wide text-neutral-500">
-                    {active.label}
-                  </span>
-                  <button
-                    type="button"
-                    disabled={active.value === active.defaultValue}
-                    onClick={() => active.onChange(active.defaultValue)}
-                    aria-label={`Reset ${active.label}`}
-                    className="min-w-[3.5rem] rounded-md text-right font-azeret text-sm tabular-nums text-neutral-900 transition-colors disabled:text-neutral-500"
-                  >
-                    {active.format(active.value)}
-                  </button>
-                </div>
-                <RulerSlider
-                  key={active.key}
-                  value={active.value}
-                  min={active.min}
-                  max={active.max}
-                  step={active.step}
-                  defaultValue={active.defaultValue}
-                  onChange={active.onChange}
-                  aria-label={active.label}
-                  aria-valuetext={active.format(active.value)}
+            {tab === "style" && (
+              <div className="flex h-full flex-col pt-3">
+                <SegmentedRow
+                  options={STYLES}
+                  value={style}
+                  onChange={onStyleChange}
+                  label="Gradient style"
                 />
-                <div className="snap-x overflow-x-auto px-3 pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-                  {/* Centered while it fits, scrolls once it overflows */}
-                  <div className="mx-auto flex w-max">
-                    {adjustments.map((a) => (
-                      <AdjustDial
-                        key={a.key}
-                        label={a.shortLabel}
-                        icon={a.icon}
-                        progress={(a.value - a.min) / (a.max - a.min)}
-                        active={a.key === active.key}
-                        onClick={() => onActiveAdjustmentChange(a.key)}
-                      />
-                    ))}
-                  </div>
+                <DialPane
+                  dials={styleDials}
+                  activeKey={activeAdjustmentKey}
+                  onActiveChange={onActiveAdjustmentChange}
+                  stripKey={style}
+                />
+              </div>
+            )}
+
+            {tab === "effects" && (
+              <div className="flex h-full flex-col pt-3">
+                <SegmentedRow
+                  options={EFFECTS}
+                  value={effect}
+                  onChange={onEffectChange}
+                  label="Finish"
+                />
+                {/* Dials exist only while a finish is on; the empty state
+                    says so rather than showing dead controls */}
+                <div className="relative flex-1">
+                  <AnimatePresence initial={false} mode="popLayout">
+                    {effect === "none" ? (
+                      <motion.p
+                        key="none"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        transition={{ duration: 0.15 }}
+                        className="absolute inset-0 flex items-center justify-center px-5 text-center text-xs text-neutral-500"
+                      >
+                        Pick Pixel or Dither to add a finish on top of the gradient.
+                      </motion.p>
+                    ) : (
+                      <motion.div
+                        key="dials"
+                        initial={{ opacity: 0, y: 6 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: 4 }}
+                        transition={{ duration: 0.18, ease: customEasing.easeOutQuad }}
+                        className="absolute inset-0 flex flex-col"
+                      >
+                        <DialPane
+                          dials={effectDials}
+                          activeKey={activeAdjustmentKey}
+                          onActiveChange={onActiveAdjustmentChange}
+                          stripKey={effect}
+                        />
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
                 </div>
               </div>
             )}
@@ -321,56 +467,6 @@ export function MobileEditPanel({
                     })}
                   </ToggleGroup>
                 </div>
-              </div>
-            )}
-
-            {tab === "style" && (
-              <div className="flex h-full flex-col justify-center gap-3 px-5">
-              <div className="flex items-center justify-center gap-3">
-                {STYLES.map((s) => {
-                  const selected = s.value === style;
-                  return (
-                    <button
-                      key={s.value}
-                      type="button"
-                      aria-pressed={selected}
-                      onClick={() => onStyleChange(s.value)}
-                      className={cn(
-                        "flex h-20 flex-1 flex-col items-center justify-center gap-2 rounded-xl border transition-[color,background-color,border-color,transform] duration-150 active:scale-[0.96]",
-                        selected
-                          ? "border-neutral-900 bg-neutral-900 text-white"
-                          : "border-neutral-200 bg-white text-neutral-600"
-                      )}
-                    >
-                      <s.icon size={22} weight={selected ? "fill" : "regular"} />
-                      <span className="text-xs font-medium">{s.label}</span>
-                    </button>
-                  );
-                })}
-              </div>
-              {/* Finish: none / pixel / dither. Its dials live in Controls. */}
-              <div className="flex items-center justify-center gap-2">
-                {EFFECTS.map((e) => {
-                  const selected = e.value === effect;
-                  return (
-                    <button
-                      key={e.value}
-                      type="button"
-                      aria-pressed={selected}
-                      onClick={() => onEffectChange(e.value)}
-                      className={cn(
-                        "flex h-9 flex-1 items-center justify-center gap-1.5 rounded-lg border text-xs font-medium transition-[color,background-color,border-color,transform] duration-150 active:scale-[0.96]",
-                        selected
-                          ? "border-neutral-900 bg-neutral-900 text-white"
-                          : "border-neutral-200 bg-white text-neutral-600"
-                      )}
-                    >
-                      <e.icon size={16} weight={selected ? "fill" : "regular"} />
-                      {e.label}
-                    </button>
-                  );
-                })}
-              </div>
               </div>
             )}
 
