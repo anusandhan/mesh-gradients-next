@@ -33,6 +33,15 @@ describe("gallery presets", () => {
     expect(findPreset("nope")).toBeNull();
   });
 
+  test("every palette has a substantial, unique description", () => {
+    const seen = new Set<string>();
+    for (const p of GALLERY) {
+      expect(p.description.length).toBeGreaterThan(160);
+      expect(seen.has(p.description)).toBe(false);
+      seen.add(p.description);
+    }
+  });
+
   test("four palettes per style, names unique", () => {
     for (const style of ["blobs", "stripes", "clouds"] as const) {
       expect(GALLERY.filter((p) => p.style === style)).toHaveLength(4);

@@ -36,7 +36,7 @@ export async function generateMetadata({
   const preset = findPreset(slug);
   if (!preset) return {};
   const title = `${preset.name} Gradient Wallpaper (4K, 5K, Phone)`;
-  const description = `Free ${preset.name} wallpaper: ${preset.mood}, ${STYLE_LABELS[preset.style].toLowerCase()} style with real grain. Download for Mac, desktop or phone, or customise it in the studio.`;
+  const description = `Free ${preset.name} wallpaper, ${preset.mood}. ${preset.description.split(". ")[0]}. Download at 4K, 5K or phone size, no sign-up.`;
   return {
     title: { absolute: `${title} | ${SITE_NAME}` },
     description,
@@ -128,10 +128,10 @@ export default async function WallpaperPage({
             <h1 className="mt-1 text-4xl font-semibold tracking-tight">
               {preset.name}
             </h1>
-            <p className="mt-3 text-neutral-600">
-              {preset.mood[0].toUpperCase() + preset.mood.slice(1)}. Rendered
-              with real grain at every size, so it stays clean on a 5K display
-              and an OLED phone.
+            <p className="mt-3 text-neutral-600">{preset.description}</p>
+            <p className="mt-2 text-sm text-neutral-500">
+              Rendered with real grain at every size, so it stays clean on a
+              5K display and an OLED phone.
             </p>
 
             <h2 className="mt-8 text-sm font-medium">Download free</h2>

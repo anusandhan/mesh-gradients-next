@@ -18,6 +18,10 @@ export type GalleryPreset = {
   mood: string;
   // Colour words for the wallpaper tag pages (/wallpapers/color/[tag])
   tags: string[];
+  // Two or three sentences unique to this palette, for its wallpaper page.
+  // Twelve near-identical template pages read as thin to search engines;
+  // this is what makes each one its own page.
+  description: string;
 };
 
 export const GALLERY: GalleryPreset[] = [
@@ -31,6 +35,8 @@ export const GALLERY: GalleryPreset[] = [
     seed: 42,
     mood: "orange, pink and violet glowing on near-black",
     tags: ["dark", "orange", "pink", "purple"],
+    description:
+      "Ember is the dark hero palette: near-black behind orange, coral, pink and violet that glow rather than shout. It carries text well, so it suits website heroes and social cards, and on an OLED phone the black stays black while the grain keeps the glow from banding.",
   },
   {
     slug: "peach-fuzz",
@@ -41,6 +47,8 @@ export const GALLERY: GalleryPreset[] = [
     seed: 5,
     mood: "soft peach and blush pastels",
     tags: ["light", "peach", "pastel"],
+    description:
+      "Peach Fuzz is a warm pastel wash of apricot, coral and blush on cream. It reads as soft and friendly, which makes it a good desktop wallpaper behind icons, a slide background that does not fight the words, and a calm cover for a personal Notion page.",
   },
   {
     slug: "lavender-haze",
@@ -51,6 +59,8 @@ export const GALLERY: GalleryPreset[] = [
     seed: 8,
     mood: "lilac, violet and periwinkle mist",
     tags: ["light", "purple", "pastel"],
+    description:
+      "Lavender Haze mixes lilac, violet, orchid and periwinkle into a light mist. It works where you want colour without weight: a portfolio hero, an app onboarding screen, a Mac wallpaper that stays readable behind windows.",
   },
   {
     slug: "deep-sea",
@@ -61,6 +71,8 @@ export const GALLERY: GalleryPreset[] = [
     seed: 21,
     mood: "navy, ocean blue and a teal glow",
     tags: ["dark", "blue", "teal"],
+    description:
+      "Deep Sea is navy and ocean blue with a single teal glow. It is the most restrained of the blob palettes, made for dark-mode product sites, dashboards and a phone wallpaper that disappears behind a dark home screen.",
   },
   // Stripes: flowing fibres with sheen
   {
@@ -72,6 +84,8 @@ export const GALLERY: GalleryPreset[] = [
     seed: 19,
     mood: "green, blue and violet northern lights",
     tags: ["dark", "green", "blue", "purple"],
+    description:
+      "Aurora is the northern lights on a night sky: mint, electric blue and violet fibres with a cyan highlight. It is the showpiece stripe palette for dark heroes, event artwork and OLED wallpapers where the greens can really glow.",
   },
   {
     slug: "solar",
@@ -82,6 +96,8 @@ export const GALLERY: GalleryPreset[] = [
     seed: 31,
     mood: "warm sunrise amber and coral",
     tags: ["light", "yellow", "orange"],
+    description:
+      "Solar is a sunrise in silk: amber, coral and gold fibres on a warm sand background. It is bright without being loud, which suits presentation backgrounds, podcast art and a desktop wallpaper for a room that gets morning light.",
   },
   {
     slug: "silk-rose",
@@ -92,6 +108,8 @@ export const GALLERY: GalleryPreset[] = [
     seed: 12,
     mood: "rose, pink and blush silk",
     tags: ["light", "pink"],
+    description:
+      "Silk Rose is draped fabric in rose, pink and blush. It photographs well as a social background and as a wallpaper for a phone with a light theme, and the fibres give it a texture a flat pink gradient never has.",
   },
   {
     slug: "ice-fibre",
@@ -102,6 +120,8 @@ export const GALLERY: GalleryPreset[] = [
     seed: 27,
     mood: "icy sky blue, cyan and white threads",
     tags: ["light", "blue", "cyan"],
+    description:
+      "Ice Fibre is cool and clean: sky blue, cyan and a thread of periwinkle running to white. It is a natural fit for a MacBook wallpaper, a light-mode website hero, or a Zoom background that looks composed without drawing attention.",
   },
   // Clouds: billowing volumes
   {
@@ -113,6 +133,8 @@ export const GALLERY: GalleryPreset[] = [
     seed: 3,
     mood: "white cumulus on a clear blue sky",
     tags: ["blue", "white"],
+    description:
+      "Blue Sky is white cumulus on a clear blue sky, the daytime reference of the cloud palettes. It is the safest wallpaper of the set for a desktop, a good slide background, and the one to start from if you want a lighter or moodier sky.",
   },
   {
     slug: "sunset",
@@ -123,6 +145,8 @@ export const GALLERY: GalleryPreset[] = [
     seed: 14,
     mood: "violet dusk into coral and gold",
     tags: ["purple", "orange", "pink"],
+    description:
+      "Sunset runs from violet dusk through coral to gold, with the clouds catching the last light. It is the warmest of the cloud palettes and the one people pick for phone wallpapers and album or podcast covers.",
   },
   {
     slug: "midnight",
@@ -133,6 +157,8 @@ export const GALLERY: GalleryPreset[] = [
     seed: 23,
     mood: "deep indigo night clouds",
     tags: ["dark", "blue", "black"],
+    description:
+      "Midnight is deep indigo cloud on near-black. It is built for OLED screens, where the darkest areas switch pixels off and the grain keeps the blue from banding, and it makes a quiet backdrop for dark-mode heroes.",
   },
   {
     slug: "storm",
@@ -143,6 +169,8 @@ export const GALLERY: GalleryPreset[] = [
     seed: 9,
     mood: "slate and silver storm front",
     tags: ["dark", "gray"],
+    description:
+      "Storm is slate, grey and silver cloud with no colour at all, which is exactly why it works: it sits behind anything. Use it for a monochrome desktop, a neutral slide deck, or a website section that needs depth without a hue.",
   },
 ];
 
