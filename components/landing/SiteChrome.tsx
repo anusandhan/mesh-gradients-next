@@ -50,7 +50,7 @@ export const SiteFooter = () => (
             href={MAKER_URL}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-neutral-900 underline-offset-2 hover:underline"
+            className="text-neutral-900 underline-offset-2 transition-colors hover:underline"
           >
             {MAKER_NAME}
           </a>
@@ -58,18 +58,18 @@ export const SiteFooter = () => (
         </p>
       </div>
       <div className="grid grid-cols-3 gap-x-10 gap-y-2">
-        <Link href="/app" className="hover:text-neutral-900">Studio</Link>
-        <Link href="/wallpapers" className="hover:text-neutral-900">Wallpapers</Link>
-        <Link href="/#pricing" className="hover:text-neutral-900">Pricing</Link>
-        <Link href="/grainy-gradient" className="hover:text-neutral-900">Grainy</Link>
-        <Link href="/blurry-gradient" className="hover:text-neutral-900">Blurry</Link>
-        <Link href="/aurora-gradient" className="hover:text-neutral-900">Aurora</Link>
-        <Link href="/#faq" className="hover:text-neutral-900">FAQ</Link>
-        <Link href="/about" className="hover:text-neutral-900">About</Link>
-        <Link href="/contact" className="hover:text-neutral-900">Contact</Link>
-        <Link href="/license" className="hover:text-neutral-900">License</Link>
-        <Link href="/terms" className="hover:text-neutral-900">Terms</Link>
-        <Link href="/privacy" className="hover:text-neutral-900">Privacy</Link>
+        <Link href="/app" className="transition-colors hover:text-neutral-900">Studio</Link>
+        <Link href="/wallpapers" className="transition-colors hover:text-neutral-900">Wallpapers</Link>
+        <Link href="/#pricing" className="transition-colors hover:text-neutral-900">Pricing</Link>
+        <Link href="/grainy-gradient" className="transition-colors hover:text-neutral-900">Grainy</Link>
+        <Link href="/blurry-gradient" className="transition-colors hover:text-neutral-900">Blurry</Link>
+        <Link href="/aurora-gradient" className="transition-colors hover:text-neutral-900">Aurora</Link>
+        <Link href="/#faq" className="transition-colors hover:text-neutral-900">FAQ</Link>
+        <Link href="/about" className="transition-colors hover:text-neutral-900">About</Link>
+        <Link href="/contact" className="transition-colors hover:text-neutral-900">Contact</Link>
+        <Link href="/license" className="transition-colors hover:text-neutral-900">License</Link>
+        <Link href="/terms" className="transition-colors hover:text-neutral-900">Terms</Link>
+        <Link href="/privacy" className="transition-colors hover:text-neutral-900">Privacy</Link>
       </div>
     </div>
     <div className="mx-auto w-full max-w-6xl px-6 pb-8 text-xs text-neutral-400">

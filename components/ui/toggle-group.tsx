@@ -28,7 +28,7 @@ const ToggleGroupItem = React.forwardRef<
     className={cn(
       // Resting pills sit raised on a soft shadow; the active pill reads as
       // physically pressed - inset shadow, firmer border, no elevation
-      "flex h-8 items-center justify-center gap-1.5 rounded-full border border-neutral-200 bg-white px-3 text-sm text-neutral-600 shadow-[0px_1px_2px_rgba(0,0,0,0.06),0px_2px_4px_rgba(0,0,0,0.05)] outline-none transition-[box-shadow,background-color,border-color,color,scale] duration-200 active:scale-[0.96] hover:text-neutral-800 focus-visible:ring-1 focus-visible:ring-ring data-[state=on]:border-neutral-300 data-[state=on]:bg-neutral-50 data-[state=on]:text-neutral-900 data-[state=on]:shadow-[inset_0px_1px_3px_rgba(0,0,0,0.12),inset_0px_1px_2px_rgba(0,0,0,0.06)]",
+      "flex h-8 items-center justify-center gap-1.5 rounded-full border border-neutral-200 bg-white px-3 text-sm text-neutral-600 shadow-[0px_1px_2px_rgba(0,0,0,0.06),0px_2px_4px_rgba(0,0,0,0.05)] outline-none transition-[box-shadow,background-color,border-color,color,transform] duration-150 ease-[cubic-bezier(0.25,0.46,0.45,0.94)] active:scale-[0.96] hover:text-neutral-800 focus-visible:ring-1 focus-visible:ring-ring data-[state=on]:border-neutral-300 data-[state=on]:bg-neutral-50 data-[state=on]:text-neutral-900 data-[state=on]:shadow-[inset_0px_1px_3px_rgba(0,0,0,0.12),inset_0px_1px_2px_rgba(0,0,0,0.06)]",
       className
     )}
     {...props}

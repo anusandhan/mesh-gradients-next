@@ -2,7 +2,9 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
+import { ShuffleIcon } from "@phosphor-icons/react";
 import { Button } from "@/components/ui/button";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { cn } from "@/lib/utils";
 import { track } from "@/lib/analytics";
 import { GALLERY, buildStudioUrl, type GalleryPreset } from "@/lib/gallery";
@@ -13,14 +15,16 @@ import {
 import TrackedLink from "./TrackedLink";
 
 // The landing-page hero is the real renderer, not a screenshot: three style
-// tabs, a handful of palettes, shuffle, and a grain toggle. "Open in the
+// pills, a handful of palettes, shuffle, and a grain toggle. "Open in the
 // studio" carries the exact state into /app. Until the first frame paints
-// (and if JavaScript never runs) the server-rendered hero.jpg shows instead.
+// (and if JavaScript never runs) the server-rendered hero.jpg shows instead;
+// it is rendered with the same default state so the crossfade is invisible.
 
 const EXPORT_WIDTH = 3840; // blur is defined relative to the 4K export
 const MAX_RENDER_WIDTH = 1400;
 const ASPECT = 16 / 10;
 const GRAIN = 0.2;
+const DEFAULT_STYLE: GradientStyle = "stripes";
 
 const STYLES: { value: GradientStyle; label: string }[] = [
   { value: "blobs", label: "Blobs" },
@@ -41,7 +45,7 @@ const domCreateCanvas = (width: number, height: number) => {
 };
 
 export default function HeroCanvas() {
-  const [style, setStyle] = useState<GradientStyle>("blobs");
+  const [style, setStyle] = useState<GradientStyle>(DEFAULT_STYLE);
   const [palette, setPalette] = useState<GalleryPreset>(PALETTES[0]);
   const [seed, setSeed] = useState(PALETTES[0].seed);
   const [grainOn, setGrainOn] = useState(true);
@@ -118,11 +122,13 @@ export default function HeroCanvas() {
 
   return (
     <div className="mx-auto w-full max-w-5xl">
-      <div className="rounded-[28px] border border-neutral-200 bg-white p-2 shadow-[0_1px_2px_rgba(0,0,0,0.04),0_12px_40px_-12px_rgba(0,0,0,0.18)]">
-        <div className="relative aspect-[16/10] w-full overflow-hidden rounded-[20px] bg-neutral-100">
+      {/* Elevation comes from layered shadows (hairline + contact + ambient),
+          not a border. Radii are concentric: 20px canvas + 8px padding = 28px. */}
+      <div className="rounded-[28px] bg-white p-2 shadow-[0_0_0_1px_rgba(0,0,0,0.06),0_1px_2px_rgba(0,0,0,0.04),0_12px_40px_-12px_rgba(0,0,0,0.18)]">
+        <div className="relative aspect-[16/10] w-full overflow-hidden rounded-[20px] bg-neutral-100 after:pointer-events-none after:absolute after:inset-0 after:rounded-[20px] after:shadow-[inset_0_0_0_1px_rgba(0,0,0,0.08)]">
           <Image
             src="/landing/hero.jpg"
-            alt="A mesh gradient in orange, pink and violet rendered by Gradients Studio"
+            alt="A stripes mesh gradient in orange, violet and pink rendered by Gradients Studio"
             fill
             priority
             sizes="(min-width: 1024px) 1024px, 100vw"
@@ -142,58 +148,58 @@ export default function HeroCanvas() {
         </div>
 
         {/* Controls: style + palette on one row, actions on the next */}
-        <div className="flex flex-col gap-2 px-2 pb-2 pt-3">
-          <div className="flex flex-wrap items-center gap-2">
-            <div
-              role="tablist"
+        <div className="flex flex-col gap-2.5 px-2 pb-2 pt-3">
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+            <ToggleGroup
+              type="single"
+              value={style}
+              onValueChange={(value) => {
+                if (!value) return;
+                setStyle(value as GradientStyle);
+                interact("style", value);
+              }}
               aria-label="Gradient style"
-              className="flex rounded-lg border border-neutral-200 bg-neutral-50 p-0.5"
             >
               {STYLES.map((option) => (
-                <button
+                <ToggleGroupItem
                   key={option.value}
-                  role="tab"
-                  aria-selected={style === option.value}
-                  onClick={() => {
-                    setStyle(option.value);
-                    interact("style", option.value);
-                  }}
-                  className={cn(
-                    "rounded-md px-3 py-1.5 text-xs font-medium transition-colors",
-                    style === option.value
-                      ? "bg-white text-neutral-900 shadow-sm"
-                      : "text-neutral-500 hover:text-neutral-900"
-                  )}
+                  value={option.value}
+                  aria-label={option.label}
                 >
                   {option.label}
-                </button>
+                </ToggleGroupItem>
               ))}
-            </div>
+            </ToggleGroup>
 
-            <div className="flex items-center gap-1.5" aria-label="Palette">
-              {PALETTES.map((option) => (
-                <button
-                  key={option.slug}
-                  type="button"
-                  title={option.name}
-                  aria-label={`${option.name} palette`}
-                  aria-pressed={palette.slug === option.slug}
-                  onClick={() => {
-                    setPalette(option);
-                    setSeed(option.seed);
-                    interact("palette", option.slug);
-                  }}
-                  className={cn(
-                    "h-7 w-7 rounded-full border-2 transition-transform active:scale-95",
-                    palette.slug === option.slug
-                      ? "border-neutral-900"
-                      : "border-white shadow-[0_0_0_1px_rgba(0,0,0,0.12)]"
-                  )}
-                  style={{
-                    background: `linear-gradient(135deg, ${option.colors[0]}, ${option.colors[1]} 50%, ${option.colors[2]})`,
-                  }}
-                />
-              ))}
+            {/* 28px swatches with a pseudo-element hit area of 40px; the
+                12px gap keeps neighboring hit areas from overlapping */}
+            <div className="flex items-center gap-3 px-1.5" role="group" aria-label="Palette">
+              {PALETTES.map((option) => {
+                const selected = palette.slug === option.slug;
+                return (
+                  <button
+                    key={option.slug}
+                    type="button"
+                    title={option.name}
+                    aria-label={`${option.name} palette`}
+                    aria-pressed={selected}
+                    onClick={() => {
+                      setPalette(option);
+                      setSeed(option.seed);
+                      interact("palette", option.slug);
+                    }}
+                    className={cn(
+                      "relative h-7 w-7 rounded-full outline-none transition-[box-shadow,transform] duration-150 ease-[cubic-bezier(0.25,0.46,0.45,0.94)] before:absolute before:-inset-1.5 before:content-[''] active:scale-[0.96] focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-2",
+                      selected
+                        ? "shadow-[0_0_0_2px_#fff,0_0_0_3.5px_#171717]"
+                        : "shadow-[0_0_0_1px_rgba(0,0,0,0.12)] hover:shadow-[0_0_0_2px_#fff,0_0_0_3.5px_rgba(0,0,0,0.25)]"
+                    )}
+                    style={{
+                      background: `linear-gradient(135deg, ${option.colors[0]}, ${option.colors[1]} 50%, ${option.colors[2]})`,
+                    }}
+                  />
+                );
+              })}
             </div>
           </div>
 
@@ -206,8 +212,11 @@ export default function HeroCanvas() {
                 interact("shuffle");
               }}
             >
+              <ShuffleIcon />
               Shuffle
             </Button>
+            {/* Fixed label plus a state dot: the button never changes width,
+                and the state is readable without motion */}
             <Button
               variant="outline"
               size="sm"
@@ -217,7 +226,14 @@ export default function HeroCanvas() {
                 interact("grain", grainOn ? "off" : "on");
               }}
             >
-              {grainOn ? "Grain on" : "Grain off"}
+              <span
+                aria-hidden="true"
+                className={cn(
+                  "h-1.5 w-1.5 rounded-full transition-colors duration-150",
+                  grainOn ? "bg-neutral-900" : "bg-neutral-300"
+                )}
+              />
+              Grain
             </Button>
             <div className="flex-1" />
             <Button asChild size="sm">

@@ -5,10 +5,11 @@ import { Button } from "@/components/ui/button";
 import TrackedLink from "@/components/landing/TrackedLink";
 import HeroCanvas from "@/components/landing/HeroCanvas";
 import GalleryTabs from "@/components/landing/GalleryTabs";
+import GrainCompare from "@/components/landing/GrainCompare";
 import { SiteFooter, SiteHeader } from "@/components/landing/SiteChrome";
 import { FREE_PRESET_LIMIT, PLANS, formatPrice } from "@/lib/plans";
 import { MAX_PRESETS_PER_USER } from "@/lib/presets";
-import { GALLERY, buildStudioUrl, presetToStudioUrl } from "@/lib/gallery";
+import { buildStudioUrl } from "@/lib/gallery";
 import { TESTIMONIALS } from "@/lib/testimonials";
 import { FREE_EXPORTS_PER_MONTH, SITE_NAME, SITE_URL } from "@/lib/site";
 
@@ -139,6 +140,11 @@ const jsonLd = {
   ],
 };
 
+// Cards get depth from a hairline plus a contact shadow, not a border.
+// Radius 16px; content sits flush or on 20px padding, so no nested radius.
+const CARD =
+  "rounded-2xl bg-white shadow-[0_0_0_1px_rgba(0,0,0,0.06),0_1px_2px_rgba(0,0,0,0.04)]";
+
 const SectionHeading = ({
   title,
   lead,
@@ -147,8 +153,12 @@ const SectionHeading = ({
   lead?: string;
 }) => (
   <>
-    <h2 className="text-2xl font-semibold tracking-tight sm:text-3xl">{title}</h2>
-    {lead && <p className="mt-2 max-w-xl text-neutral-600">{lead}</p>}
+    <h2 className="text-2xl font-semibold tracking-tight [text-wrap:balance] sm:text-3xl">
+      {title}
+    </h2>
+    {lead && (
+      <p className="mt-2 max-w-xl text-neutral-600 [text-wrap:pretty]">{lead}</p>
+    )}
   </>
 );
 
@@ -168,10 +178,10 @@ export default function LandingPage() {
         <section className="mx-auto w-full max-w-6xl px-6 pb-16 pt-8 sm:pt-12">
           <div className="grid items-center gap-10 lg:grid-cols-12">
             <div className="lg:col-span-5">
-              <h1 className="text-4xl font-semibold tracking-tight text-neutral-900 sm:text-5xl">
+              <h1 className="text-4xl font-semibold tracking-tight text-neutral-900 [text-wrap:balance] sm:text-5xl">
                 Mesh gradient generator with real grain
               </h1>
-              <p className="mt-4 text-lg text-neutral-600">
+              <p className="mt-4 text-lg text-neutral-600 [text-wrap:pretty]">
                 Gradients that look designed, not generated. Pick blobs, stripes
                 or clouds, tune the color, blur and texture, then export a 4K
                 wallpaper or background. Free to start, nothing to subscribe to.
@@ -213,10 +223,10 @@ export default function LandingPage() {
               <p className="text-xs font-medium uppercase tracking-wide text-neutral-500">
                 Seen on the Nasdaq tower
               </p>
-              <h2 className="mt-2 text-2xl font-semibold tracking-tight sm:text-3xl">
+              <h2 className="mt-2 text-2xl font-semibold tracking-tight [text-wrap:balance] sm:text-3xl">
                 Built for work that ends up in Times Square
               </h2>
-              <p className="mt-3 text-neutral-600">
+              <p className="mt-3 text-neutral-600 [text-wrap:pretty]">
                 The green gradient behind Nasdaq&apos;s congratulations to
                 reAlpha on its acquisition of Prevu was made in Gradients
                 Studio by reAlpha&apos;s design team. Rendered grain is what
@@ -290,10 +300,7 @@ export default function LandingPage() {
                 dials: "Coverage, softness, detail",
               },
             ].map((style) => (
-              <figure
-                key={style.name}
-                className="overflow-hidden rounded-2xl border border-neutral-200 bg-white"
-              >
+              <figure key={style.name} className={`${CARD} overflow-hidden`}>
                 <Image
                   src={style.file}
                   alt={`${style.name} style gradient`}
@@ -327,7 +334,7 @@ export default function LandingPage() {
               {useCases.map((item) => (
                 <li
                   key={item.title}
-                  className="flex flex-col rounded-2xl border border-neutral-200 bg-white p-5"
+                  className={`${CARD} flex flex-col p-5`}
                 >
                   <h3 className="text-sm font-medium">{item.title}</h3>
                   <p className="mt-1 font-azeret text-[11px] tabular-nums text-neutral-500">
@@ -338,7 +345,7 @@ export default function LandingPage() {
                     href={item.href}
                     location="use_case"
                     properties={{ useCase: item.title }}
-                    className="mt-4 text-sm font-medium text-neutral-900 underline-offset-2 hover:underline"
+                    className="mt-4 self-start text-sm font-medium text-neutral-900 underline-offset-2 transition-colors hover:underline"
                   >
                     Open at this size
                   </TrackedLink>
@@ -354,37 +361,27 @@ export default function LandingPage() {
             title="Why it looks designed"
             lead="Most generators make a smooth blur that falls apart at full size. Here is the difference at 100% on a 4K export."
           />
-          <div className="mt-8 grid gap-4 sm:grid-cols-2">
-            {[
-              {
-                file: "/landing/grain-off.jpg",
-                label: "Smooth blur, no grain",
-                note: "Color bands and a flat, plastic center.",
-              },
-              {
-                file: "/landing/grain-on.jpg",
-                label: "Same gradient with grain",
-                note: "Bands break into texture the eye reads as depth.",
-              },
-            ].map((item) => (
-              <figure
-                key={item.file}
-                className="overflow-hidden rounded-2xl border border-neutral-200 bg-white"
-              >
-                <Image
-                  src={item.file}
-                  alt={`${item.label}: ${item.note}`}
-                  width={720}
-                  height={450}
-                  sizes="(min-width: 640px) 50vw, 100vw"
-                  className="block w-full"
-                />
-                <figcaption className="p-4">
-                  <div className="text-sm font-medium">{item.label}</div>
-                  <p className="mt-1 text-sm text-neutral-600">{item.note}</p>
-                </figcaption>
-              </figure>
-            ))}
+          <div className="mt-8 grid items-start gap-8 lg:grid-cols-12">
+            <div className="lg:col-span-8">
+              <GrainCompare />
+            </div>
+            <dl className="grid gap-5 sm:grid-cols-2 lg:col-span-4 lg:grid-cols-1">
+              <div>
+                <dt className="text-sm font-medium">Smooth blur, no grain</dt>
+                <dd className="mt-1 text-sm text-neutral-600 [text-wrap:pretty]">
+                  A slow dark blur has nowhere to go between shades, so it
+                  steps. Those steps are the color bands you see on a big
+                  monitor.
+                </dd>
+              </div>
+              <div>
+                <dt className="text-sm font-medium">Same gradient with grain</dt>
+                <dd className="mt-1 text-sm text-neutral-600 [text-wrap:pretty]">
+                  Grain scatters each step into texture. Same render, same
+                  tones, no bands. Drag the handle to compare.
+                </dd>
+              </div>
+            </dl>
           </div>
           <div className="mt-8 grid gap-6 text-sm text-neutral-600 sm:grid-cols-3">
             <div>
@@ -428,7 +425,7 @@ export default function LandingPage() {
             />
             <div className="mt-8 grid gap-6 md:grid-cols-3">
               {/* Free */}
-              <div className="flex flex-col rounded-2xl border border-neutral-200 bg-white p-6">
+              <div className={`${CARD} flex flex-col p-6`}>
                 <div className="text-sm font-medium text-neutral-500">Free</div>
                 <div className="mt-2 flex items-baseline gap-1">
                   <span className="text-3xl font-semibold">$0</span>
@@ -495,7 +492,7 @@ export default function LandingPage() {
               </div>
 
               {/* Week pass */}
-              <div className="flex flex-col rounded-2xl border border-neutral-200 bg-white p-6">
+              <div className={`${CARD} flex flex-col p-6`}>
                 <div className="text-sm font-medium text-neutral-500">
                   {PLANS.week.name}
                 </div>
@@ -539,12 +536,12 @@ export default function LandingPage() {
               {TESTIMONIALS.slice(0, 6).map((t) => (
                 <li
                   key={t.name}
-                  className="rounded-2xl border border-neutral-200 p-5"
+                  className={`${CARD} p-5`}
                 >
                   <p className="text-sm text-neutral-800">“{t.quote}”</p>
                   <p className="mt-3 text-xs text-neutral-500">
                     {t.url ? (
-                      <a href={t.url} className="hover:text-neutral-900">
+                      <a href={t.url} className="transition-colors hover:text-neutral-900">
                         {t.name}
                       </a>
                     ) : (
@@ -586,7 +583,7 @@ export default function LandingPage() {
             <h2 className="text-3xl font-semibold tracking-tight sm:text-4xl">
               Make one now
             </h2>
-            <p className="mt-3 max-w-md text-white/85">
+            <p className="mt-3 max-w-md text-white/85 [text-wrap:pretty]">
               The studio opens with a random palette. Shuffle until something
               feels right, then export.
             </p>

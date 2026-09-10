@@ -47,7 +47,7 @@ export const QuotaMeter = memo(function QuotaMeter({
         // Negative margins keep the content aligned with the column while
         // the hover tint and hit area extend past it
         "group -mx-1.5 flex w-[calc(100%+0.75rem)] items-center justify-center gap-2 rounded-md px-1.5 py-1",
-        "transition-[background-color,scale] duration-150 ease-out hover:bg-neutral-100 active:scale-[0.98]",
+        "transition-[background-color,transform] duration-150 ease-out hover:bg-neutral-100 active:scale-[0.98]",
         "focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-neutral-900"
       )}
     >

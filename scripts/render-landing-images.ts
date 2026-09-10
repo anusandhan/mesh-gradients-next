@@ -36,7 +36,8 @@ const shots: Shot[] = [
     file: "hero.jpg",
     width: 2000,
     height: 1250,
-    style: "blobs",
+    // Must match HeroCanvas's default state: it crossfades onto this
+    style: "stripes",
     background: LOVABLE.background,
     colors: LOVABLE.colors,
     seed: LOVABLE.seed,
@@ -121,10 +122,13 @@ for (const shot of shots) {
   );
 }
 
-// Grain before/after: render a subtle dark palette at full 4K with and
-// without grain, then crop the same 720x450 region at 100% so the page can
-// show real banding next to real grain rather than a mock-up. JPEG at q92
-// keeps the grain intact at a sane file size.
+// Grain before/after: render a dark palette at full 4K with and without
+// grain, crop the same 720x450 region at 100%, then quantize both crops to
+// the same reduced set of tones. Rendering to 8-bit already steps a slow
+// dark blur into bands; the coarser step makes those bands legible at the
+// size the landing page shows the crop. The grain crop goes through the
+// identical quantization, which is the actual argument: grain dithers the
+// steps into texture, so the same pipeline produces no visible bands.
 const grainShot: Shot = {
   file: "",
   width: 3840,
@@ -134,6 +138,7 @@ const grainShot: Shot = {
   colors: ["#1E2A5A", "#2B1E4A", "#1B3B4A", "#14213D"],
   seed: 77,
 };
+const QUANT_STEP = 10;
 for (const [file, grain] of [
   ["grain-off.jpg", 0],
   ["grain-on.jpg", 0.12],
@@ -149,6 +154,14 @@ for (const [file, grain] of [
   const crop = createCanvas(cropW, cropH);
   const cctx = crop.getContext("2d");
   cctx.drawImage(full, 1500, 950, cropW, cropH, 0, 0, cropW, cropH);
+  const image = cctx.getImageData(0, 0, cropW, cropH);
+  const px = image.data;
+  for (let i = 0; i < px.length; i += 4) {
+    px[i] = Math.round(px[i] / QUANT_STEP) * QUANT_STEP;
+    px[i + 1] = Math.round(px[i + 1] / QUANT_STEP) * QUANT_STEP;
+    px[i + 2] = Math.round(px[i + 2] / QUANT_STEP) * QUANT_STEP;
+  }
+  cctx.putImageData(image, 0, 0);
   const buffer = crop.toBuffer("image/jpeg", 92);
   writeFileSync(join(OUT_DIR, file), buffer);
   console.log(`${file}: ${cropW}x${cropH} crop ${(buffer.length / 1024).toFixed(0)}KB`);
