@@ -30,11 +30,11 @@ const faqs = [
   },
   {
     q: "Why do they have grain?",
-    a: "Smooth gradients band on large screens, especially in dark palettes. The grain is rendered into the image, so the colours stay clean at full size and on OLED displays.",
+    a: "Smooth gradients band on large screens, especially in dark palettes. The grain is rendered into the image, so the colors stay clean at full size and on OLED displays.",
   },
   {
-    q: "Can I change the colours?",
-    a: "Yes. Every wallpaper page has a Customise button that opens the exact palette in the studio, where you can tune colours, blur and texture and export your own version.",
+    q: "Can I change the colors?",
+    a: "Yes. Every wallpaper page has a Customise button that opens the exact palette in the studio, where you can tune colors, blur and texture and export your own version.",
   },
 ];
 
@@ -123,7 +123,7 @@ export default function WallpapersPage() {
             turns into visible bands, and on a phone the fine detail is lost.
             These are rendered separately for each size from the same scene,
             with grain drawn in at the final resolution, so the texture is
-            real at 100 percent and the colours never band.
+            real at 100 percent and the colors never band.
           </p>
           <p>
             The three styles behave differently. Blobs are soft overlapping
@@ -135,7 +135,7 @@ export default function WallpapersPage() {
           <p>
             If none of the twelve is quite right, every page has a Customise
             button. It opens the same palette in the studio, where you can
-            change any colour, the blur, the grain and the texture, then export
+            change any color, the blur, the grain and the texture, then export
             at 4K. Five exports a month are free.
           </p>
           <div className="pt-2">

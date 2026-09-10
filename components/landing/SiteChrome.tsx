@@ -67,10 +67,13 @@ export const SiteFooter = () => (
         <Link href="/#faq" className="hover:text-neutral-900">FAQ</Link>
         <Link href="/about" className="hover:text-neutral-900">About</Link>
         <Link href="/contact" className="hover:text-neutral-900">Contact</Link>
+        <Link href="/license" className="hover:text-neutral-900">License</Link>
+        <Link href="/terms" className="hover:text-neutral-900">Terms</Link>
+        <Link href="/privacy" className="hover:text-neutral-900">Privacy</Link>
       </div>
     </div>
     <div className="mx-auto w-full max-w-6xl px-6 pb-8 text-xs text-neutral-400">
-      {`© ${new Date().getFullYear()} ${SITE_NAME}. Exports are yours to use in personal and commercial work.`}
+      {`© ${new Date().getFullYear()} ${SITE_NAME}. Exports are yours to use in personal and commercial work, see the license.`}
     </div>
   </footer>
 );

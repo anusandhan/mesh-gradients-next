@@ -239,10 +239,10 @@ const applyAdjustments = (
 };
 
 export type GradientStyle = "blobs" | "stripes" | "clouds";
-// Post-process finishes applied after colour and speckle
+// Post-process finishes applied after color and speckle
 export type GradientEffect = "none" | "pixel" | "dither";
 export const EFFECT_SIZE_DEFAULT = 16; // cell size in export pixels
-export const EFFECT_STRENGTH_DEFAULT = 0.9;
+export const EFFECT_STRENGTH_DEFAULT = 1.4;
 
 export type RenderOptions = {
   backgroundColor: string;
@@ -573,7 +573,7 @@ const fbm = (
 // warp bends the field so cloud edges wisp and curl instead of blobbing;
 // a seeded directional ramp keeps one side of the sky denser, like a real
 // one. Softness is a final blur; detail scales the fine octaves; coverage
-// biases the whole mapping toward the highlight colours.
+// biases the whole mapping toward the highlight colors.
 const renderClouds = (
   ctx: CanvasRenderingContext2D,
   width: number,
@@ -697,8 +697,8 @@ const cellHash = (x: number, y: number) => {
   return (h ^ (h >>> 16)) >>> 0;
 };
 
-// "Pixel": a dot matrix. Each cell becomes a square dot in the colour the
-// gradient had there, on the background colour, like a status-page grid.
+// "Pixel": a dot matrix. Each cell becomes a square dot in the color the
+// gradient had there, on the background color, like a status-page grid.
 const applyPixel = (
   ctx: CanvasRenderingContext2D,
   width: number,
@@ -726,9 +726,9 @@ const applyPixel = (
   }
 };
 
-// "Dither": every cell snaps to its nearest palette colour; where the
-// gradient sits between two palette colours, an ordered (Bayer) threshold
-// decides whether the cell also carries a symbol in the second colour, so
+// "Dither": every cell snaps to its nearest palette color; where the
+// gradient sits between two palette colors, an ordered (Bayer) threshold
+// decides whether the cell also carries a symbol in the second color, so
 // transitions turn into fields of bars, crosses, rings and dots.
 const applyDither = (
   ctx: CanvasRenderingContext2D,
@@ -742,7 +742,7 @@ const applyDither = (
   const cols = Math.ceil(width / cell);
   const rows = Math.ceil(height / cell);
   const css = palette.map((p) => `rgb(${p[0]},${p[1]},${p[2]})`);
-  // Fill with the background colour, then only paint cells that differ
+  // Fill with the background color, then only paint cells that differ
   ctx.fillStyle = css[0];
   ctx.fillRect(0, 0, width, height);
 
@@ -758,7 +758,7 @@ const applyDither = (
       const r = src[i];
       const g = src[i + 1];
       const b = src[i + 2];
-      // Two nearest palette colours
+      // Two nearest palette colors
       let best = 0;
       let bestD = Infinity;
       let second = 0;
@@ -785,7 +785,7 @@ const applyDither = (
         ctx.fillRect(x0, y0, cell + 0.5, cell + 0.5);
       }
       if (palette.length < 2) continue;
-      // How far this cell sits toward the second colour, 0..0.5
+      // How far this cell sits toward the second color, 0..0.5
       const mix = Math.sqrt(bestD) / (Math.sqrt(bestD) + Math.sqrt(secondD) + 1e-6);
       const threshold = (BAYER_4[cy & 3][cx & 3] + 0.5) / 16;
       if (mix * 2 * strength <= threshold) continue;

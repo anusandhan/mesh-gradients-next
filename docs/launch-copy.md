@@ -24,7 +24,7 @@ Flair: OC. Upload a gallery of the four phone files for Sunset, Midnight, Aurora
 `I made four grainy gradient wallpapers for iPhone (1290×2796) [OC]`
 
 **First comment** (no link, no product mention)
-> Made these myself. The grain is rendered into the image at full size, so they don't band on OLED. If anyone wants a different colour, say which and I'll render it.
+> Made these myself. The grain is rendered into the image at full size, so they don't band on OLED. If anyone wants a different color, say which and I'll render it.
 
 **If someone asks where they're from or for more:** reply with the wallpapers page and nothing else.
 > All twelve are free here, no sign-up: https://www.gradients.studio/wallpapers
@@ -54,7 +54,7 @@ Flair: Wallpaper (if the sub has it; otherwise Discussion). This sub likes macOS
 Upload: Blue Sky, Peach Fuzz, Ice Fibre, Midnight Mac files.
 
 **First comment** (no link, no product mention)
-> These are rendered at 5120×2880 specifically, not upscaled from 4K, so the soft parts stay smooth on the Retina panel. Say if you'd like a different colour and I'll render it.
+> These are rendered at 5120×2880 specifically, not upscaled from 4K, so the soft parts stay smooth on the Retina panel. Say if you'd like a different color and I'll render it.
 
 **If asked for more:**
 > There's a set of twelve, free, no sign-up: https://www.gradients.studio/wallpapers/style/clouds
@@ -79,7 +79,7 @@ This sub is for batches. Post all twelve desktop files as one gallery.
 **Comment in the showcase thread**
 > I made these with my gradient tool, which has a 5:2 "Notion cover" size built in. Grain keeps them from banding behind the page title.
 >
-> Make your own in any colour here, five free exports a month, no watermark: https://www.gradients.studio/app?aspect=5:2
+> Make your own in any color here, five free exports a month, no watermark: https://www.gradients.studio/app?aspect=5:2
 >
 > Ready-made wallpapers in other sizes: https://www.gradients.studio/wallpapers
 
@@ -108,7 +108,7 @@ Post this as a text post, not an image. Developers on these subs are hostile to 
 > - Keep some structure behind the headline. A fully even blur looks like a placeholder.
 > - A 3840-wide JPEG at quality 92 is about 2 MB. Serve a 1920 version to phones with `image-set()` or `<picture>`.
 >
-> I ended up building a small tool for this so I could tune colour, blur and grain and export 4K: https://www.gradients.studio. Free tier is five exports a month, no watermark, and I'm genuinely after feedback on the stripes and clouds styles from people who do this for a living.
+> I ended up building a small tool for this so I could tune color, blur and grain and export 4K: https://www.gradients.studio. Free tier is five exports a month, no watermark, and I'm genuinely after feedback on the stripes and clouds styles from people who do this for a living.
 
 ---
 
@@ -128,15 +128,15 @@ https://www.gradients.studio
 Mesh gradient generator with real grain, 4K export
 
 **Short description (under 160 characters)**
-Make mesh gradients in three styles with real grain, blur and colour controls. Export 4K wallpapers and backgrounds with no watermark. Free to start.
+Make mesh gradients in three styles with real grain, blur and color controls. Export 4K wallpapers and backgrounds with no watermark. Free to start.
 
 **Medium description (about 60 words)**
-Gradients Studio makes mesh gradients that look designed rather than generated. Pick blobs, stripes or clouds, tune the colours, blur and grain, and export at 4K with no watermark. The grain is rendered into the image, so nothing bands on large screens or in print. Five free exports a month, then a one-time pass. No subscription.
+Gradients Studio makes mesh gradients that look designed rather than generated. Pick blobs, stripes or clouds, tune the colors, blur and grain, and export at 4K with no watermark. The grain is rendered into the image, so nothing bands on large screens or in print. Five free exports a month, then a one-time pass. No subscription.
 
 **Long description (about 180 words)**
-Most gradient generators produce the same smooth blur, and it falls apart on a 4K monitor: colour bands, muddy centres, a texture designers spot from across the room. Gradients Studio was built to fix that.
+Most gradient generators produce the same smooth blur, and it falls apart on a 4K monitor: color bands, muddy centres, a texture designers spot from across the room. Gradients Studio was built to fix that.
 
-Three styles share one set of controls. Blobs are the classic mesh look. Stripes are flowing fibres with a silk sheen that reads as aurora in the right palette. Clouds are billowing volumes with real depth. Colour, blur, contrast, saturation and grain work the same way in each, and each style adds its own dials. Pixel and Dither finishes turn any gradient into a dot matrix or a palette-quantised pattern.
+Three styles share one set of controls. Blobs are the classic mesh look. Stripes are flowing fibres with a silk sheen that reads as aurora in the right palette. Clouds are billowing volumes with real depth. Color, blur, contrast, saturation and grain work the same way in each, and each style adds its own dials. Pixel and Dither finishes turn any gradient into a dot matrix or a palette-quantised pattern.
 
 The grain is drawn at export resolution, so it survives compression, scaling and print. Exports are 3840 pixels wide in nine aspect ratios, from 16:9 desktop and 16:10 Mac to 9:16 phone, 1.91:1 social cards and 5:2 Notion covers.
 

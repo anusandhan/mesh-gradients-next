@@ -24,5 +24,8 @@ export default function sitemap(): MetadataRoute.Sitemap {
     ...WALLPAPER_TAGS.map((t) => entry(`/wallpapers/color/${t}`, 0.5)),
     entry("/about", 0.3),
     entry("/contact", 0.3),
+    entry("/license", 0.2),
+    entry("/terms", 0.2),
+    entry("/privacy", 0.2),
   ];
 }

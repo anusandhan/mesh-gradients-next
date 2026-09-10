@@ -191,7 +191,7 @@ export default async function WallpaperPage({
                 </TrackedLink>
               </Button>
               <p className="mt-2 text-xs text-neutral-500">
-                Opens this exact scene. Change any colour, the blur or the
+                Opens this exact scene. Change any color, the blur or the
                 grain, then export at 4K.
               </p>
             </div>

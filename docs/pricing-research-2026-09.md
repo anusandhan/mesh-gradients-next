@@ -35,7 +35,7 @@ Legend: **V** verified on the vendor's page this session; **S** from search snip
 | Unicorn Studio | 8 publishes with branding, non-commercial | $20/mo or $168/yr | Subscription | V |
 | Haikei | Unlimited SVG + medium-res PNG | Pro "coming soon", price TBD (for years) | Resolution gate | V |
 | Colorffy | Unlimited tools, palettes, gradients | $40/yr (~$5/mo) | Subscription | V/S |
-| Coolors | Ads, 5-colour palettes, 10 saved | $36/yr (~$3/mo) | Subscription | V |
+| Coolors | Ads, 5-color palettes, 10 saved | $36/yr (~$3/mo) | Subscription | V |
 | Paper Shaders | Open source npm library | Paper Pro $16–20/mo (design tool, not gradients) | Free / OSS | V |
 | BGJar | CC BY attribution | $5.99 Basic, $35.99 Pro | Lifetime one-time | V |
 | Figma: Mesh gradients (oodesign) | 7-day trial | $9.99/yr per designer, $39.99/yr team | Subscription | V |

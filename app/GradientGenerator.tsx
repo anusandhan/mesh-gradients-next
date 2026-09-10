@@ -145,7 +145,7 @@ type PresetGradient = {
   colors: string[];
   // Collection palettes belong to a style and carry the seed that produced
   // their gallery tile, so picking one reproduces the tile exactly.
-  // "Inspired by" palettes are colours only, shown with the brand mark.
+  // "Inspired by" palettes are colors only, shown with the brand mark.
   group: "collection" | "inspired";
   style?: GradientStyle;
   seed?: number;
@@ -296,7 +296,7 @@ const PALETTE_GROUP_LABEL =
 
 // The untouched starting palette. Switching style while it is still in
 // place (or while a collection palette is selected) swaps in the new
-// style's first collection palette; custom colours and saved presets stay.
+// style's first collection palette; custom colors and saved presets stay.
 const DEFAULT_BACKGROUND = "#f8fafc";
 const DEFAULT_COLORS = ["#3b82f6", "#8b5cf6", "#ec4899", "#f59e0b"];
 
@@ -1402,7 +1402,7 @@ const GradientGenerator = () => {
         setColorInputs(preset.colors);
         setGradientName(preset.name);
         // Collection palettes reproduce their gallery tile: same style,
-        // same seed. User and inspired palettes only change colours.
+        // same seed. User and inspired palettes only change colors.
         if ("style" in preset && preset.style) setGradientStyle(preset.style);
         if ("seed" in preset && preset.seed !== undefined) setSeed(preset.seed);
       }
@@ -1413,7 +1413,7 @@ const GradientGenerator = () => {
   const openManagePresets = useCallback(() => setManagePresetsOpen(true), []);
 
   // Style switch: a saved preset, an inspired palette or hand-picked
-  // colours survive; the untouched default or a collection palette (which
+  // colors survive; the untouched default or a collection palette (which
   // belongs to the old style) gives way to the new style's first palette.
   const handleStyleChange = useCallback(
     (style: GradientStyle) => {

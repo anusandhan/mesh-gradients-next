@@ -21,7 +21,7 @@ export default function AboutPage() {
         <div className="mt-6 space-y-4 text-neutral-700">
           <p>
             Most gradient generators make the same soft blur. It looks fine on
-            a phone and falls apart on a 4K monitor: colour bands, muddy
+            a phone and falls apart on a 4K monitor: color bands, muddy
             centres, and a texture that a designer can spot from across the
             room. {SITE_NAME} started as a fix for that.
           </p>
@@ -29,7 +29,7 @@ export default function AboutPage() {
             The renderer draws real grain into the image instead of pasting a
             grain layer on top, so the export holds up at full size and in
             print. The three styles, blobs, stripes and clouds, each have their
-            own dials, but colour, blur, contrast and saturation work the same
+            own dials, but color, blur, contrast and saturation work the same
             way everywhere. Everything you see in the editor is what you get
             in the file.
           </p>
@@ -41,7 +41,7 @@ export default function AboutPage() {
             LED wall with no banding is the bar it has been held to since.
           </p>
           <p>
-            It is made by{" "}
+            I&apos;m{" "}
             <a
               href={MAKER_URL}
               target="_blank"
@@ -50,10 +50,9 @@ export default function AboutPage() {
             >
               {MAKER_NAME}
             </a>
-            , one person, and priced to match: a
-            free tier that is genuinely useful, and a pass you pay for once.
-            No subscription, because a tool you use in bursts should not bill
-            you every month.
+            , and I make it on my own. I priced it to match: a free tier that
+            is genuinely useful, and a pass you pay for once. No subscription,
+            because a tool you use in bursts should not bill you every month.
           </p>
         </div>
         <div className="mt-8 flex gap-3">

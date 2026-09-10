@@ -36,7 +36,7 @@ export const wallpaperUrl = (slug: string, size: WallpaperSizeId | "preview") =>
 export const wallpaperFilename = (preset: GalleryPreset, size: WallpaperSize) =>
   `gradients-studio-${preset.slug}-${size.width}x${size.height}.jpg`;
 
-// Tag pages: every colour word used by at least one palette
+// Tag pages: every color word used by at least one palette
 export const WALLPAPER_TAGS: string[] = Array.from(
   new Set(GALLERY.flatMap((p) => p.tags))
 ).sort();
@@ -48,7 +48,7 @@ export const presetsByStyle = (style: GradientStyle) =>
   GALLERY.filter((p) => p.style === style);
 
 export const TAG_COPY: Record<string, string> = {
-  dark: "Dark gradient wallpapers that stay easy on the eyes, with grain that keeps deep colours from banding on OLED screens.",
+  dark: "Dark gradient wallpapers that stay easy on the eyes, with grain that keeps deep colors from banding on OLED screens.",
   light: "Light, airy gradient wallpapers for desktops that need to stay readable behind icons and windows.",
   blue: "Blue gradient wallpapers, from clear sky to deep sea.",
   purple: "Purple and violet gradient wallpapers with real texture.",
@@ -59,7 +59,7 @@ export const TAG_COPY: Record<string, string> = {
   cyan: "Cyan and ice-blue gradient wallpapers.",
   yellow: "Golden and sunlit gradient wallpapers.",
   peach: "Peach and apricot gradient wallpapers.",
-  pastel: "Pastel gradient wallpapers with soft, low-contrast colour.",
+  pastel: "Pastel gradient wallpapers with soft, low-contrast color.",
   gray: "Grey and slate gradient wallpapers for a quiet desktop.",
   black: "Near-black gradient wallpapers built for OLED displays.",
   white: "Bright gradient wallpapers with white highlights.",

@@ -27,7 +27,7 @@ Sources: `home-mixer/params/param.rs` in github.com/xai-org/x-algorithm. **[High
 Rules that follow from the code and the data:
 
 1. **Links in the post are allowed again.** X's head of product said in April 2026 that links were never de-boosted, the card just covered the engagement buttons, and in July that link-in-reply is no longer needed. Put the link in the post when the media is strong, and make sure the preview card shows a great render. **[High]**
-2. **Replies are the currency.** Every post should give someone a reason to answer: a colour to request, a device to name, a choice to make. **[High]**
+2. **Replies are the currency.** Every post should give someone a reason to answer: a color to request, a device to name, a choice to make. **[High]**
 3. **Mutuals are boosted since July 2026.** Follow back every designer who engages. Their feeds will show your replies more. **[High]**
 4. **Space posts three hours apart.** A second post from the same author in one feed is halved. Two posts a day, morning and afternoon, beats four in an hour. **[High]**
 5. **Premium is effectively required for a launch account.** Free accounts average under 100 impressions a post with a median engagement of zero; Premium averages around 600. Budget it for at least the launch quarter. **[High for the effect, Medium for why]**
@@ -65,21 +65,21 @@ Every template below names the media to attach and the reply hook. Copy is ready
 > Free to use, 5 exports a month, no watermark. gradients.studio
 
 **Post 2.** Media: the grain-off versus grain-on crop at 100 percent.
-> Left is a smooth blur. Right is the same colours with grain rendered at export size. Zoom in. That's the whole reason it exists.
+> Left is a smooth blur. Right is the same colors with grain rendered at export size. Zoom in. That's the whole reason it exists.
 
 **Post 3.** Media: two images, Pixel and Dither of the same gradient.
 > Two finishes on top: Pixel turns it into a dot matrix, Dither snaps it to the palette and fills the edges with symbols. Both export at 4K.
 
 **Post 4.** Media: three renders, same palette, blobs, stripes, clouds.
-> Three styles, one set of controls. Same four colours in each.
+> Three styles, one set of controls. Same four colors in each.
 
 **Post 5.** Text only.
 > Pricing: free is 5 exports a month. Pro is $39 once for 12 months. A Week Pass is $9. Nothing auto-renews. I priced it against what I'd pay for a tool I open twice a week.
 
 **Post 6.** Text only. This is the reply engine.
-> Reply with a hex code or a colour word and I'll render your gradient at 4K today.
+> Reply with a hex code or a color word and I'll render your gradient at 4K today.
 
-Pin the thread. Reply to every comment for two hours. Render every colour request as a reply with the image, tagging the requester.
+Pin the thread. Reply to every comment for two hours. Render every color request as a reply with the image, tagging the requester.
 
 ### T2. Wallpaper drop (weekly, product account, one image)
 
@@ -100,22 +100,22 @@ One line of what changed. Nothing else.
 
 ### T4. Before and after (weekly, image pair or a 6-second crossfade)
 
-> Same colours. The only difference is whether the grain is rendered or overlaid.
+> Same colors. The only difference is whether the grain is rendered or overlaid.
 >
 > Which one would you ship?
 
 Poll variant: attach a two-option poll, "Smooth" and "Grain".
 
-### T5. Reply with a colour (every two weeks, text only)
+### T5. Reply with a color (every two weeks, text only)
 
-> Drop a hex or a colour word. I'll turn the first 20 into 4K gradients and post them in this thread.
+> Drop a hex or a color word. I'll turn the first 20 into 4K gradients and post them in this thread.
 
 Render each as a reply with the image, tag the person. This is the highest-value format the ranking code allows: replies, follows, and shares in one post. It is what Xnapper's "drop a wave for a beta code" posts did before its launch.
 
 ### T6. Pixel and Dither reveal (feature post)
 
 Media: one gradient in both finishes, plus a zoomed crop.
-> Two finishes nobody else renders at 4K. Dither snaps every cell to the palette; Pixel is a dot matrix on the background colour. Both are in the free tier.
+> Two finishes nobody else renders at 4K. Dither snaps every cell to the palette; Pixel is a dot matrix on the background color. Both are in the free tier.
 
 ### T7. One-time pricing (text first, long post optional)
 
@@ -133,7 +133,7 @@ Follow with a reply carrying a 4K export. If you write the long version, tell th
 | 6:00am | X launch thread (T1). Put the Product Hunt link in a reply with "feedback welcome", never "please upvote"; Product Hunt suppresses vote asks. |
 | 10:00am | Numbers post with a fresh render: "6 hours in: [N] gradients exported, [N] wallpapers downloaded." |
 | 1:00pm | Quote-post the best render someone made, with credit. |
-| 5:00pm | "Reply with a colour" thread (T5). |
+| 5:00pm | "Reply with a color" thread (T5). |
 | Next morning | Results post with real numbers, win or lose. Xnapper's honest launch report is the model. |
 
 ---
@@ -144,10 +144,10 @@ Two posts on weekdays, spaced at least three hours apart, one on weekends, plus 
 
 | Week | Mon | Tue | Wed | Thu | Fri | Sat | Sun |
 |---|---|---|---|---|---|---|---|
-| 1, warm-up | Process clip, blobs | Wallpaper 1 | Before and after grain | Reply with a colour 1 | Pixel and Dither reveal | Quote a designer's palette with a render | DM the 20 people who replied Thursday |
-| 2, anticipation | "Launching next Tuesday" teaser, stripes clip | Wallpaper 2 | Long post: how grain is rendered | Reply with a colour 2 | Pricing post | Timelapse of a wallpaper set | Schedule launch assets, DM the list |
-| 3, launch | Final teaser | Product Hunt plus launch thread (T8) | Results post plus Wallpaper 3 | Reply with a colour 3, the big one | "What people made" round-up | Dither wallpaper drop | Thank-you post, follow back every mutual |
-| 4, compound | Feature clip, clouds | Wallpaper 4 | Before and after, Pixel | Reply with a colour 4 | Numbers post: exports, sign-ups, Pro sales | Directory submissions post | Plan next month's wallpapers |
+| 1, warm-up | Process clip, blobs | Wallpaper 1 | Before and after grain | Reply with a color 1 | Pixel and Dither reveal | Quote a designer's palette with a render | DM the 20 people who replied Thursday |
+| 2, anticipation | "Launching next Tuesday" teaser, stripes clip | Wallpaper 2 | Long post: how grain is rendered | Reply with a color 2 | Pricing post | Timelapse of a wallpaper set | Schedule launch assets, DM the list |
+| 3, launch | Final teaser | Product Hunt plus launch thread (T8) | Results post plus Wallpaper 3 | Reply with a color 3, the big one | "What people made" round-up | Dither wallpaper drop | Thank-you post, follow back every mutual |
+| 4, compound | Feature clip, clouds | Wallpaper 4 | Before and after, Pixel | Reply with a color 4 | Numbers post: exports, sign-ups, Pro sales | Directory submissions post | Plan next month's wallpapers |
 
 **One render, a week of posts.** From a single 4K master: a 100-percent grain crop, the phone wallpaper, the desktop wallpaper, an 8-second zoom-out video, a before-and-after pair, Pixel and Dither variants, and a text post with the hex codes behind it.
 

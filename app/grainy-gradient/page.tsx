@@ -25,7 +25,7 @@ const content: StyleLandingContent = {
   sections: [
     {
       heading: "What a grainy gradient is",
-      body: "A grainy gradient is a soft colour blend with fine, film-like texture drawn over it. The grain does two jobs: it gives a flat gradient a tactile, printed feel, and it breaks up the colour bands that smooth gradients show on large screens and in dark palettes.",
+      body: "A grainy gradient is a soft color blend with fine, film-like texture drawn over it. The grain does two jobs: it gives a flat gradient a tactile, printed feel, and it breaks up the color bands that smooth gradients show on large screens and in dark palettes.",
     },
     {
       heading: "Why rendered grain beats a noise layer",
@@ -33,7 +33,7 @@ const content: StyleLandingContent = {
     },
     {
       heading: "How to get the look",
-      body: "Pick a palette, set the Grain dial between 25 and 50 percent, and keep Blur high so the colours melt into each other. Dark backgrounds with two or three bright accents show grain best. Contrast at 120 to 140 percent lifts the texture without crushing the shadows.",
+      body: "Pick a palette, set the Grain dial between 25 and 50 percent, and keep Blur high so the colors melt into each other. Dark backgrounds with two or three bright accents show grain best. Contrast at 120 to 140 percent lifts the texture without crushing the shadows.",
     },
     {
       heading: "Where grainy gradients work",
@@ -43,7 +43,7 @@ const content: StyleLandingContent = {
   faqs: [
     {
       q: "How do I fix banding in a gradient?",
-      a: "Add grain. Banding appears when a smooth gradient has too few colour steps for the screen. Grain scatters the boundary between steps so the eye reads texture instead of stripes. The Grain dial here renders it into the image at full size.",
+      a: "Add grain. Banding appears when a smooth gradient has too few color steps for the screen. Grain scatters the boundary between steps so the eye reads texture instead of stripes. The Grain dial here renders it into the image at full size.",
     },
     {
       q: "Is the grain the same in the preview and the export?",

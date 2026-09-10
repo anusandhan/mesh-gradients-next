@@ -376,7 +376,7 @@ export function MobileEditPanel({
 
             {tab === "colors" && (
               <div className="flex h-full flex-col justify-between pt-2">
-                {/* Preset first: pick a palette, then adjust its colours */}
+                {/* Preset first: pick a palette, then adjust its colors */}
                 <div className="flex items-center justify-between px-5">
                   <span className="text-xs font-medium uppercase tracking-wide text-neutral-500">
                     Preset

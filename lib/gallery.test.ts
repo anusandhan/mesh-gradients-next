@@ -14,7 +14,7 @@ describe("gallery presets", () => {
     for (const slug of slugs) expect(slug).toMatch(/^[a-z0-9-]+$/);
   });
 
-  test("every preset has valid hex colours", () => {
+  test("every preset has valid hex colors", () => {
     for (const preset of GALLERY) {
       expect(preset.background).toMatch(/^#[0-9A-Fa-f]{6}$/);
       expect(preset.colors.length).toBeGreaterThanOrEqual(1);

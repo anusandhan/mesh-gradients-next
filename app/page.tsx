@@ -17,7 +17,7 @@ import { FREE_EXPORTS_PER_MONTH, SITE_NAME, SITE_URL } from "@/lib/site";
 
 const TITLE = "Mesh Gradient Generator with Real Grain — Free 4K Export";
 const DESCRIPTION =
-  "Make mesh gradients in three styles with real grain, blur and colour controls. Export 4K wallpapers and backgrounds with no watermark. Free to start, nothing to subscribe to.";
+  "Make mesh gradients in three styles with real grain, blur and color controls. Export 4K wallpapers and backgrounds with no watermark. Free to start, nothing to subscribe to.";
 
 export const metadata: Metadata = {
   title: { absolute: `${TITLE} | ${SITE_NAME}` },
@@ -67,7 +67,7 @@ const useCases = [
 const faqs = [
   {
     q: "What is a mesh gradient?",
-    a: "A gradient made from several colour points spread across a canvas and blurred together, instead of one straight fade between two colours. It gives the soft, glowing look you see on modern app and product sites.",
+    a: "A gradient made from several color points spread across a canvas and blurred together, instead of one straight fade between two colors. It gives the soft, glowing look you see on modern app and product sites.",
   },
   {
     q: "Is the free plan really free?",
@@ -87,7 +87,7 @@ const faqs = [
   },
   {
     q: "Why does grain matter?",
-    a: "Smooth blurs at 4K show visible colour bands, especially in dark palettes. Grain breaks the bands into texture the eye reads as depth. It is rendered into the image, not pasted on top, so it survives compression and print.",
+    a: "Smooth blurs at 4K show visible color bands, especially in dark palettes. Grain breaks the bands into texture the eye reads as depth. It is rendered into the image, not pasted on top, so it survives compression and print.",
   },
   {
     q: "Do you export CSS or SVG?",
@@ -172,7 +172,7 @@ export default function LandingPage() {
               </h1>
               <p className="mt-4 text-lg text-neutral-600">
                 Gradients that look designed, not generated. Pick blobs, stripes
-                or clouds, tune the colour, blur and texture, then export a 4K
+                or clouds, tune the color, blur and texture, then export a 4K
                 wallpaper or background. Free to start, nothing to subscribe to.
               </p>
               <div className="mt-8 flex flex-wrap items-center gap-3">
@@ -221,12 +221,16 @@ export default function LandingPage() {
                 Studio by reAlpha&apos;s design team. Rendered grain is what
                 keeps a gradient clean at the size of a building.
               </p>
-              <p className="mt-3 text-sm text-neutral-500">
-                Made by the team, rendered by the tool.{" "}
-                <Link href="/about" className="text-neutral-900 underline-offset-2 hover:underline">
-                  The story
-                </Link>
-              </p>
+              <div className="mt-6 flex flex-wrap items-center justify-center gap-3 sm:justify-start">
+                <Button asChild>
+                  <TrackedLink href="/app" location="proof">
+                    Make yours
+                  </TrackedLink>
+                </Button>
+                <Button asChild variant="ghost">
+                  <Link href="/about">Read the story</Link>
+                </Button>
+              </div>
             </div>
           </div>
         </section>
@@ -289,14 +293,14 @@ export default function LandingPage() {
         <section className="mx-auto w-full max-w-6xl px-6 py-16">
           <SectionHeading
             title="Three styles, one set of controls"
-            lead="Colour, blur, contrast and saturation work the same way everywhere. Each style adds its own dials."
+            lead="Color, blur, contrast and saturation work the same way everywhere. Each style adds its own dials."
           />
           <div className="mt-8 grid gap-6 sm:grid-cols-3">
             {[
               {
                 name: "Blobs",
                 file: "/landing/blobs.jpg",
-                copy: "Soft, overlapping colour fields. The classic mesh look for heroes and wallpapers.",
+                copy: "Soft, overlapping color fields. The classic mesh look for heroes and wallpapers.",
                 dials: "Blur and placement",
               },
               {
@@ -381,7 +385,7 @@ export default function LandingPage() {
               {
                 file: "/landing/grain-off.jpg",
                 label: "Smooth blur, no grain",
-                note: "Colour bands and a flat, plastic centre.",
+                note: "Color bands and a flat, plastic centre.",
               },
               {
                 file: "/landing/grain-on.jpg",

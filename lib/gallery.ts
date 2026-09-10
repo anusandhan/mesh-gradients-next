@@ -16,7 +16,7 @@ export type GalleryPreset = {
   seed: number;
   // Short line for alt text and the preset page
   mood: string;
-  // Colour words for the wallpaper tag pages (/wallpapers/color/[tag])
+  // Color words for the wallpaper tag pages (/wallpapers/color/[tag])
   tags: string[];
   // Two or three sentences unique to this palette, for its wallpaper page.
   // Twelve near-identical template pages read as thin to search engines;
@@ -60,7 +60,7 @@ export const GALLERY: GalleryPreset[] = [
     mood: "lilac, violet and periwinkle mist",
     tags: ["light", "purple", "pastel"],
     description:
-      "Lavender Haze mixes lilac, violet, orchid and periwinkle into a light mist. It works where you want colour without weight: a portfolio hero, an app onboarding screen, a Mac wallpaper that stays readable behind windows.",
+      "Lavender Haze mixes lilac, violet, orchid and periwinkle into a light mist. It works where you want color without weight: a portfolio hero, an app onboarding screen, a Mac wallpaper that stays readable behind windows.",
   },
   {
     slug: "deep-sea",
@@ -170,7 +170,7 @@ export const GALLERY: GalleryPreset[] = [
     mood: "slate and silver storm front",
     tags: ["dark", "gray"],
     description:
-      "Storm is slate, grey and silver cloud with no colour at all, which is exactly why it works: it sits behind anything. Use it for a monochrome desktop, a neutral slide deck, or a website section that needs depth without a hue.",
+      "Storm is slate, grey and silver cloud with no color at all, which is exactly why it works: it sits behind anything. Use it for a monochrome desktop, a neutral slide deck, or a website section that needs depth without a hue.",
   },
 ];
 

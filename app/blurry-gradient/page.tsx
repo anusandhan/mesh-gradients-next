@@ -12,7 +12,7 @@ const content: StyleLandingContent = {
   tagline:
     "Soft, out-of-focus gradient backgrounds for heroes, wallpapers and slides. Dial the blur, keep a touch of grain so nothing bands, export at 4K.",
   description:
-    "Free blurry gradient generator. Soft, blurred colour fields with optional grain, three styles, 4K export with no watermark.",
+    "Free blurry gradient generator. Soft, blurred color fields with optional grain, three styles, 4K export with no watermark.",
   studioHref: buildStudioUrl({
     style: "clouds",
     background: cloud.background,
@@ -28,11 +28,11 @@ const content: StyleLandingContent = {
   sections: [
     {
       heading: "What makes a blurry gradient work",
-      body: "A blurry gradient is a few colour fields blurred until their edges disappear. The trick is keeping some structure: a light source, a darker corner, a shape you can almost read. Blur everything evenly and you get a flat wash; blur a composition and you get depth.",
+      body: "A blurry gradient is a few color fields blurred until their edges disappear. The trick is keeping some structure: a light source, a darker corner, a shape you can almost read. Blur everything evenly and you get a flat wash; blur a composition and you get depth.",
     },
     {
       heading: "Blur without banding",
-      body: "Heavy blur creates long, slow colour transitions, which is exactly where 8-bit screens band. A small amount of grain, around 10 percent, breaks the bands without reading as texture. It is on by default here for that reason.",
+      body: "Heavy blur creates long, slow color transitions, which is exactly where 8-bit screens band. A small amount of grain, around 10 percent, breaks the bands without reading as texture. It is on by default here for that reason.",
     },
     {
       heading: "Blobs or clouds",

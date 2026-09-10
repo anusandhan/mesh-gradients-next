@@ -31,7 +31,7 @@ Evidence tags: **[strong]** large-sample or peer-reviewed, **[medium]** vendor d
 
 Title tag: `Mesh Gradient Generator with Real Grain — Free 4K Export | Gradients Studio`
 H1: `Mesh gradient generator with real grain`
-Subhead: `Blobs, stripes and clouds that look designed, not generated. Tune colour, blur and texture, then export a 4K wallpaper or background. Free to start, nothing to subscribe to.`
+Subhead: `Blobs, stripes and clouds that look designed, not generated. Tune color, blur and texture, then export a 4K wallpaper or background. Free to start, nothing to subscribe to.`
 
 Alternative H1s to test later: "Make a wallpaper-grade mesh gradient in 30 seconds" and "Gradients with grain, depth and taste."
 
@@ -64,7 +64,7 @@ Do not add: countdown timers, fake scarcity, carousels, autoplay video with audi
 
 | Priority | Page | Target queries | Shape |
 |---|---|---|---|
-| P1 | `/wallpapers` and `/wallpapers/[slug]` | gradient wallpaper 4K, grainy gradient wallpaper, mesh gradient wallpaper iPhone, macOS gradient wallpaper | Free downloads at 3840x2160, 5120x2880 and 1290x2796 with "Customise in the studio". Tag pages by colour, style, device. ImageObject and FAQPage schema. The backgrounds.supply model. |
+| P1 | `/wallpapers` and `/wallpapers/[slug]` | gradient wallpaper 4K, grainy gradient wallpaper, mesh gradient wallpaper iPhone, macOS gradient wallpaper | Free downloads at 3840x2160, 5120x2880 and 1290x2796 with "Customise in the studio". Tag pages by color, style, device. ImageObject and FAQPage schema. The backgrounds.supply model. |
 | P1 | `/gradients/[slug]` | long-tail palette names | Server-rendered image, hex codes, style, "Open in studio". 24 to 40 entries. Cheap indexable variety. |
 | P1 | `/grainy-gradient` | grainy gradient generator, noise gradient generator | Thin wrapper over `/app` with a high-grain preset, 500 to 800 words, FAQ. |
 | P2 | `/blurry-gradient`, `/aurora-gradient` | blurry gradient generator, aurora gradient generator | Same shape as above. |

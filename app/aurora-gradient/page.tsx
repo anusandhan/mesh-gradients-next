@@ -33,8 +33,8 @@ const content: StyleLandingContent = {
       body: "The Stripes style draws thousands of fine fibres along a shared wave, melts them with blur and adds light and dark folds for sheen. Set Waviness high for curtains, lower for calm bands, and use Sheen to control how much the folds glow.",
     },
     {
-      heading: "Picking aurora colours",
-      body: "Start from a near-black navy background. Use one mint or green, one electric blue and one violet, and let the fourth colour be a bright cyan for the highlights. Keep saturation near 110 percent so the greens stay luminous without turning neon.",
+      heading: "Picking aurora colors",
+      body: "Start from a near-black navy background. Use one mint or green, one electric blue and one violet, and let the fourth color be a bright cyan for the highlights. Keep saturation near 110 percent so the greens stay luminous without turning neon.",
     },
     {
       heading: "Where it is used",
