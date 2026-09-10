@@ -24,7 +24,7 @@ const content: StyleLandingContent = {
   }),
   cta: "Make a blurry gradient",
   presetsHeading: "Blurry gradients to start from",
-  presets: GALLERY.filter((p) => ["blue-sky", "peach-fuzz", "lavender-haze", "storm", "ice-fibre", "silk-rose", "sunset", "ember"].includes(p.slug)),
+  presets: GALLERY.filter((p) => ["blue-sky", "peach-fuzz", "lavender-haze", "storm", "ice-fiber", "silk-rose", "sunset", "ember"].includes(p.slug)),
   sections: [
     {
       heading: "What makes a blurry gradient work",

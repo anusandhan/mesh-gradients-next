@@ -112,7 +112,7 @@ export const GALLERY: GalleryPreset[] = [
       "Silk Rose is draped fabric in rose, pink and blush. It photographs well as a social background and as a wallpaper for a phone with a light theme, and the fibres give it a texture a flat pink gradient never has.",
   },
   {
-    slug: "ice-fibre",
+    slug: "ice-fiber",
     name: "Ice Fibre",
     style: "stripes",
     background: "#BAE6FD",

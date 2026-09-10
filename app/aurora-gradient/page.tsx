@@ -22,7 +22,7 @@ const content: StyleLandingContent = {
   }),
   cta: "Make an aurora gradient",
   presetsHeading: "Aurora and night-sky gradients",
-  presets: GALLERY.filter((p) => ["aurora", "deep-sea", "midnight", "ice-fibre", "lavender-haze", "storm"].includes(p.slug)),
+  presets: GALLERY.filter((p) => ["aurora", "deep-sea", "midnight", "ice-fiber", "lavender-haze", "storm"].includes(p.slug)),
   sections: [
     {
       heading: "What an aurora gradient is",
