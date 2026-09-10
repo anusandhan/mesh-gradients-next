@@ -4,6 +4,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import TrackedLink from "@/components/landing/TrackedLink";
 import HeroCanvas from "@/components/landing/HeroCanvas";
+import GalleryTabs from "@/components/landing/GalleryTabs";
 import { SiteFooter, SiteHeader } from "@/components/landing/SiteChrome";
 import { FREE_PRESET_LIMIT, PLANS, formatPrice } from "@/lib/plans";
 import { MAX_PRESETS_PER_USER } from "@/lib/presets";
@@ -252,40 +253,13 @@ export default function LandingPage() {
         )}
 
         {/* Gallery */}
-        <section id="gallery" className="scroll-mt-8 border-t border-neutral-200 bg-neutral-50">
+        <section id="gallery" className="scroll-mt-8 border-t border-neutral-200 bg-white">
           <div className="mx-auto w-full max-w-6xl px-6 py-16">
             <SectionHeading
               title="Start from a palette"
-              lead="Twelve presets across the three styles. Open one, then make it yours."
+              lead="Four palettes per style. Open one, then make it yours."
             />
-            <ul className="mt-8 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
-              {GALLERY.map((preset) => (
-                <li key={preset.slug}>
-                  <TrackedLink
-                    href={presetToStudioUrl(preset)}
-                    location="gallery"
-                    event="landing_gallery_clicked"
-                    properties={{ preset: preset.slug, style: preset.style }}
-                    className="group block overflow-hidden rounded-2xl border border-neutral-200 bg-white transition-shadow hover:shadow-[0_8px_30px_-12px_rgba(0,0,0,0.25)]"
-                  >
-                    <Image
-                      src={`/landing/gallery/${preset.slug}.jpg`}
-                      alt={`${preset.name}: ${preset.mood}, ${preset.style} style`}
-                      width={960}
-                      height={600}
-                      sizes="(min-width: 1024px) 25vw, (min-width: 640px) 33vw, 50vw"
-                      className="block aspect-[16/10] w-full object-cover"
-                    />
-                    <div className="flex items-center justify-between px-3 py-2 text-sm">
-                      <span className="font-medium">{preset.name}</span>
-                      <span className="text-xs capitalize text-neutral-500">
-                        {preset.style}
-                      </span>
-                    </div>
-                  </TrackedLink>
-                </li>
-              ))}
-            </ul>
+            <GalleryTabs />
           </div>
         </section>
 
