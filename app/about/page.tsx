@@ -34,6 +34,13 @@ export default function AboutPage() {
             in the file.
           </p>
           <p>
+            The moment I knew it worked was not on a screen. I was heading
+            design at reAlpha, and when the company acquired Prevu, the team
+            built the announcement graphic for the Nasdaq tower in Times
+            Square with this tool. A gradient that survives a building-sized
+            LED wall with no banding is the bar it has been held to since.
+          </p>
+          <p>
             It is made by{" "}
             <a
               href={MAKER_URL}

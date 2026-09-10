@@ -195,7 +195,43 @@ export default function LandingPage() {
           </div>
         </section>
 
-        {/* Proof strip: hidden until there are real quotes */}
+        {/* Proof: a gradient from the studio on the Nasdaq tower. Stated as
+            a fact about the graphic, not as an endorsement; no third-party
+            logos beyond what the photo itself shows. */}
+        <section className="border-y border-neutral-200 bg-neutral-50">
+          <div className="mx-auto flex w-full max-w-6xl flex-col items-center gap-8 px-6 py-12 sm:flex-row sm:gap-12">
+            <Image
+              src="/nasdaq-polaroid.jpg"
+              alt="A polaroid of the Nasdaq tower in Times Square showing a green gradient with the text: Nasdaq congratulates reAlpha on their successful acquisition of Prevu"
+              width={655}
+              height={1006}
+              sizes="(min-width: 640px) 220px, 60vw"
+              className="w-44 shrink-0 -rotate-2 rounded-sm shadow-[0_12px_32px_-12px_rgba(0,0,0,0.35)] sm:w-52"
+            />
+            <div className="max-w-xl text-center sm:text-left">
+              <p className="text-xs font-medium uppercase tracking-wide text-neutral-500">
+                Seen on the Nasdaq tower
+              </p>
+              <h2 className="mt-2 text-2xl font-semibold tracking-tight sm:text-3xl">
+                Built for work that ends up in Times Square
+              </h2>
+              <p className="mt-3 text-neutral-600">
+                The green gradient behind Nasdaq&apos;s congratulations to
+                reAlpha on its acquisition of Prevu was made in Gradients
+                Studio by reAlpha&apos;s design team. Rendered grain is what
+                keeps a gradient clean at the size of a building.
+              </p>
+              <p className="mt-3 text-sm text-neutral-500">
+                Made by the team, rendered by the tool.{" "}
+                <Link href="/about" className="text-neutral-900 underline-offset-2 hover:underline">
+                  The story
+                </Link>
+              </p>
+            </div>
+          </div>
+        </section>
+
+        {/* Quotes strip: hidden until there are real ones */}
         {TESTIMONIALS.length > 0 && (
           <section className="border-y border-neutral-200 bg-neutral-50">
             <div className="mx-auto w-full max-w-6xl px-6 py-8">
