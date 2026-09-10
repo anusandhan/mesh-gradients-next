@@ -6,7 +6,7 @@ Ground rules that apply to all of the Reddit posts:
 
 - **Post the image, not a link.** Image posts get the reach. Upload the file itself (or a gallery of two to four).
 - **Wallpaper subs are giveaways, not launches.** r/iphonewallpapers, r/wallpapers, r/MacOS and r/wallpaperdump all forbid promoting or selling your designs. So: no link in the post, no link in the first comment, no mention of a tool or a site. Put `gradients.studio` in your Reddit profile bio once, and only share a link when someone asks in the comments. A reply to a genuine question is allowed everywhere; an unprompted link is what gets removed.
-- **r/Notion and the web subs are different.** They allow resources and write-ups, so the links stay in those posts.
+- **r/Notion allows links only inside its pinned Self-promo & Showcase thread.** The web-dev subs allow write-ups with a link at the end.
 - **One sub per day, different palettes.** The same image across five subs on the same day reads as spam and gets reported. Rotate palettes.
 - **Read the sidebar before each post.** Most wallpaper subs require the resolution in the title and an "OC" flair. Some require the exact pixel size in brackets. The titles below already follow that convention.
 - **Reply to every comment for the first two hours.** That is what pushes a post up.
@@ -74,12 +74,9 @@ This sub is for batches. Post all twelve desktop files as one gallery.
 
 ### r/Notion
 
-Flair: Showcase or Resources. Notion covers are 1500×600; the studio's 5:2 aspect matches. Export four covers at 5:2 from the studio first (Ember, Lavender Haze, Blue Sky, Storm) and upload those.
+**Not a standalone post.** r/Notion's Rule 4 sends all showcase and self-promo content to the fortnightly pinned "Self-promo & Showcase" thread; a normal post gets removed. Find the pinned thread (post early in a fresh one) and leave the copy below as a comment with the four 5:2 covers attached. Export them from the studio first (Ember, Lavender Haze, Blue Sky, Storm) at the Notion cover size.
 
-**Title**
-`Free grainy gradient covers for Notion (5:2, dark-mode safe)`
-
-**First comment**
+**Comment in the showcase thread**
 > I made these with my gradient tool, which has a 5:2 "Notion cover" size built in. Grain keeps them from banding behind the page title.
 >
 > Make your own in any colour here, five free exports a month, no watermark: https://www.gradients.studio/app?aspect=5:2
