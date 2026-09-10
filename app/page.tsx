@@ -306,7 +306,7 @@ export default function LandingPage() {
               {
                 name: "Stripes",
                 file: "/landing/stripes.jpg",
-                copy: "Flowing fibres with a subtle sheen. Reads as fabric or aurora depending on the palette.",
+                copy: "Flowing fibers with a subtle sheen. Reads as fabric or aurora depending on the palette.",
                 dials: "Density, waviness, sheen",
               },
               {
@@ -385,7 +385,7 @@ export default function LandingPage() {
               {
                 file: "/landing/grain-off.jpg",
                 label: "Smooth blur, no grain",
-                note: "Color bands and a flat, plastic centre.",
+                note: "Color bands and a flat, plastic center.",
               },
               {
                 file: "/landing/grain-on.jpg",
@@ -474,7 +474,7 @@ export default function LandingPage() {
               {/* Pro. Figma spec: 8px outside stroke with a radial gradient,
                   plus an 8px #F4F4F4 spread shadow. The ring is a padded
                   wrapper with negative margin so the white card lines up
-                  with its neighbours and the ring grows into the gaps.
+                  with its neighbors and the ring grows into the gaps.
                   Radii are concentric: 16px card + 8px ring = 24px. */}
               <div
                 className="-m-2 rounded-[24px] p-2 shadow-[0_0_0_8px_#F4F4F4]"

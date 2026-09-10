@@ -25,10 +25,10 @@ const COPY: Record<GradientStyle, { title: string; description: string; body: st
   stripes: {
     title: "Silk and Aurora Stripe Wallpapers",
     description:
-      "Free striped gradient wallpapers in 4K, 5K and phone sizes. Flowing fibres with a sheen that read as silk or aurora, rendered with real grain.",
+      "Free striped gradient wallpapers in 4K, 5K and phone sizes. Flowing fibers with a sheen that read as silk or aurora, rendered with real grain.",
     body: [
-      "Stripes are thousands of fine fibres flowing diagonally across the canvas, melted together by blur and finished with a soft sheen. Depending on the palette they read as draped silk or the northern lights.",
-      "The four palettes here run from an aurora on a night sky to sunlit amber, a rose silk and an icy blue weave. The fibres are drawn as true curves, so nothing kinks at full size.",
+      "Stripes are thousands of fine fibers flowing diagonally across the canvas, melted together by blur and finished with a soft sheen. Depending on the palette they read as draped silk or the northern lights.",
+      "The four palettes here run from an aurora on a night sky to sunlit amber, a rose silk and an icy blue weave. The fibers are drawn as true curves, so nothing kinks at full size.",
     ],
   },
   clouds: {

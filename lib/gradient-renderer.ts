@@ -67,7 +67,7 @@ const applyBlur = (
   // The pyramid can only halve in whole steps, and at these radii it bottoms
   // out at a handful of pixels, so integer level sizes can't express small
   // radius changes. Strength is made continuous by blending the results of
-  // the two neighbouring step counts by the fractional part: every slider
+  // the two neighboring step counts by the fractional part: every slider
   // value renders differently, and the look changes smoothly through the
   // range instead of jumping at step boundaries. The chain stops on its own
   // once a level would drop to 2px, so 4K exports no longer saturate at a
@@ -264,7 +264,7 @@ export type RenderOptions = {
   coverage?: number;
   softness?: number;
   detail?: number;
-  // Finish: none, dot-matrix pixels, or palette-quantised symbol dither.
+  // Finish: none, dot-matrix pixels, or palette-quantized symbol dither.
   // effectSize is the grid cell in export pixels (scaled by blurScale);
   // effectStrength is a 0..2 multiplier (dot size / symbol density).
   effect?: GradientEffect;
@@ -356,10 +356,10 @@ const renderStripes = (
           (0.35 + (w.grow * (x + diag)) / (2 * diag)),
       0
     );
-  // Analytic dy/dx of waveOffset, so each fibre can be drawn as cubic
+  // Analytic dy/dx of waveOffset, so each fiber can be drawn as cubic
   // Hermite segments with exact tangents instead of a polyline. That is
   // what keeps the curves smooth: a polyline's corners survive the blur
-  // and read as kinks, especially where several fibres share the same x.
+  // and read as kinks, especially where several fibers share the same x.
   const waveSlope = (x: number, t: number) =>
     waviness *
     waves.reduce((acc, w) => {
@@ -552,7 +552,7 @@ const gradientNoise = (x: number, y: number, seed: number) => {
   return nx0 + (nx1 - nx0) * v;
 };
 
-// Fractal sum of octaves; weights are normalised by the caller
+// Fractal sum of octaves; weights are normalized by the caller
 const fbm = (
   x: number,
   y: number,
@@ -681,7 +681,7 @@ const renderClouds = (
 
 // --- Finishes -----------------------------------------------------------------
 // Both finishes read the rendered image once, then repaint it on a grid.
-// Cells are sampled at their centre: the underlying gradient is smooth, so
+// Cells are sampled at their center: the underlying gradient is smooth, so
 // a single sample is as good as an average and far cheaper.
 
 const BAYER_4 = [

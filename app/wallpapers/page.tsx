@@ -10,7 +10,7 @@ import { SITE_NAME, SITE_URL } from "@/lib/site";
 
 const TITLE = "Free 4K Gradient Wallpapers for Mac, Desktop and Phone";
 const DESCRIPTION =
-  "Twelve free gradient wallpapers with real grain, in 5K for Mac, 4K for desktop and 1290×2796 for phones. No sign-up, no watermark. Customise any of them in the studio.";
+  "Twelve free gradient wallpapers with real grain, in 5K for Mac, 4K for desktop and 1290×2796 for phones. No sign-up, no watermark. Customize any of them in the studio.";
 
 export const metadata: Metadata = {
   title: { absolute: `${TITLE} | ${SITE_NAME}` },
@@ -34,7 +34,7 @@ const faqs = [
   },
   {
     q: "Can I change the colors?",
-    a: "Yes. Every wallpaper page has a Customise button that opens the exact palette in the studio, where you can tune colors, blur and texture and export your own version.",
+    a: "Yes. Every wallpaper page has a Customize button that opens the exact palette in the studio, where you can tune colors, blur and texture and export your own version.",
   },
 ];
 
@@ -127,13 +127,13 @@ export default function WallpapersPage() {
           </p>
           <p>
             The three styles behave differently. Blobs are soft overlapping
-            fields, the classic mesh look. Stripes are flowing fibres with a
+            fields, the classic mesh look. Stripes are flowing fibers with a
             sheen, which read as silk or aurora depending on the palette.
             Clouds are billowing volumes with depth, best in dark palettes.
             Pick by mood first, then by the screen it is going on.
           </p>
           <p>
-            If none of the twelve is quite right, every page has a Customise
+            If none of the twelve is quite right, every page has a Customize
             button. It opens the same palette in the studio, where you can
             change any color, the blur, the grain and the texture, then export
             at 4K. Five exports a month are free.

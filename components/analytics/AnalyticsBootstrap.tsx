@@ -4,7 +4,7 @@ import { useEffect } from "react";
 import posthog from "posthog-js";
 import { useUser } from "@clerk/nextjs";
 
-// Initialises PostHog on the production host only, so localhost and
+// Initializes PostHog on the production host only, so localhost and
 // preview deployments never pollute the funnel. Set
 // NEXT_PUBLIC_POSTHOG_FORCE=1 locally to verify events end to end.
 const PRODUCTION_HOSTS = ["www.gradients.studio", "gradients.studio"];

@@ -81,7 +81,7 @@ export default function PrivacyPage() {
         <h2>What it is used for</h2>
         <p>
           To run the editor and exports, to enforce the free-tier limit, to
-          grant and honour paid passes, to send a receipt, to understand which
+          grant and honor paid passes, to send a receipt, to understand which
           parts of the product get used, and to keep the service safe from
           abuse. Nothing else. No marketing email is sent unless you ask for
           it.

@@ -83,7 +83,7 @@ renderGradient(
 );
 check("different seed renders differently", !other.toBuffer("image/png").equals(bufferA));
 
-// Blur must be continuous: neighbouring slider ticks and the top of the
+// Blur must be continuous: neighboring slider ticks and the top of the
 // range must all render differently (the pyramid used to quantize to whole
 // halving steps and saturate at 4K, so most of the slider did nothing)
 const renderBlur = (blur: number, scale = 1) => {

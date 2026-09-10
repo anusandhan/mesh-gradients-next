@@ -52,7 +52,7 @@ Alternative H1s to test later: "Make a wallpaper-grade mesh gradient in 30 secon
 | 8 | Testimonials | Answer doubts | 4 to 6, named, one per audience. Collect first (see section 6). |
 | 9 | FAQ | SEO and objections | 8 questions with FAQPage schema: what is a mesh gradient, is it free, resolution and formats, commercial use, subscription, what happens when time ends, SVG/CSS (honest no, link to explainer), where palettes are saved. |
 | 10 | Closing CTA | Last push | Full-bleed gradient behind "Open the studio" and the free line. |
-| 11 | Footer | SEO surface and trust | Studio, Wallpapers, Gradients, Pricing, Changelog, Licence, Terms, Privacy, Contact, "Made by". |
+| 11 | Footer | SEO surface and trust | Studio, Wallpapers, Gradients, Pricing, Changelog, License, Terms, Privacy, Contact, "Made by". |
 
 Target length: 900 to 1,200 words of real copy, 5th to 7th grade reading level.
 
@@ -64,7 +64,7 @@ Do not add: countdown timers, fake scarcity, carousels, autoplay video with audi
 
 | Priority | Page | Target queries | Shape |
 |---|---|---|---|
-| P1 | `/wallpapers` and `/wallpapers/[slug]` | gradient wallpaper 4K, grainy gradient wallpaper, mesh gradient wallpaper iPhone, macOS gradient wallpaper | Free downloads at 3840x2160, 5120x2880 and 1290x2796 with "Customise in the studio". Tag pages by color, style, device. ImageObject and FAQPage schema. The backgrounds.supply model. |
+| P1 | `/wallpapers` and `/wallpapers/[slug]` | gradient wallpaper 4K, grainy gradient wallpaper, mesh gradient wallpaper iPhone, macOS gradient wallpaper | Free downloads at 3840x2160, 5120x2880 and 1290x2796 with "Customize in the studio". Tag pages by color, style, device. ImageObject and FAQPage schema. The backgrounds.supply model. |
 | P1 | `/gradients/[slug]` | long-tail palette names | Server-rendered image, hex codes, style, "Open in studio". 24 to 40 entries. Cheap indexable variety. |
 | P1 | `/grainy-gradient` | grainy gradient generator, noise gradient generator | Thin wrapper over `/app` with a high-grain preset, 500 to 800 words, FAQ. |
 | P2 | `/blurry-gradient`, `/aurora-gradient` | blurry gradient generator, aurora gradient generator | Same shape as above. |

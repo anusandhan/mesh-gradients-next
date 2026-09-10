@@ -74,7 +74,7 @@ export const GALLERY: GalleryPreset[] = [
     description:
       "Deep Sea is navy and ocean blue with a single teal glow. It is the most restrained of the blob palettes, made for dark-mode product sites, dashboards and a phone wallpaper that disappears behind a dark home screen.",
   },
-  // Stripes: flowing fibres with sheen
+  // Stripes: flowing fibers with sheen
   {
     slug: "aurora",
     name: "Aurora",
@@ -85,7 +85,7 @@ export const GALLERY: GalleryPreset[] = [
     mood: "green, blue and violet northern lights",
     tags: ["dark", "green", "blue", "purple"],
     description:
-      "Aurora is the northern lights on a night sky: mint, electric blue and violet fibres with a cyan highlight. It is the showpiece stripe palette for dark heroes, event artwork and OLED wallpapers where the greens can really glow.",
+      "Aurora is the northern lights on a night sky: mint, electric blue and violet fibers with a cyan highlight. It is the showpiece stripe palette for dark heroes, event artwork and OLED wallpapers where the greens can really glow.",
   },
   {
     slug: "solar",
@@ -97,7 +97,7 @@ export const GALLERY: GalleryPreset[] = [
     mood: "warm sunrise amber and coral",
     tags: ["light", "yellow", "orange"],
     description:
-      "Solar is a sunrise in silk: amber, coral and gold fibres on a warm sand background. It is bright without being loud, which suits presentation backgrounds, podcast art and a desktop wallpaper for a room that gets morning light.",
+      "Solar is a sunrise in silk: amber, coral and gold fibers on a warm sand background. It is bright without being loud, which suits presentation backgrounds, podcast art and a desktop wallpaper for a room that gets morning light.",
   },
   {
     slug: "silk-rose",
@@ -109,11 +109,11 @@ export const GALLERY: GalleryPreset[] = [
     mood: "rose, pink and blush silk",
     tags: ["light", "pink"],
     description:
-      "Silk Rose is draped fabric in rose, pink and blush. It photographs well as a social background and as a wallpaper for a phone with a light theme, and the fibres give it a texture a flat pink gradient never has.",
+      "Silk Rose is draped fabric in rose, pink and blush. It photographs well as a social background and as a wallpaper for a phone with a light theme, and the fibers give it a texture a flat pink gradient never has.",
   },
   {
     slug: "ice-fiber",
-    name: "Ice Fibre",
+    name: "Ice Fiber",
     style: "stripes",
     background: "#BAE6FD",
     colors: ["#38BDF8", "#67E8F9", "#818CF8", "#E0F2FE"],
@@ -121,7 +121,7 @@ export const GALLERY: GalleryPreset[] = [
     mood: "icy sky blue, cyan and white threads",
     tags: ["light", "blue", "cyan"],
     description:
-      "Ice Fibre is cool and clean: sky blue, cyan and a thread of periwinkle running to white. It is a natural fit for a MacBook wallpaper, a light-mode website hero, or a Zoom background that looks composed without drawing attention.",
+      "Ice Fiber is cool and clean: sky blue, cyan and a thread of periwinkle running to white. It is a natural fit for a MacBook wallpaper, a light-mode website hero, or a Zoom background that looks composed without drawing attention.",
   },
   // Clouds: billowing volumes
   {
@@ -170,7 +170,7 @@ export const GALLERY: GalleryPreset[] = [
     mood: "slate and silver storm front",
     tags: ["dark", "gray"],
     description:
-      "Storm is slate, grey and silver cloud with no color at all, which is exactly why it works: it sits behind anything. Use it for a monochrome desktop, a neutral slide deck, or a website section that needs depth without a hue.",
+      "Storm is slate, gray and silver cloud with no color at all, which is exactly why it works: it sits behind anything. Use it for a monochrome desktop, a neutral slide deck, or a website section that needs depth without a hue.",
   },
 ];
 

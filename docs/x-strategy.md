@@ -12,7 +12,7 @@ Most "X algorithm" guides still quote 2023 weights. The current code says someth
 
 | Signal | Weight | What it means for us |
 |---|---|---|
-| Like | 0.5 | Nearly worthless. Do not optimise for likes. |
+| Like | 0.5 | Nearly worthless. Do not optimize for likes. |
 | Repost | 1.0 | Fine, not the goal. |
 | Reply | 5.0 | One reply is worth ten likes. Posts that make people answer win. |
 | Quote | 5.0 | Same. Renders people want to show off get quoted. |
@@ -190,7 +190,7 @@ Reply within the first hour with something specific. A render that responds to t
 6. **GIFs for motion.** No watch-time signal, muddy on gradients. Short MP4 only.
 7. **A cold Product Hunt launch.** Every case that worked had a warm list first: Xnapper had 45,000 followers, Screen Studio went viral before launch. Weeks one and two exist to build that list.
 8. **Weekend and evening posting.** The measured lows.
-9. **Chasing likes.** Optimise for replies, copy-link shares and follows; that is what the scorer pays.
+9. **Chasing likes.** Optimize for replies, copy-link shares and follows; that is what the scorer pays.
 10. **Pricing whiplash.** Screen Studio publicly regretted a jump to $229. Say "$39 once" plainly and keep it.
 
 ---
@@ -199,4 +199,4 @@ Reply within the first hour with something specific. A render that responds to t
 
 X ranking code: github.com/xai-org/x-algorithm, `home-mixer/params/param.rs` and `home-mixer/scorers/ranking_scorer.rs`. X product statements on links: x.com/nikitabier/status/2041911302541730237 and the July 2026 exchange. Mutuals update: techcrunch.com, 13 July 2026. Communities shutdown: xcommunies.com/x-communities-shutdown. Buffer: x-premium-review, links-on-x, state-of-social-media-engagement, best-time-to-post-on-twitter. Sprout Social: best-times-to-post-on-twitter, twitter-algorithm. Maker reports: solounicorn.club Screen Studio day 40, indiehackers.com Xnapper launch report, supabird.io on Tony Dinh's tactics, draper.chat solo founders' first 100 customers, tympanus.net Codrops feature on Unicorn Studio, basicappleguy.com gradient drops. Cadence and Product Hunt: teract.ai indie-hacker X strategy, producthunt.com/launch, dev.to Product Hunt playbook. Curators: toools.design/submit, uxcel.com best accounts, shamanth.dev designer list.
 
-Gaps: X's help-centre spam policy pages were unreachable; no public X metrics exist for Shots, Haikei or Coolors; the Premium mechanism is measured but not visible in the open code.
+Gaps: X's help-center spam policy pages were unreachable; no public X metrics exist for Shots, Haikei or Coolors; the Premium mechanism is measured but not visible in the open code.

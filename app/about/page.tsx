@@ -22,7 +22,7 @@ export default function AboutPage() {
           <p>
             Most gradient generators make the same soft blur. It looks fine on
             a phone and falls apart on a 4K monitor: color bands, muddy
-            centres, and a texture that a designer can spot from across the
+            centers, and a texture that a designer can spot from across the
             room. {SITE_NAME} started as a fix for that.
           </p>
           <p>

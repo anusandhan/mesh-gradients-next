@@ -60,7 +60,7 @@ export const TAG_COPY: Record<string, string> = {
   yellow: "Golden and sunlit gradient wallpapers.",
   peach: "Peach and apricot gradient wallpapers.",
   pastel: "Pastel gradient wallpapers with soft, low-contrast color.",
-  gray: "Grey and slate gradient wallpapers for a quiet desktop.",
+  gray: "Gray and slate gradient wallpapers for a quiet desktop.",
   black: "Near-black gradient wallpapers built for OLED displays.",
   white: "Bright gradient wallpapers with white highlights.",
 };

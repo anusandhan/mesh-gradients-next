@@ -10,7 +10,7 @@ const content: StyleLandingContent = {
   path: "/aurora-gradient",
   title: "Aurora Gradient Generator",
   tagline:
-    "Northern-lights gradients: flowing green, blue and violet fibres on a night sky, with real grain. Tune the waviness and sheen, export at 4K.",
+    "Northern-lights gradients: flowing green, blue and violet fibers on a night sky, with real grain. Tune the waviness and sheen, export at 4K.",
   description:
     "Free aurora gradient generator. Flowing northern-lights bands in green, blue and violet with real grain, 4K export with no watermark.",
   studioHref: buildStudioUrl({
@@ -26,11 +26,11 @@ const content: StyleLandingContent = {
   sections: [
     {
       heading: "What an aurora gradient is",
-      body: "An aurora gradient mimics the northern lights: ribbons of green and cyan fading into violet, draped diagonally across a dark sky. The fibres have direction and a faint shimmer, which a plain radial gradient never gets right.",
+      body: "An aurora gradient mimics the northern lights: ribbons of green and cyan fading into violet, draped diagonally across a dark sky. The fibers have direction and a faint shimmer, which a plain radial gradient never gets right.",
     },
     {
       heading: "How the stripes style makes it",
-      body: "The Stripes style draws thousands of fine fibres along a shared wave, melts them with blur and adds light and dark folds for sheen. Set Waviness high for curtains, lower for calm bands, and use Sheen to control how much the folds glow.",
+      body: "The Stripes style draws thousands of fine fibers along a shared wave, melts them with blur and adds light and dark folds for sheen. Set Waviness high for curtains, lower for calm bands, and use Sheen to control how much the folds glow.",
     },
     {
       heading: "Picking aurora colors",
@@ -48,7 +48,7 @@ const content: StyleLandingContent = {
     },
     {
       q: "Why does the aurora look kinked or jagged?",
-      a: "It should not. Fibres are drawn as true curves and the blur is defined against the 4K export, so lines stay smooth at every size. If a preview looks rough, the export will still be clean.",
+      a: "It should not. Fibers are drawn as true curves and the blur is defined against the 4K export, so lines stay smooth at every size. If a preview looks rough, the export will still be clean.",
     },
     {
       q: "Is the export free?",

@@ -20,7 +20,7 @@ import {
 import { SITE_NAME, SITE_URL } from "@/lib/site";
 
 // One page per collection palette: preview, three free downloads, the hex
-// codes, and a Customise link that opens the exact scene in the studio.
+// codes, and a Customize link that opens the exact scene in the studio.
 
 type Params = { slug: string };
 
@@ -187,7 +187,7 @@ export default async function WallpaperPage({
                   location="wallpaper_customise"
                   properties={{ preset: preset.slug }}
                 >
-                  Customise in the studio
+                  Customize in the studio
                 </TrackedLink>
               </Button>
               <p className="mt-2 text-xs text-neutral-500">

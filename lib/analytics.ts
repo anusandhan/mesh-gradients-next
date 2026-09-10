@@ -2,7 +2,7 @@ import posthog from "posthog-js";
 
 // Client-side product analytics. Every event the app emits is listed here
 // so names stay consistent between the code and the PostHog funnels.
-// Calls are no-ops until AnalyticsBootstrap has initialised PostHog, which
+// Calls are no-ops until AnalyticsBootstrap has initialized PostHog, which
 // only happens on the production host (or with NEXT_PUBLIC_POSTHOG_FORCE=1).
 
 export type AnalyticsEvent =

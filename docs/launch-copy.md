@@ -51,7 +51,7 @@ Flair: Wallpaper (if the sub has it; otherwise Discussion). This sub likes macOS
 **Title**
 `Made some 5K gradient wallpapers for MacBook and Studio Display (5120×2880)`
 
-Upload: Blue Sky, Peach Fuzz, Ice Fibre, Midnight Mac files.
+Upload: Blue Sky, Peach Fuzz, Ice Fiber, Midnight Mac files.
 
 **First comment** (no link, no product mention)
 > These are rendered at 5120×2880 specifically, not upscaled from 4K, so the soft parts stay smooth on the Retina panel. Say if you'd like a different color and I'll render it.
@@ -134,9 +134,9 @@ Make mesh gradients in three styles with real grain, blur and color controls. Ex
 Gradients Studio makes mesh gradients that look designed rather than generated. Pick blobs, stripes or clouds, tune the colors, blur and grain, and export at 4K with no watermark. The grain is rendered into the image, so nothing bands on large screens or in print. Five free exports a month, then a one-time pass. No subscription.
 
 **Long description (about 180 words)**
-Most gradient generators produce the same smooth blur, and it falls apart on a 4K monitor: color bands, muddy centres, a texture designers spot from across the room. Gradients Studio was built to fix that.
+Most gradient generators produce the same smooth blur, and it falls apart on a 4K monitor: color bands, muddy centers, a texture designers spot from across the room. Gradients Studio was built to fix that.
 
-Three styles share one set of controls. Blobs are the classic mesh look. Stripes are flowing fibres with a silk sheen that reads as aurora in the right palette. Clouds are billowing volumes with real depth. Color, blur, contrast, saturation and grain work the same way in each, and each style adds its own dials. Pixel and Dither finishes turn any gradient into a dot matrix or a palette-quantised pattern.
+Three styles share one set of controls. Blobs are the classic mesh look. Stripes are flowing fibers with a silk sheen that reads as aurora in the right palette. Clouds are billowing volumes with real depth. Color, blur, contrast, saturation and grain work the same way in each, and each style adds its own dials. Pixel and Dither finishes turn any gradient into a dot matrix or a palette-quantized pattern.
 
 The grain is drawn at export resolution, so it survives compression, scaling and print. Exports are 3840 pixels wide in nine aspect ratios, from 16:9 desktop and 16:10 Mac to 9:16 phone, 1.91:1 social cards and 5:2 Notion covers.
 

@@ -71,7 +71,7 @@ export default function TermsPage() {
           Email <a href={`mailto:${SUPPORT_EMAIL}`}>{SUPPORT_EMAIL}</a> within
           14 days of buying a pass. If you have not exported anything with it,
           the pass is refunded in full. If you have, we will still talk;
-          reasonable requests are honoured.
+          reasonable requests are honored.
         </p>
       </section>
 

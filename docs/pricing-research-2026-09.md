@@ -54,7 +54,7 @@ Not found or dead: a "Mesh Gradient by Kumar" tool, gradient.art (DNS fails), Gh
 1. **The free floor is unlimited 4K with no watermark.** At least eight direct competitors give this away, and several market "no paywall" as the feature. Pro cannot be sold on 4K access alone. It sells on the styles (blobs, stripes, clouds), grain and blur control, saved palettes, mobile editing, and taste.
 2. **Nobody sells a 6-month term.** MagicPattern's $79 six-month pass is the only one, and it bundles 30+ tools. Consumer apps that use 6-month tiers (Babbel, Tinder) auto-renew and use them as a middle anchor.
 3. **Pure generators go free or cheap one-time** ($0.99 to $29 lifetime). Asset libraries go subscription plus lifetime ($49–99/yr, $199–299 lifetime). Suites go $10–20/mo.
-4. **Gating is by resolution, watermark, saved-item count, or commercial licence.** A monthly export count has no direct peer in this niche. The closest analogues are Instant Gradient's 5 saved palettes and Coolors' 10.
+4. **Gating is by resolution, watermark, saved-item count, or commercial license.** A monthly export count has no direct peer in this niche. The closest analogues are Instant Gradient's 5 saved palettes and Coolors' 10.
 5. **$38 per 6 months annualises to about $76/yr.** That is above Coolors ($36), Colorffy ($40), Grainient ($59), and Simplified ($72), and just under MagicPattern Basic ($120). It is priced like a suite and scoped like a single generator, and it is above Instant Gradient's $29 lifetime for a near-identical feature set.
 6. **Buyers who pay once expect to own it** (Instant Gradient, BGJar, Meshing, Mesh Gradients Ultimate). A one-time pass that expires needs explicit "one year, no auto-renew" framing to read as fair.
 
@@ -80,7 +80,7 @@ Gradients Studio at $38 per 6 months is $6.33/mo-equivalent, in the gap between 
 | Resolution cap, unlimited count | 6–7 | Cleanup 720p, Jitter 720p, remove.bg 0.25 MP, Haikei medium PNG, Shapefest 512px, Pika and Jitter gate 4K |
 | Saved-object count | 5 | Coolors 10 palettes, Unicorn 8 publishes, Rive 3 files, Jitter 3 files, Mobbin 3 collections |
 | Format or code export | 4 | Shots WebP, Pika SVG, Haikei JSX, Jitter ProRes |
-| Commercial licence | 4 | Cursorful, Unicorn, Noun Project, Pika |
+| Commercial license | 4 | Cursorful, Unicorn, Noun Project, Pika |
 | Credits | 3 | remove.bg, Removal.ai, Noun Studio |
 | Monthly export quota | 0 | none |
 
@@ -99,7 +99,7 @@ Tags: **[strong]** peer-reviewed or large-N platform data; **[medium]** vendor o
 
 ### 4.1 Price points
 
-- **$39 outsold $34 and $44** in Anderson and Simester's catalogue field experiments (16, 21, 17 units), strongest for products the buyer has no price reference for. [strong]
+- **$39 outsold $34 and $44** in Anderson and Simester's catalog field experiments (16, 21, 17 units), strongest for products the buyer has no price reference for. [strong]
 - **Left-digit effect only fires when the left digit changes** ($39 vs $40), not $38 vs $39 (Thomas and Morwitz 2005). [strong]
 - **Precise prices are judged smaller** but a 2026 preregistered replication (N=729) found no reliable effect on purchase intent. [medium]
 - **Round prices suit feeling-driven purchases, precise prices suit cognition-driven ones** (Wadhwa and Zhang 2015). [medium]
