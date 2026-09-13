@@ -23,6 +23,7 @@ import {
 import type { Icon } from "@phosphor-icons/react";
 import { track } from "@/lib/analytics";
 import { GALLERY, parseStudioParams } from "@/lib/gallery";
+import { INSPIRED_PALETTES } from "@/lib/inspired";
 import { FREE_EXPORTS_PER_MONTH } from "@/lib/site";
 import { QuotaMeter } from "@/components/QuotaMeter";
 import { DialList } from "@/components/DialList";
@@ -234,57 +235,23 @@ const collectionPresets: PresetGradient[] = GALLERY.map((p) => ({
   seed: p.seed,
 }));
 
-const inspiredPresets: PresetGradient[] = [
-  {
-    name: "Lovable",
-    background: "#1A1B1D",
-    colors: ["#FE7A04", "#FE4F1A", "#F35CBE", "#7472FC"],
-    group: "inspired",
-    icon: LovableIcon,
-  },
-  {
-    name: "Dia",
-    background: "#0358f7",
-    colors: ["#c679c4", "#fa3d1d", "#ffb005", "#e1e1fe"],
-    group: "inspired",
-    icon: DiaIcon,
-  },
-  {
-    name: "Raycast",
-    background: "#07090B",
-    colors: ["#CF1627", "#08243A", "#0F8B92", "#D54F63"],
-    group: "inspired",
-    icon: RaycastIcon,
-  },
-  {
-    name: "Stripe",
-    background: "#635BFF",
-    colors: ["#F15372", "#FFCA3B", "#76E2FF", "#B5DAB9"],
-    group: "inspired",
-    icon: StripeIcon,
-  },
-  {
-    name: "Arc",
-    background: "#140080",
-    colors: ["#0229C9", "#FF526B", "#FF9598", "#EE4A5F"],
-    group: "inspired",
-    icon: ArcIcon,
-  },
-  {
-    name: "Comet",
-    background: "#101013",
-    colors: ["#5099A1", "#733138", "#53969F", "#C17B55"],
-    group: "inspired",
-    icon: CometIcon,
-  },
-  {
-    name: "Devin",
-    background: "#11131D",
-    colors: ["#2A6DCE", "#1796E2", "#1DC19C", "#3FA9DD"],
-    group: "inspired",
-    icon: DevinIcon,
-  },
-];
+const INSPIRED_ICONS: Record<string, PresetGradient["icon"]> = {
+  Lovable: LovableIcon,
+  Dia: DiaIcon,
+  Raycast: RaycastIcon,
+  Stripe: StripeIcon,
+  Arc: ArcIcon,
+  Comet: CometIcon,
+  Devin: DevinIcon,
+};
+
+const inspiredPresets: PresetGradient[] = INSPIRED_PALETTES.map((p) => ({
+  name: p.name,
+  background: p.background,
+  colors: [...p.colors],
+  group: "inspired",
+  icon: INSPIRED_ICONS[p.name],
+}));
 
 const presetGradients: PresetGradient[] = [
   ...collectionPresets,
@@ -1026,6 +993,7 @@ const GradientGenerator = () => {
     if (s.blur !== undefined) setBlurAmount([s.blur]);
     if (s.aspectRatio) setAspectRatio(s.aspectRatio);
     if (s.name) setGradientName(s.name);
+    if (s.effect) setEffect(s.effect);
     if (s.plan) setUpgradeOpen("browse");
     window.history.replaceState(null, "", window.location.pathname);
   }, []);
@@ -1701,106 +1669,150 @@ const GradientGenerator = () => {
                   aria-labelledby="upgrade-title"
                   className="fixed left-1/2 top-1/2 z-[70] w-[90vw] max-w-sm -translate-x-1/2 -translate-y-1/2 rounded-2xl bg-white p-6 shadow-xl"
                 >
-                  <h2
-                    id="upgrade-title"
-                    className="text-lg font-semibold text-neutral-900"
-                  >
-                    {upgradeOpen === "exports"
-                      ? "You're out of free exports"
-                      : upgradeOpen === "presets"
-                        ? "Save more palettes with Pro"
-                        : "Go Pro"}
-                  </h2>
-                  <p className="mt-2 text-sm text-neutral-600">
-                    {upgradeOpen === "exports"
-                      ? "You've used all 5 free exports this month. Pro removes the limit."
-                      : upgradeOpen === "presets"
-                        ? `Free accounts keep ${FREE_PRESET_LIMIT} palettes. Pro keeps 50 and removes the export limit.`
-                        : "Unlimited 4K exports and 50 saved palettes. Pay once, no subscription."}
-                  </p>
+                  {(() => {
+                    // Someone who just hit the monthly cap is mid-project:
+                    // lead with the Week Pass and say when free exports
+                    // return. Everyone else sees Pro first.
+                    const capHit = upgradeOpen === "exports";
+                    const headline: PlanId = capHit ? "week" : "year";
+                    const secondary: PlanId = capHit ? "year" : "week";
+                    const resetDate =
+                      quota?.resetsAt &&
+                      new Date(quota.resetsAt).toLocaleDateString(undefined, {
+                        month: "long",
+                        day: "numeric",
+                      });
+                    const bullets: Record<PlanId, string[]> = {
+                      year: [
+                        "Unlimited 4K exports",
+                        "Save up to 50 palettes",
+                        "One payment, never auto-renews",
+                      ],
+                      week: [
+                        `Unlimited 4K exports for ${PLANS.week.durationLabel}`,
+                        "Same controls as Pro",
+                        "One payment, never auto-renews",
+                      ],
+                    };
+                    const secondaryLine: Record<PlanId, string> = {
+                      year: `${PLANS.year.name}: unlimited exports and 50 palettes for ${PLANS.year.durationLabel}`,
+                      week: `${PLANS.week.name}: unlimited exports for one project`,
+                    };
+                    const buttonLabel: Record<PlanId, string> = {
+                      year: `Get ${PLANS.year.name}`,
+                      week: "Get the pass",
+                    };
+                    return (
+                      <>
+                        <h2
+                          id="upgrade-title"
+                          className="text-lg font-semibold text-neutral-900"
+                        >
+                          {capHit
+                            ? `Keep going for ${formatPrice(PLANS.week)}`
+                            : upgradeOpen === "presets"
+                              ? "Save more palettes with Pro"
+                              : "Go Pro"}
+                        </h2>
+                        <p className="mt-2 text-sm text-neutral-600">
+                          {capHit
+                            ? `You've used this month's ${FREE_EXPORTS_PER_MONTH} free exports. A ${PLANS.week.name} unlocks unlimited exports for ${PLANS.week.durationLabel}, one payment.${resetDate ? ` Free exports come back on ${resetDate}.` : ""}`
+                            : upgradeOpen === "presets"
+                              ? `Free accounts keep ${FREE_PRESET_LIMIT} palettes. Pro keeps 50 and removes the export limit.`
+                              : "Unlimited 4K exports and 50 saved palettes. Pay once, no subscription."}
+                        </p>
 
-                  {/* Headline pass: same ring as the landing-page Pro card
-                      (8px radial stroke + 8px halo, concentric radii) */}
-                  <div
-                    className="mt-6 rounded-[20px] p-2 shadow-[0_0_0_8px_#F4F4F4]"
-                    style={{
-                      background:
-                        "radial-gradient(ellipse farthest-corner at center, #8487FF 0%, #F6CCFD 33%, #C3EFED 66%, #8487FF 100%)",
-                    }}
-                  >
-                  <div className="rounded-xl bg-white p-4">
-                    <div className="flex items-center justify-between gap-2">
-                      <div className="flex items-baseline gap-1">
-                        <span className="text-2xl font-semibold text-neutral-900">
-                          {formatPrice(PLANS.year)}
-                        </span>
-                        <span className="text-sm text-neutral-500">
-                          {`/ ${PLANS.year.durationLabel}`}
-                        </span>
-                      </div>
-                      <Image
-                        src="/best-value-badge.png"
-                        alt="Best value"
-                        width={1449}
-                        height={423}
-                        className="h-6 w-auto"
-                      />
-                    </div>
-                    <ul className="mt-2 space-y-1 text-sm text-neutral-600">
-                      <li>Unlimited 4K exports</li>
-                      <li>Save up to 50 palettes</li>
-                      <li>One payment, never auto-renews</li>
-                    </ul>
-                    <Button
-                      className="mt-3 w-full"
-                      onClick={() => startCheckout("year")}
-                      disabled={checkoutLoading !== null}
-                    >
-                      {checkoutLoading === "year"
-                        ? "Redirecting…"
-                        : `Get ${PLANS.year.name}`}
-                    </Button>
-                  </div>
-                  </div>
+                        {/* Headline plan: same ring as the landing-page Pro
+                            card (8px radial stroke + 8px halo, concentric) */}
+                        <div
+                          className="mt-6 rounded-[20px] p-2 shadow-[0_0_0_8px_#F4F4F4]"
+                          style={{
+                            background:
+                              "radial-gradient(ellipse farthest-corner at center, #8487FF 0%, #F6CCFD 33%, #C3EFED 66%, #8487FF 100%)",
+                          }}
+                        >
+                          <div className="rounded-xl bg-white p-4">
+                            <div className="flex items-center justify-between gap-2">
+                              <div className="flex items-baseline gap-1">
+                                <span className="text-2xl font-semibold text-neutral-900">
+                                  {formatPrice(PLANS[headline])}
+                                </span>
+                                <span className="text-sm text-neutral-500">
+                                  {`/ ${PLANS[headline].durationLabel}`}
+                                </span>
+                              </div>
+                              {headline === "year" ? (
+                                <Image
+                                  src="/best-value-badge.png"
+                                  alt="Best value"
+                                  width={1449}
+                                  height={423}
+                                  className="h-6 w-auto"
+                                />
+                              ) : (
+                                <span className="text-sm font-medium text-neutral-500">
+                                  {PLANS.week.name}
+                                </span>
+                              )}
+                            </div>
+                            <ul className="mt-2 space-y-1 text-sm text-neutral-600">
+                              {bullets[headline].map((line) => (
+                                <li key={line}>{line}</li>
+                              ))}
+                            </ul>
+                            <Button
+                              className="mt-3 w-full"
+                              onClick={() => startCheckout(headline)}
+                              disabled={checkoutLoading !== null}
+                            >
+                              {checkoutLoading === headline
+                                ? "Redirecting…"
+                                : buttonLabel[headline]}
+                            </Button>
+                          </div>
+                        </div>
 
-                  {/* Burst pass for one-project users (mt clears the halo) */}
-                  <div className="mt-6 flex items-center justify-between gap-3 rounded-xl border border-neutral-200 px-4 py-3">
-                    <div className="min-w-0">
-                      <div className="flex items-baseline gap-1">
-                        <span className="text-base font-semibold text-neutral-900">
-                          {formatPrice(PLANS.week)}
-                        </span>
-                        <span className="text-xs text-neutral-500">
-                          {`/ ${PLANS.week.durationLabel}`}
-                        </span>
-                      </div>
-                      <p className="text-xs text-neutral-500">
-                        {PLANS.week.name}: unlimited exports for one project
-                      </p>
-                    </div>
-                    <Button
-                      variant="outline"
-                      className="h-8 shrink-0 px-3 text-xs"
-                      onClick={() => startCheckout("week")}
-                      disabled={checkoutLoading !== null}
-                    >
-                      {checkoutLoading === "week" ? "Redirecting…" : "Get pass"}
-                    </Button>
-                  </div>
+                        {/* The other plan, one line (mt clears the halo) */}
+                        <div className="mt-6 flex items-center justify-between gap-3 rounded-xl border border-neutral-200 px-4 py-3">
+                          <div className="min-w-0">
+                            <div className="flex items-baseline gap-1">
+                              <span className="text-base font-semibold text-neutral-900">
+                                {formatPrice(PLANS[secondary])}
+                              </span>
+                              <span className="text-xs text-neutral-500">
+                                {`/ ${PLANS[secondary].durationLabel}`}
+                              </span>
+                            </div>
+                            <p className="text-xs text-neutral-500">
+                              {secondaryLine[secondary]}
+                            </p>
+                          </div>
+                          <Button
+                            variant="outline"
+                            className="h-8 shrink-0 px-3 text-xs"
+                            onClick={() => startCheckout(secondary)}
+                            disabled={checkoutLoading !== null}
+                          >
+                            {checkoutLoading === secondary
+                              ? "Redirecting…"
+                              : secondary === "year"
+                                ? `Get ${PLANS.year.name}`
+                                : "Get pass"}
+                          </Button>
+                        </div>
 
-                  <button
-                    type="button"
-                    className="mt-4 w-full text-center text-sm text-neutral-500 hover:text-neutral-800"
-                    onClick={() => setUpgradeOpen(false)}
-                  >
-                    Maybe later
-                  </button>
-                  {upgradeOpen === "exports" && quota?.resetsAt && (
-                    <p className="mt-2 text-center text-xs text-neutral-400">
-                      Free exports reset on{" "}
-                      {new Date(quota.resetsAt).toLocaleDateString()}
-                    </p>
-                  )}
+                        <button
+                          type="button"
+                          className="mt-4 w-full text-center text-sm text-neutral-500 transition-colors hover:text-neutral-800"
+                          onClick={() => setUpgradeOpen(false)}
+                        >
+                          {capHit && resetDate
+                            ? `Wait for ${resetDate}`
+                            : "Maybe later"}
+                        </button>
+                      </>
+                    );
+                  })()}
                 </div>
               </>
             )}

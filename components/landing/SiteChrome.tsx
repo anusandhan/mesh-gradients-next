@@ -64,6 +64,9 @@ export const SiteFooter = () => (
         <Link href="/grainy-gradient" className="transition-colors hover:text-neutral-900">Grainy</Link>
         <Link href="/blurry-gradient" className="transition-colors hover:text-neutral-900">Blurry</Link>
         <Link href="/aurora-gradient" className="transition-colors hover:text-neutral-900">Aurora</Link>
+        <Link href="/pixel-gradient" className="transition-colors hover:text-neutral-900">Pixel</Link>
+        <Link href="/dither-gradient" className="transition-colors hover:text-neutral-900">Dither</Link>
+        <Link href="/gradient-background" className="transition-colors hover:text-neutral-900">Backgrounds</Link>
         <Link href="/#faq" className="transition-colors hover:text-neutral-900">FAQ</Link>
         <Link href="/about" className="transition-colors hover:text-neutral-900">About</Link>
         <Link href="/contact" className="transition-colors hover:text-neutral-900">Contact</Link>

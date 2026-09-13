@@ -10,6 +10,7 @@ import { SiteFooter, SiteHeader } from "@/components/landing/SiteChrome";
 import { FREE_PRESET_LIMIT, PLANS, formatPrice } from "@/lib/plans";
 import { MAX_PRESETS_PER_USER } from "@/lib/presets";
 import { buildStudioUrl } from "@/lib/gallery";
+import { INSPIRED_PALETTES } from "@/lib/inspired";
 import { TESTIMONIALS } from "@/lib/testimonials";
 import { FREE_EXPORTS_PER_MONTH, SITE_NAME, SITE_URL } from "@/lib/site";
 
@@ -19,7 +20,7 @@ import { FREE_EXPORTS_PER_MONTH, SITE_NAME, SITE_URL } from "@/lib/site";
 
 const TITLE = "Mesh Gradient Generator with Real Grain — Free 4K Export";
 const DESCRIPTION =
-  "Make mesh gradients in three styles with real grain, blur and color controls. Export 4K wallpapers and backgrounds with no watermark. Free to start, nothing to subscribe to.";
+  "Make gradient backgrounds for product sites, launch posts and decks. Three styles, real grain, pixel and dither finishes, 4K export with no watermark. Free to start, nothing to subscribe to.";
 
 export const metadata: Metadata = {
   title: { absolute: `${TITLE} | ${SITE_NAME}` },
@@ -28,41 +29,47 @@ export const metadata: Metadata = {
   openGraph: {
     title: `${SITE_NAME}: mesh gradient generator with real grain`,
     description:
-      "Gradients that look designed, not generated. Export 4K, free to start, no subscription.",
+      "Gradient backgrounds that look designed, not generated. Grain, pixel and dither finishes, 4K export, free to start, no subscription.",
     url: "/",
   },
 };
 
 const useCases = [
   {
-    title: "Website hero and social card",
+    title: "Website hero",
     sizes: "3840×2160 and 3840×2010",
-    copy: "The Linear look, exported clean. Grain is baked in, so nothing bands behind your headline.",
-    href: buildStudioUrl({ aspectRatio: "1.91:1", style: "blobs" }),
+    copy: "The Linear look: a grainy dark gradient behind the headline, exported clean so nothing bands at full width.",
+    href: buildStudioUrl({ aspectRatio: "16:9", style: "blobs", grain: 0.3 }),
   },
   {
-    title: "Desktop and phone wallpaper",
-    sizes: "3840×2160, 3840×2400 Mac, 1215×2160 phone",
-    copy: "One palette, every screen. Re-export the same scene for the Mac and the phone.",
-    href: buildStudioUrl({ aspectRatio: "16:10", style: "clouds" }),
+    title: "Launch post and OG image",
+    sizes: "3840×2010 card, 1728×2160 portrait",
+    copy: "Sized for LinkedIn, X and link previews. Dither reads as intentional at feed size instead of compressed.",
+    href: buildStudioUrl({ aspectRatio: "1.91:1", style: "blobs", effect: "dither" }),
+  },
+  {
+    title: "Pitch deck and slides",
+    sizes: "3840×2160",
+    copy: "Covers and section breaks that do not look like a template. Stripes read as fabric on a dark deck.",
+    href: buildStudioUrl({ aspectRatio: "16:9", style: "stripes" }),
+  },
+  {
+    title: "Product video and screenshots",
+    sizes: "3840×2160, 1215×2160 portrait",
+    copy: "Dark, premium backdrops that make a UI pop without fighting it. Pixel finish for a retro launch video.",
+    href: buildStudioUrl({ aspectRatio: "16:9", style: "clouds", effect: "pixel" }),
   },
   {
     title: "App Store and device shots",
     sizes: "1215×2160 portrait",
-    copy: "Dark, premium backdrops that make a UI pop without fighting it.",
+    copy: "One palette across every screenshot, so the listing reads as a set.",
     href: buildStudioUrl({ aspectRatio: "9:16", style: "blobs" }),
   },
   {
-    title: "Slides and video calls",
-    sizes: "3840×2160",
-    copy: "Decks and Zoom backgrounds that do not look like a template.",
-    href: buildStudioUrl({ aspectRatio: "16:9", style: "stripes" }),
-  },
-  {
-    title: "Notion covers and podcast art",
-    sizes: "3840×1536 cover, 2160×2160 square",
-    copy: "Aesthetic covers in one click, dark-mode safe.",
-    href: buildStudioUrl({ aspectRatio: "5:2", style: "clouds" }),
+    title: "Wallpapers and Notion covers",
+    sizes: "3840×2400 Mac, 3840×1536 cover",
+    copy: "The same scene re-exported for the Mac, the phone and the workspace. Or grab a free one.",
+    href: buildStudioUrl({ aspectRatio: "16:10", style: "clouds" }),
   },
 ];
 
@@ -90,6 +97,18 @@ const faqs = [
   {
     q: "Why does grain matter?",
     a: "Smooth blurs at 4K show visible color bands, especially in dark palettes. Grain breaks the bands into texture the eye reads as depth. It is rendered into the image, not pasted on top, so it survives compression and print.",
+  },
+  {
+    q: "What are the pixel and dither finishes?",
+    a: "Pixel breaks the gradient into a grid of cells, the look of early game art and modern retro launch videos. Dither reduces the gradient to a pattern of dots that reads as texture, the finish on many current product sites. Both are rendered at export size with a cell size and density dial.",
+  },
+  {
+    q: "Does it work with Figma?",
+    a: "Yes. Export the JPG and place it in Figma as an image fill or a frame background. Exports are 4K, so they stay sharp on retina screens and in 2x exports from Figma. Copy the studio link into the layer description and you can reopen the exact gradient later.",
+  },
+  {
+    q: "Can I use it for a website background?",
+    a: "That is the main use. Export at 16:9 or the 1.91:1 social card size, place it as a background image, and let the grain hide the banding that a CSS gradient shows on large monitors. Keep the hero copy on top; the palettes are tuned to leave a calm area for it.",
   },
   {
     q: "Do you export CSS or SVG?",
@@ -182,9 +201,9 @@ export default function LandingPage() {
                 Mesh gradient generator with real grain
               </h1>
               <p className="mt-4 text-lg text-neutral-600 [text-wrap:pretty]">
-                Gradients that look designed, not generated. Pick blobs, stripes
-                or clouds, tune the color, blur and texture, then export a 4K
-                wallpaper or background. Free to start, nothing to subscribe to.
+                Backgrounds for product sites, launch posts and decks. Pick
+                blobs, stripes or clouds, add grain, pixel or dither, then
+                export at 4K. Free to start, nothing to subscribe to.
               </p>
               <div className="mt-8 flex flex-wrap items-center gap-3">
                 <Button asChild size="lg">
@@ -221,7 +240,7 @@ export default function LandingPage() {
             />
             <div className="max-w-xl text-center sm:text-left">
               <p className="text-xs font-medium uppercase tracking-wide text-neutral-500">
-                Seen on the Nasdaq tower
+                Used by the design team at reAlpha
               </p>
               <h2 className="mt-2 text-2xl font-semibold tracking-tight [text-wrap:balance] sm:text-3xl">
                 Built for work that ends up in Times Square
@@ -230,7 +249,8 @@ export default function LandingPage() {
                 The green gradient behind Nasdaq&apos;s congratulations to
                 reAlpha on its acquisition of Prevu was made in Gradients
                 Studio by reAlpha&apos;s design team. Rendered grain is what
-                keeps a gradient clean at the size of a building.
+                keeps a gradient clean at the size of a building, and at the
+                size of a hero, a deck or a launch post.
               </p>
               <div className="mt-6 flex flex-wrap items-center justify-center gap-3 sm:justify-start">
                 <Button asChild>
@@ -270,6 +290,42 @@ export default function LandingPage() {
               lead="Four palettes per style. Open one, then make it yours."
             />
             <GalleryTabs />
+
+            {/* Palettes behind sites this audience already admires. Names
+                only, no logos; the studio deep link opens with the colors
+                and the matching preset selected. */}
+            <div className="mt-12 border-t border-neutral-200 pt-8">
+              <p className="text-sm text-neutral-600">
+                Or start from the palettes behind sites you already admire.
+              </p>
+              <ul className="mt-4 flex flex-wrap gap-2">
+                {INSPIRED_PALETTES.map((p) => (
+                  <li key={p.name}>
+                    <TrackedLink
+                      href={buildStudioUrl({
+                        style: "blobs",
+                        background: p.background,
+                        colors: [...p.colors],
+                        name: p.name,
+                      })}
+                      location="inspired"
+                      event="landing_gallery_clicked"
+                      properties={{ preset: p.name.toLowerCase(), style: "inspired" }}
+                      className="flex h-9 items-center gap-2 rounded-full bg-white pl-1.5 pr-3.5 text-sm text-neutral-800 shadow-[0_0_0_1px_rgba(0,0,0,0.08),0_1px_2px_rgba(0,0,0,0.04)] transition-[box-shadow,transform] duration-150 ease-[cubic-bezier(0.25,0.46,0.45,0.94)] hover:shadow-[0_0_0_1px_rgba(0,0,0,0.14),0_2px_6px_rgba(0,0,0,0.08)] active:scale-[0.96]"
+                    >
+                      <span
+                        aria-hidden="true"
+                        className="h-6 w-6 rounded-full shadow-[inset_0_0_0_1px_rgba(0,0,0,0.08)]"
+                        style={{
+                          background: `linear-gradient(135deg, ${p.colors[0]}, ${p.colors[1]} 50%, ${p.colors[2]})`,
+                        }}
+                      />
+                      {p.name}
+                    </TrackedLink>
+                  </li>
+                ))}
+              </ul>
+            </div>
           </div>
         </section>
 
@@ -277,7 +333,7 @@ export default function LandingPage() {
         <section className="mx-auto w-full max-w-6xl px-6 py-16">
           <SectionHeading
             title="Three styles, one set of controls"
-            lead="Color, blur, contrast and saturation work the same way everywhere. Each style adds its own dials."
+            lead="Color, blur, contrast and saturation work the same way everywhere. Each style adds its own dials, and every style takes the grain, pixel and dither finishes."
           />
           <div className="mt-8 grid gap-6 sm:grid-cols-3">
             {[
@@ -327,8 +383,8 @@ export default function LandingPage() {
         <section className="border-t border-neutral-200 bg-neutral-50">
           <div className="mx-auto w-full max-w-6xl px-6 py-16">
             <SectionHeading
-              title="Made for how you will use it"
-              lead="Pick the size first and the studio frames the gradient for it. Every export is full resolution."
+              title="Made for the work designers actually ship"
+              lead="Pick the size first and the studio frames the gradient for it. Every export is full resolution, on every plan."
             />
             <ul className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {useCases.map((item) => (

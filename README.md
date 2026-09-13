@@ -115,7 +115,7 @@ that calls back into the app.
   renderer, no sign-in, immutable and CDN-cached. Bump `WALLPAPER_VERSION`
   in `lib/wallpapers.ts` after any renderer or palette change so the CDN
   re-renders. Curated slugs only, so it can't bypass the export quota.
-- `/grainy-gradient`, `/blurry-gradient`, `/aurora-gradient` — SEO landing
+- `/grainy-gradient`, `/blurry-gradient`, `/aurora-gradient`, `/pixel-gradient`, `/dither-gradient`, `/gradient-background` — SEO landing
   pages built from `components/landing/StyleLanding.tsx`; each opens the
   studio pre-set to that look.
 - `/about`, `/contact` — static marketing pages sharing

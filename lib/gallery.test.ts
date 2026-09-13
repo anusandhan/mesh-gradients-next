@@ -75,6 +75,13 @@ describe("studio deep links", () => {
     expect(parsed.aspectRatio).toBe("1.91:1");
   });
 
+  test("carries a pixel or dither effect and drops none", () => {
+    expect(buildStudioUrl({ effect: "none" })).toBe("/app");
+    const url = buildStudioUrl({ effect: "dither" });
+    expect(parseStudioParams(url.slice("/app".length)).effect).toBe("dither");
+    expect(parseStudioParams("?effect=glitch").effect).toBeUndefined();
+  });
+
   test("drops invalid values instead of throwing", () => {
     const parsed = parseStudioParams(
       "?style=neon&bg=zzz&colors=FF0000,nothex&seed=-1&grain=9&blur=5000&aspect=2:1&plan=lifetime"

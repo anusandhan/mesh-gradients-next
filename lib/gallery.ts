@@ -1,4 +1,4 @@
-import type { GradientStyle } from "./gradient-renderer";
+import type { GradientEffect, GradientStyle } from "./gradient-renderer";
 
 // The collection: twelve named palettes, four per style, shown on the
 // landing page, offered in the studio's preset menu and (later) served at
@@ -216,6 +216,7 @@ export type StudioState = {
   aspectRatio?: StudioAspectRatio;
   name?: string;
   plan?: "year" | "week";
+  effect?: GradientEffect;
 };
 
 const stripHash = (hex: string) => hex.replace(/^#/, "").toUpperCase();
@@ -231,6 +232,7 @@ export const buildStudioUrl = (state: StudioState): string => {
   if (state.aspectRatio) params.set("aspect", state.aspectRatio);
   if (state.name) params.set("name", state.name);
   if (state.plan) params.set("plan", state.plan);
+  if (state.effect && state.effect !== "none") params.set("effect", state.effect);
   const query = params.toString();
   return query ? `/app?${query}` : "/app";
 };
@@ -288,6 +290,9 @@ export const parseStudioParams = (search: string): StudioState => {
 
   const plan = params.get("plan");
   if (plan === "year" || plan === "week") state.plan = plan;
+
+  const effect = params.get("effect");
+  if (effect === "pixel" || effect === "dither") state.effect = effect;
 
   return state;
 };

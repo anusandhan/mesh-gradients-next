@@ -10,6 +10,7 @@ import { track } from "@/lib/analytics";
 import { GALLERY, buildStudioUrl, type GalleryPreset } from "@/lib/gallery";
 import {
   renderGradient,
+  type GradientEffect,
   type GradientStyle,
 } from "@/lib/gradient-renderer";
 import TrackedLink from "./TrackedLink";
@@ -32,6 +33,12 @@ const STYLES: { value: GradientStyle; label: string }[] = [
   { value: "clouds", label: "Clouds" },
 ];
 
+const EFFECTS: { value: GradientEffect; label: string }[] = [
+  { value: "none", label: "Smooth" },
+  { value: "pixel", label: "Pixel" },
+  { value: "dither", label: "Dither" },
+];
+
 // Four palettes that read well in every style
 const PALETTES: GalleryPreset[] = ["ember", "aurora", "peach-fuzz", "blue-sky"]
   .map((slug) => GALLERY.find((p) => p.slug === slug))
@@ -49,6 +56,7 @@ export default function HeroCanvas() {
   const [palette, setPalette] = useState<GalleryPreset>(PALETTES[0]);
   const [seed, setSeed] = useState(PALETTES[0].seed);
   const [grainOn, setGrainOn] = useState(true);
+  const [effect, setEffect] = useState<GradientEffect>("none");
   const [ready, setReady] = useState(false);
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -63,8 +71,9 @@ export default function HeroCanvas() {
         seed,
         grain: grainOn ? GRAIN : 0,
         name: palette.name,
+        effect,
       }),
-    [style, palette, seed, grainOn]
+    [style, palette, seed, grainOn, effect]
   );
 
   const render = useCallback(() => {
@@ -92,9 +101,10 @@ export default function HeroCanvas() {
       blurScale: width / EXPORT_WIDTH,
       createCanvas: domCreateCanvas,
       style,
+      effect,
     });
     setReady(true);
-  }, [palette, grainOn, seed, style]);
+  }, [palette, grainOn, seed, style, effect]);
 
   // Coalesce renders onto the next frame; clouds can take a few hundred ms
   useEffect(() => {
@@ -204,6 +214,27 @@ export default function HeroCanvas() {
           </div>
 
           <div className="flex flex-wrap items-center gap-2">
+            <ToggleGroup
+              type="single"
+              value={effect}
+              onValueChange={(value) => {
+                if (!value) return;
+                setEffect(value as GradientEffect);
+                interact("effect", value);
+              }}
+              aria-label="Finish"
+              className="mr-2"
+            >
+              {EFFECTS.map((option) => (
+                <ToggleGroupItem
+                  key={option.value}
+                  value={option.value}
+                  aria-label={option.label}
+                >
+                  {option.label}
+                </ToggleGroupItem>
+              ))}
+            </ToggleGroup>
             <Button
               variant="outline"
               size="sm"
@@ -240,7 +271,7 @@ export default function HeroCanvas() {
               <TrackedLink
                 href={studioUrl}
                 location="hero_canvas"
-                properties={{ style, palette: palette.slug, grain: grainOn }}
+                properties={{ style, palette: palette.slug, grain: grainOn, effect }}
               >
                 Open in the studio
               </TrackedLink>
