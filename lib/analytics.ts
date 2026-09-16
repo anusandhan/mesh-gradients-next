@@ -16,7 +16,8 @@ export type AnalyticsEvent =
   | "upgrade_dialog_dismissed"
   | "checkout_started"
   | "preset_saved"
-  | "preset_blocked_free_cap";
+  | "preset_blocked_free_cap"
+  | "overlay_svg_uploaded";
 
 export const track = (
   event: AnalyticsEvent,

@@ -82,6 +82,15 @@ describe("studio deep links", () => {
     expect(parseStudioParams("?effect=glitch").effect).toBeUndefined();
   });
 
+  test("carries a built-in overlay shape, drops none and custom", () => {
+    expect(buildStudioUrl({ overlay: "none" })).toBe("/app");
+    expect(buildStudioUrl({ overlay: "custom" })).toBe("/app");
+    const url = buildStudioUrl({ overlay: "hexagon" });
+    expect(parseStudioParams(url.slice("/app".length)).overlay).toBe("hexagon");
+    expect(parseStudioParams("?overlay=custom").overlay).toBeUndefined();
+    expect(parseStudioParams("?overlay=blob").overlay).toBeUndefined();
+  });
+
   test("drops invalid values instead of throwing", () => {
     const parsed = parseStudioParams(
       "?style=neon&bg=zzz&colors=FF0000,nothex&seed=-1&grain=9&blur=5000&aspect=2:1&plan=lifetime"

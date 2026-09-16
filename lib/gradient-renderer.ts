@@ -132,6 +132,8 @@ const applyBlur = (
 const GRAIN_TILE_SIZE = 1024;
 let fastPathSupported: boolean | null = null;
 let grainTile: HTMLCanvasElement | null = null;
+// Grain averaged down to a render scale, keyed by that scale (see getGrainTile)
+const scaledGrainTiles = new Map<number, HTMLCanvasElement>();
 
 const detectFastPath = () => {
   if (fastPathSupported !== null) return fastPathSupported;
@@ -155,7 +157,29 @@ const detectFastPath = () => {
   return fastPathSupported;
 };
 
-const getGrainTile = () => {
+// Grain is defined per export pixel. A preview pixel covers 1/scale² of
+// them, so its grain is the average of that many speckles: same mean, spread
+// shrunk by scale. Downscaling the base tile with smoothing does that
+// averaging, so the preview grain reads like the export seen at preview size.
+const getGrainTile = (scale = 1): HTMLCanvasElement => {
+  const base = getBaseGrainTile();
+  if (scale >= 1) return base;
+  const key = Math.round(scale * 1000);
+  const cached = scaledGrainTiles.get(key);
+  if (cached) return cached;
+  const size = Math.max(1, Math.round(GRAIN_TILE_SIZE * scale));
+  const tile = document.createElement("canvas");
+  tile.width = size;
+  tile.height = size;
+  const t = tile.getContext("2d")!;
+  t.imageSmoothingEnabled = true;
+  t.imageSmoothingQuality = "high";
+  t.drawImage(base, 0, 0, size, size);
+  scaledGrainTiles.set(key, tile);
+  return tile;
+};
+
+const getBaseGrainTile = () => {
   if (grainTile) return grainTile;
   const tile = document.createElement("canvas");
   tile.width = GRAIN_TILE_SIZE;
@@ -181,7 +205,8 @@ const applyAdjustmentsFast = (
   height: number,
   contrastK: number,
   saturationK: number,
-  grain: number
+  grain: number,
+  scale: number
 ) => {
   ctx.save();
   if (contrastK !== 1 || saturationK !== 1) {
@@ -193,7 +218,7 @@ const applyAdjustmentsFast = (
   if (grain > 0) {
     ctx.globalCompositeOperation = "lighter";
     ctx.globalAlpha = grain;
-    ctx.fillStyle = ctx.createPattern(getGrainTile(), "repeat")!;
+    ctx.fillStyle = ctx.createPattern(getGrainTile(scale), "repeat")!;
     ctx.fillRect(0, 0, width, height);
   }
   ctx.restore();
@@ -207,16 +232,22 @@ const applyAdjustments = (
   height: number,
   contrast: number,
   saturation: number,
-  grain: number
+  grain: number,
+  scale: number // rendered px per export px; grain averages down with it
 ) => {
   const contrastK = contrast / 100;
   const saturationK = saturation / 100;
   if (contrastK === 1 && saturationK === 1 && grain <= 0) return;
 
   if (detectFastPath()) {
-    applyAdjustmentsFast(ctx, width, height, contrastK, saturationK, grain);
+    applyAdjustmentsFast(ctx, width, height, contrastK, saturationK, grain, scale);
     return;
   }
+
+  // Per-export-pixel speckle is uniform on [0, 255·grain]; at a smaller
+  // scale each pixel averages many, so keep the mean and shrink the spread
+  const speckleMean = 127.5 * grain;
+  const speckleSpread = 255 * grain * Math.min(1, scale);
 
   const imageData = ctx.getImageData(0, 0, width, height);
   const data = imageData.data;
@@ -230,7 +261,7 @@ const applyAdjustments = (
     g = luma + (g - luma) * saturationK;
     b = luma + (b - luma) * saturationK;
 
-    const speckle = grain > 0 ? Math.random() * 255 * grain : 0;
+    const speckle = grain > 0 ? speckleMean + (Math.random() - 0.5) * speckleSpread : 0;
     data[i] = r + speckle;
     data[i + 1] = g + speckle;
     data[i + 2] = b + speckle;
@@ -243,6 +274,33 @@ export type GradientStyle = "blobs" | "stripes" | "clouds";
 export type GradientEffect = "none" | "pixel" | "dither";
 export const EFFECT_SIZE_DEFAULT = 16; // cell size in export pixels
 export const EFFECT_STRENGTH_DEFAULT = 1.4;
+export const DITHER_CHARS_MAX = 16;
+// Monospace face shared by the browser preview and the server export so
+// character dither matches; registered from /public/fonts/AzeretMono.ttf
+export const DITHER_FONT = "GS Mono";
+
+// Overlays sit above the finish: concentric copies of one shape radiating
+// from a seed-placed point just outside the frame
+export type GradientOverlay = "none" | "shapes";
+export const OVERLAY_SHAPES = [
+  "circle",
+  "square",
+  "rounded",
+  "squircle",
+  "diamond",
+  "triangle",
+  "hexagon",
+  "star",
+  "flower",
+  "seal",
+  "heart",
+  "custom",
+] as const;
+export type OverlayShape = (typeof OVERLAY_SHAPES)[number];
+export const OVERLAY_OPACITY_DEFAULT = 0.4;
+export const OVERLAY_SIZE_DEFAULT = 800; // export px, base shape's longer side
+export const OVERLAY_SPACING_DEFAULT = 60; // export px between rings
+export const OVERLAY_STROKE_DEFAULT = 3; // export px
 
 export type RenderOptions = {
   backgroundColor: string;
@@ -270,6 +328,20 @@ export type RenderOptions = {
   effect?: GradientEffect;
   effectSize?: number;
   effectStrength?: number;
+  // 0..1 blend of the finish over the smooth gradient; 1 replaces it
+  effectOpacity?: number;
+  // Dither glyphs: empty keeps the bar/cross/ring/dot symbols
+  ditherChars?: string;
+  overlay?: GradientOverlay;
+  overlayShape?: OverlayShape;
+  overlayOpacity?: number;
+  overlaySize?: number; // base shape size in export px; rings offset outward
+  overlaySpacing?: number;
+  overlayStroke?: number;
+  overlayCenter?: [number, number]; // fractions of width/height; seeded if absent
+  // Required when overlayShape is "custom": the uploaded SVG as one path in
+  // its own viewBox units (see lib/svg-outline.ts), stroked like a built-in
+  overlayPath?: { path: Path2D; box: [number, number, number, number] };
 };
 
 const hexToRgbTuple = (hex: string): [number, number, number] => {
@@ -736,12 +808,18 @@ const applyDither = (
   height: number,
   cell: number,
   strength: number,
-  palette: [number, number, number][]
+  palette: [number, number, number][],
+  chars: string[]
 ) => {
   const src = ctx.getImageData(0, 0, width, height).data;
   const cols = Math.ceil(width / cell);
   const rows = Math.ceil(height / cell);
   const css = palette.map((p) => `rgb(${p[0]},${p[1]},${p[2]})`);
+  if (chars.length) {
+    ctx.font = `${(cell * 0.9).toFixed(2)}px "${DITHER_FONT}", monospace`;
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+  }
   // Fill with the background color, then only paint cells that differ
   ctx.fillStyle = css[0];
   ctx.fillRect(0, 0, width, height);
@@ -793,6 +871,10 @@ const applyDither = (
       ctx.fillStyle = css[second];
       const midX = x0 + cell / 2;
       const midY = y0 + cell / 2;
+      if (chars.length) {
+        ctx.fillText(chars[cellHash(cx, cy) % chars.length], midX, midY);
+        continue;
+      }
       switch (cellHash(cx, cy) & 3) {
         case 0: // bar
           ctx.fillRect(midX - bar / 2, midY - arm / 2, bar, arm);
@@ -821,12 +903,14 @@ const applyEffect = (
   opts: RenderOptions
 ) => {
   const effect = opts.effect ?? "none";
-  if (effect === "none") return;
-  const cell = Math.max(
-    2,
-    Math.round((opts.effectSize ?? EFFECT_SIZE_DEFAULT) * opts.blurScale)
-  );
+  const opacity = Math.max(0, Math.min(1, opts.effectOpacity ?? 1));
+  if (effect === "none" || opacity === 0) return;
+  // The grid lives in export pixels; the preview gets fractional cells so
+  // both land on the same cell boundaries and the download matches
+  const cell = Math.max(1, (opts.effectSize ?? EFFECT_SIZE_DEFAULT) * opts.blurScale);
   const strength = opts.effectStrength ?? EFFECT_STRENGTH_DEFAULT;
+  // Keep the smooth gradient to fade back in under a partial finish
+  const smooth = opacity < 1 ? ctx.getImageData(0, 0, width, height) : null;
   if (effect === "pixel") {
     applyPixel(ctx, width, height, cell, strength, opts.backgroundColor);
   } else {
@@ -836,9 +920,198 @@ const applyEffect = (
       height,
       cell,
       strength,
-      [opts.backgroundColor, ...opts.colors].map(hexToRgbTuple)
+      [opts.backgroundColor, ...opts.colors].map(hexToRgbTuple),
+      Array.from(opts.ditherChars ?? "").slice(0, DITHER_CHARS_MAX)
     );
   }
+  if (!smooth) return;
+  const scratch = opts.createCanvas(width, height);
+  scratch.getContext("2d")!.putImageData(smooth, 0, 0);
+  ctx.save();
+  ctx.globalAlpha = 1 - opacity;
+  ctx.drawImage(scratch, 0, 0);
+  ctx.restore();
+};
+
+// One shape outline of "radius" r (half the size) centered on (cx, cy)
+const traceShape = (
+  ctx: CanvasRenderingContext2D,
+  shape: OverlayShape,
+  cx: number,
+  cy: number,
+  r: number
+) => {
+  ctx.beginPath();
+  switch (shape) {
+    case "square":
+      ctx.rect(cx - r, cy - r, r * 2, r * 2);
+      return;
+    case "rounded": {
+      const k = r * 0.35;
+      ctx.moveTo(cx - r + k, cy - r);
+      ctx.arcTo(cx + r, cy - r, cx + r, cy + r, k);
+      ctx.arcTo(cx + r, cy + r, cx - r, cy + r, k);
+      ctx.arcTo(cx - r, cy + r, cx - r, cy - r, k);
+      ctx.arcTo(cx - r, cy - r, cx + r, cy - r, k);
+      ctx.closePath();
+      return;
+    }
+    case "triangle":
+    case "diamond":
+    case "hexagon":
+    case "star": {
+      const points =
+        shape === "triangle" ? 3 : shape === "diamond" ? 4 : shape === "hexagon" ? 6 : 10;
+      for (let i = 0; i < points; i++) {
+        const angle = -Math.PI / 2 + (i / points) * Math.PI * 2;
+        const rad = shape === "star" && i % 2 ? r * 0.5 : r;
+        const x = cx + Math.cos(angle) * rad;
+        const y = cy + Math.sin(angle) * rad;
+        if (i === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      }
+      ctx.closePath();
+      return;
+    }
+    case "squircle":
+    case "flower":
+    case "seal":
+    case "heart": {
+      // Smooth curves as 120-gons; polar radius or parametric point per angle
+      const STEPS = 120;
+      for (let i = 0; i < STEPS; i++) {
+        const t = (i / STEPS) * Math.PI * 2;
+        let x: number;
+        let y: number;
+        if (shape === "heart") {
+          // Classic parametric heart, normalized to fit radius r
+          x = cx + (r / 17) * 16 * Math.sin(t) ** 3;
+          y =
+            cy -
+            (r / 17) *
+              (13 * Math.cos(t) - 5 * Math.cos(2 * t) - 2 * Math.cos(3 * t) - Math.cos(4 * t)) -
+            r * 0.1;
+        } else {
+          let rad: number;
+          if (shape === "squircle") {
+            // Superellipse |x|^4 + |y|^4 = r^4
+            const c = Math.abs(Math.cos(t));
+            const s = Math.abs(Math.sin(t));
+            rad = r / Math.pow(c ** 4 + s ** 4, 0.25);
+          } else if (shape === "flower") {
+            rad = r * (0.78 + 0.22 * Math.cos(6 * t)); // six soft petals
+          } else {
+            rad = r * (0.93 + 0.07 * Math.cos(14 * t)); // scalloped badge edge
+          }
+          x = cx + Math.cos(t) * rad;
+          y = cy + Math.sin(t) * rad;
+        }
+        if (i === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      }
+      ctx.closePath();
+      return;
+    }
+    default:
+      ctx.arc(cx, cy, r, 0, Math.PI * 2);
+  }
+};
+
+// Seeded center inside the frame, independent of the style's own random
+// draws so it holds still while colors change. The placement UI shows this
+// spot until the user drags it somewhere.
+export const overlayCenterFor = (seed: number): [number, number] => {
+  const random = mulberry32(seed ^ 0x9e3779b9);
+  return [0.3 + random() * 0.4, 0.3 + random() * 0.4];
+};
+
+const applyOverlay = (
+  ctx: CanvasRenderingContext2D,
+  width: number,
+  height: number,
+  opts: RenderOptions
+) => {
+  if ((opts.overlay ?? "none") === "none") return;
+  const opacity = Math.max(0, Math.min(1, opts.overlayOpacity ?? OVERLAY_OPACITY_DEFAULT));
+  if (opacity === 0) return;
+  const shape = opts.overlayShape ?? "circle";
+  const custom = shape === "custom" ? opts.overlayPath : undefined;
+  if (shape === "custom" && !custom) return;
+  const size = Math.max(4, (opts.overlaySize ?? OVERLAY_SIZE_DEFAULT) * opts.blurScale);
+  const spacing = Math.max(2, (opts.overlaySpacing ?? OVERLAY_SPACING_DEFAULT) * opts.blurScale);
+  const stroke = Math.max(0.75, (opts.overlayStroke ?? OVERLAY_STROKE_DEFAULT) * opts.blurScale);
+
+  const [fx, fy] = opts.overlayCenter ?? overlayCenterFor(opts.seed);
+  const cx = width * fx;
+  const cy = height * fy;
+  const maxR = Math.hypot(Math.max(cx, width - cx), Math.max(cy, height - cy));
+
+  // Paint the base shape grown outward by `offset`, Illustrator Offset Path
+  // style: fill the shape, then stroke it with a round-joined line twice the
+  // offset wide. Works for any path, including uploaded ones.
+  const paint = (target: CanvasRenderingContext2D, offset: number) => {
+    target.save();
+    if (custom) {
+      const [bx, by, bw, bh] = custom.box;
+      const sc = size / Math.max(bw, bh);
+      target.translate(cx - (bx + bw / 2) * sc, cy - (by + bh / 2) * sc);
+      target.scale(sc, sc);
+      target.fill(custom.path);
+      if (offset > 0) {
+        target.lineWidth = (offset * 2) / sc;
+        target.stroke(custom.path);
+      }
+    } else {
+      traceShape(target, shape, cx, cy, size / 2);
+      target.fill();
+      if (offset > 0) {
+        target.lineWidth = offset * 2;
+        target.stroke();
+      }
+    }
+    target.restore();
+  };
+
+  // Rings are built on a scratch layer from the outside in: paint the ring's
+  // outer edge, knock out its inner edge, then the next ring in lands in the
+  // hole. One composite at the end carries the opacity.
+  // ponytail: ~2 full-frame fills per ring (~70 rings at 4K); cache the
+  // scratch between frames if the preview ever lags on the Size dial.
+  const layer = opts.createCanvas(width, height);
+  const l = layer.getContext("2d")!;
+  l.clearRect(0, 0, width, height);
+  l.fillStyle = "#ffffff";
+  l.strokeStyle = "#ffffff";
+  l.lineJoin = "round";
+  l.lineCap = "round";
+  const rings = Math.ceil((maxR + size) / spacing);
+  for (let k = rings; k >= 0; k--) {
+    const offset = k * spacing;
+    l.globalCompositeOperation = "source-over";
+    paint(l, offset + stroke);
+    l.globalCompositeOperation = "destination-out";
+    paint(l, offset);
+  }
+
+  ctx.save();
+  ctx.globalAlpha = opacity;
+  ctx.drawImage(layer, 0, 0);
+  ctx.restore();
+};
+
+// Shared tail of every style: color adjustments, then the finish on the
+// clean gradient (so Pixel/Dither snap cells deterministically and the
+// preview matches the export), then grain over everything, then overlays.
+const finish = (
+  ctx: CanvasRenderingContext2D,
+  width: number,
+  height: number,
+  opts: RenderOptions
+) => {
+  applyAdjustments(ctx, width, height, opts.contrast, opts.saturation, 0, 1);
+  applyEffect(ctx, width, height, opts);
+  applyAdjustments(ctx, width, height, 100, 100, opts.grain, opts.blurScale);
+  applyOverlay(ctx, width, height, opts);
 };
 
 export const renderGradient = (
@@ -856,15 +1129,7 @@ export const renderGradient = (
     } else {
       renderClouds(ctx, width, height, opts, random);
     }
-    applyAdjustments(
-      ctx,
-      width,
-      height,
-      opts.contrast,
-      opts.saturation,
-      opts.grain
-    );
-    applyEffect(ctx, width, height, opts);
+    finish(ctx, width, height, opts);
     return;
   }
 
@@ -928,13 +1193,5 @@ export const renderGradient = (
 
   // 1.12 folds the original chained blur(B) + blur(B/2) into one pass.
   applyBlur(ctx, width, height, blur * 1.12, opts.createCanvas);
-  applyAdjustments(
-    ctx,
-    width,
-    height,
-    opts.contrast,
-    opts.saturation,
-    opts.grain
-  );
-  applyEffect(ctx, width, height, opts);
+  finish(ctx, width, height, opts);
 };

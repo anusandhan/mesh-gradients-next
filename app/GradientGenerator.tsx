@@ -27,6 +27,13 @@ import { INSPIRED_PALETTES } from "@/lib/inspired";
 import { FREE_EXPORTS_PER_MONTH } from "@/lib/site";
 import { QuotaMeter } from "@/components/QuotaMeter";
 import { DialList } from "@/components/DialList";
+import {
+  ShapePicker,
+  loadOverlaySvg,
+  ensureDitherFont,
+  type OverlaySvg,
+} from "@/components/ShapePicker";
+import { PlacementGrid } from "@/components/PlacementGrid";
 import { Collapse } from "@/components/ui/collapse";
 import Spinner from "@/components/ui/spinner";
 import {
@@ -76,6 +83,8 @@ import {
   GridFourIcon,
   HashIcon,
   ArrowsOutSimpleIcon,
+  ShapesIcon,
+  LineSegmentIcon,
 } from "@phosphor-icons/react";
 import { RulerSlider } from "@/components/mobile/RulerSlider";
 import {
@@ -108,8 +117,17 @@ import {
   normalizeHexColor,
   EFFECT_SIZE_DEFAULT,
   EFFECT_STRENGTH_DEFAULT,
+  OVERLAY_OPACITY_DEFAULT,
+  OVERLAY_SIZE_DEFAULT,
+  OVERLAY_SPACING_DEFAULT,
+  OVERLAY_STROKE_DEFAULT,
+  overlayCenterFor,
+  DITHER_CHARS_MAX,
+  DITHER_FONT,
   type GradientEffect,
+  type GradientOverlay,
   type GradientStyle,
+  type OverlayShape,
 } from "@/lib/gradient-renderer";
 import { SignInButton, UserButton, useAuth, useClerk } from "@clerk/nextjs";
 import { motion } from "framer-motion";
@@ -273,6 +291,29 @@ const EFFECTS: { value: GradientEffect; label: string; icon: Icon }[] = [
   { value: "dither", label: "Dither", icon: HashIcon },
 ];
 
+// The lower sidebar sections expand dials beneath their toggle, which can
+// land below the fold unnoticed. Once the collapse has made room, bring
+// the whole section into view.
+const useRevealOnEnable = (
+  sectionRef: React.RefObject<HTMLDivElement | null>,
+  enabled: boolean
+) => {
+  const wasEnabled = useRef(enabled);
+  useEffect(() => {
+    const wasOff = !wasEnabled.current;
+    wasEnabled.current = enabled;
+    if (!wasOff || !enabled) return;
+    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const timer = setTimeout(() => {
+      sectionRef.current?.scrollIntoView({
+        block: "end",
+        behavior: reduced ? "auto" : "smooth",
+      });
+    }, 320);
+    return () => clearTimeout(timer);
+  }, [enabled, sectionRef]);
+};
+
 // Finish picker: none, dot-matrix pixels, palette dither
 const EffectSection = memo(function EffectSection({
   effect,
@@ -284,23 +325,7 @@ const EffectSection = memo(function EffectSection({
   children?: React.ReactNode;
 }) {
   const sectionRef = useRef<HTMLDivElement>(null);
-  const previousEffect = useRef(effect);
-  // The section sits at the bottom of the sidebar, so dials that expand
-  // beneath the toggle can land below the fold unnoticed. Once the
-  // collapse has made room, bring the whole section into view.
-  useEffect(() => {
-    const wasOff = previousEffect.current === "none";
-    previousEffect.current = effect;
-    if (!wasOff || effect === "none") return;
-    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    const timer = setTimeout(() => {
-      sectionRef.current?.scrollIntoView({
-        block: "end",
-        behavior: reduced ? "auto" : "smooth",
-      });
-    }, 320);
-    return () => clearTimeout(timer);
-  }, [effect]);
+  useRevealOnEnable(sectionRef, effect !== "none");
   return (
     <div ref={sectionRef} className="select-none space-y-4 scroll-mb-6">
       <div className="space-y-1">
@@ -319,6 +344,51 @@ const EffectSection = memo(function EffectSection({
         className="w-full"
       >
         {EFFECTS.map((item) => (
+          <ToggleGroupItem key={item.value} value={item.value} aria-label={item.label}>
+            <item.icon size={16} weight="fill" />
+            {item.label}
+          </ToggleGroupItem>
+        ))}
+      </ToggleGroup>
+      {children}
+    </div>
+  );
+});
+
+const OVERLAYS: { value: GradientOverlay; label: string; icon: Icon }[] = [
+  { value: "none", label: "None", icon: ProhibitIcon },
+  { value: "shapes", label: "Shapes", icon: ShapesIcon },
+];
+
+// Overlay picker: concentric shapes above the finish. Shape row and dials
+// only exist while an overlay is on.
+const OverlaySection = memo(function OverlaySection({
+  overlay,
+  onChange,
+  children,
+}: {
+  overlay: GradientOverlay;
+  onChange: (overlay: GradientOverlay) => void;
+  children?: React.ReactNode;
+}) {
+  const sectionRef = useRef<HTMLDivElement>(null);
+  useRevealOnEnable(sectionRef, overlay !== "none");
+  return (
+    <div ref={sectionRef} className="select-none space-y-4 scroll-mb-6">
+      <h3 className="flex items-center gap-2 text-base font-medium text-neutral-800">
+        <ShapesIcon className="w-6 h-6" />
+        Overlay
+      </h3>
+      <ToggleGroup
+        type="single"
+        value={overlay}
+        onValueChange={(value) => {
+          if (value) onChange(value as GradientOverlay);
+        }}
+        aria-label="Overlay"
+        className="w-full"
+      >
+        {OVERLAYS.map((item) => (
           <ToggleGroupItem key={item.value} value={item.value} aria-label={item.label}>
             <item.icon size={16} weight="fill" />
             {item.label}
@@ -880,6 +950,19 @@ const GradientGenerator = () => {
   const [effectStrength, setEffectStrength] = useState([
     EFFECT_STRENGTH_DEFAULT,
   ]);
+  const [effectOpacity, setEffectOpacity] = useState([1]);
+  const [ditherChars, setDitherChars] = useState("");
+  const [overlay, setOverlay] = useState<GradientOverlay>("none");
+  const [overlayShape, setOverlayShape] = useState<OverlayShape>("circle");
+  const [overlayOpacity, setOverlayOpacity] = useState([OVERLAY_OPACITY_DEFAULT]);
+  const [overlaySize, setOverlaySize] = useState([OVERLAY_SIZE_DEFAULT]);
+  const [overlaySpacing, setOverlaySpacing] = useState([OVERLAY_SPACING_DEFAULT]);
+  const [overlayStroke, setOverlayStroke] = useState([OVERLAY_STROKE_DEFAULT]);
+  const [overlaySvg, setOverlaySvg] = useState<OverlaySvg | null>(null);
+  // null: the seeded spot, until the user drags it
+  const [overlayCenter, setOverlayCenter] = useState<[number, number] | null>(null);
+  // Bumps once the shared dither face is usable so the preview repaints
+  const [ditherFontTick, setDitherFontTick] = useState(0);
   const [blurAmount, setBlurAmount] = useState([700]);
   const [grainAmount, setGrainAmount] = useState([0.2]);
   const [contrastAmount, setContrastAmount] = useState([130]);
@@ -994,6 +1077,10 @@ const GradientGenerator = () => {
     if (s.aspectRatio) setAspectRatio(s.aspectRatio);
     if (s.name) setGradientName(s.name);
     if (s.effect) setEffect(s.effect);
+    if (s.overlay && s.overlay !== "none") {
+      setOverlay("shapes");
+      setOverlayShape(s.overlay);
+    }
     if (s.plan) setUpgradeOpen("browse");
     window.history.replaceState(null, "", window.location.pathname);
   }, []);
@@ -1125,6 +1212,16 @@ const GradientGenerator = () => {
       effect,
       effectSize: effectSize[0],
       effectStrength: effectStrength[0],
+      effectOpacity: effectOpacity[0],
+      ditherChars,
+      overlay,
+      overlayShape,
+      overlayOpacity: overlayOpacity[0],
+      overlaySize: overlaySize[0],
+      overlaySpacing: overlaySpacing[0],
+      overlayStroke: overlayStroke[0],
+      overlayCenter: overlayCenter ?? undefined,
+      overlayPath: overlaySvg ? { path: overlaySvg.path, box: overlaySvg.box } : undefined,
       createCanvas: domCreateCanvas,
     }),
     [
@@ -1146,8 +1243,25 @@ const GradientGenerator = () => {
       effect,
       effectSize,
       effectStrength,
+      effectOpacity,
+      ditherChars,
+      overlay,
+      overlayShape,
+      overlayOpacity,
+      overlaySize,
+      overlaySpacing,
+      overlayStroke,
+      overlayCenter,
+      overlaySvg,
     ]
   );
+
+  // Character dither needs the shared face; load it lazily the first time
+  // it's wanted and repaint when it lands
+  useEffect(() => {
+    if (effect !== "dither" || !ditherChars) return;
+    ensureDitherFont(DITHER_FONT).then(() => setDitherFontTick((t) => t + 1));
+  }, [effect, ditherChars]);
 
   const renderPreview = useCallback(() => {
     const canvas = canvasRef.current;
@@ -1157,7 +1271,8 @@ const GradientGenerator = () => {
       ...renderOptions,
       blurScale: canvas.width / canvasDimensions.width,
     });
-  }, [renderOptions, canvasDimensions]);
+    void ditherFontTick; // repaint once the dither face has loaded
+  }, [renderOptions, canvasDimensions, ditherFontTick]);
 
   // Re-render the preview whenever any gradient parameter changes. Renders
   // are coalesced onto the next animation frame so a drag paints as fast as
@@ -1226,6 +1341,19 @@ const GradientGenerator = () => {
           effect,
           effectSize: effectSize[0],
           effectStrength: effectStrength[0],
+          effectOpacity: effectOpacity[0],
+          ditherChars,
+          overlay,
+          overlayShape,
+          overlayOpacity: overlayOpacity[0],
+          overlaySize: overlaySize[0],
+          overlaySpacing: overlaySpacing[0],
+          overlayStroke: overlayStroke[0],
+          overlayCenter: overlayCenter ?? undefined,
+          overlayPath:
+            overlay === "shapes" && overlayShape === "custom" && overlaySvg
+              ? { d: overlaySvg.d, box: overlaySvg.box }
+              : undefined,
           format: "jpeg",
         }),
       });
@@ -1575,7 +1703,105 @@ const GradientGenerator = () => {
             { min: 0.2, max: 2, step: 0.05, defaultValue: EFFECT_STRENGTH_DEFAULT },
             percent
           ),
+          dial(
+            "effectOpacity",
+            "Opacity",
+            "Opacity",
+            CircleHalfIcon,
+            [effectOpacity, setEffectOpacity],
+            { min: 0, max: 1, step: 0.05, defaultValue: 1 },
+            percent
+          ),
         ];
+
+  // Overlay dials, shown only while an overlay is on
+  const overlayDials: Adjustment[] =
+    overlay === "none"
+      ? []
+      : [
+          dial(
+            "overlayOpacity",
+            "Opacity",
+            "Opacity",
+            CircleHalfIcon,
+            [overlayOpacity, setOverlayOpacity],
+            { min: 0.05, max: 1, step: 0.05, defaultValue: OVERLAY_OPACITY_DEFAULT },
+            percent
+          ),
+          dial(
+            "overlaySize",
+            "Size",
+            "Size",
+            ShapesIcon,
+            [overlaySize, setOverlaySize],
+            { min: 100, max: 3000, step: 20, defaultValue: OVERLAY_SIZE_DEFAULT },
+            (v) => `${v}px`
+          ),
+          dial(
+            "overlaySpacing",
+            "Spacing",
+            "Spacing",
+            ArrowsOutSimpleIcon,
+            [overlaySpacing, setOverlaySpacing],
+            { min: 10, max: 200, step: 2, defaultValue: OVERLAY_SPACING_DEFAULT },
+            (v) => `${v}px`
+          ),
+          dial(
+            "overlayStroke",
+            "Stroke",
+            "Stroke",
+            LineSegmentIcon,
+            [overlayStroke, setOverlayStroke],
+            { min: 1, max: 20, step: 0.5, defaultValue: OVERLAY_STROKE_DEFAULT },
+            (v) => `${v}px`
+          ),
+        ];
+
+  const handleUploadSvg = (file: File) => {
+    loadOverlaySvg(file)
+      .then((svg) => {
+        setOverlaySvg(svg);
+        setOverlayShape("custom");
+        setOverlay("shapes");
+        track("overlay_svg_uploaded", { bytes: file.size });
+      })
+      .catch((error: Error) => toast.error(error.message));
+  };
+  const handleRemoveSvg = () => {
+    setOverlaySvg(null);
+    if (overlayShape === "custom") setOverlayShape("circle");
+  };
+
+  const [ratioW, ratioH] = aspectRatio.split(":").map(Number);
+  const placementGrid = (height?: string) => (
+    <PlacementGrid
+      ratio={ratioW / ratioH}
+      center={overlayCenter ?? overlayCenterFor(seed)}
+      onChange={setOverlayCenter}
+      height={height}
+    />
+  );
+
+  // Dither character input, shared by the sidebar and the mobile Effects tab
+  const ditherCharsInput =
+    effect === "dither" ? (
+      <div className="space-y-1">
+        <Label htmlFor="dither-chars" className="text-sm">
+          Characters
+        </Label>
+        <Input
+          id="dither-chars"
+          value={ditherChars}
+          maxLength={DITHER_CHARS_MAX}
+          placeholder="e.g. @#%+ or 01"
+          aria-label="Dither characters"
+          spellCheck={false}
+          autoComplete="off"
+          className="w-full font-azeret text-sm"
+          onChange={(e) => setDitherChars(e.target.value)}
+        />
+      </div>
+    ) : null;
 
   // Mobile edit mode: every change is live, so opening is the whole
   // ceremony and closing is the only exit
@@ -1891,12 +2117,33 @@ const GradientGenerator = () => {
                 {/* Finish: none / pixel / dither. Dials make room only
                     while a finish is on. */}
                 <EffectSection effect={effect} onChange={setEffect}>
-                  <Collapse open={effectDials.length > 0}>
-                    <div className="pt-1">
+                  {/* The collapse clips; the inset gives the input's focus
+                      ring room while the negative margin keeps alignment */}
+                  <Collapse open={effectDials.length > 0} className="-mx-1 px-1">
+                    <div className="space-y-5 pt-1">
+                      {ditherCharsInput}
                       <DialList dials={effectDials} />
                     </div>
                   </Collapse>
                 </EffectSection>
+
+                {/* Overlay: concentric shapes above everything, stacking
+                    with any finish. */}
+                <OverlaySection overlay={overlay} onChange={setOverlay}>
+                  <Collapse open={overlay !== "none"}>
+                    <div className="space-y-5 pt-1">
+                      <ShapePicker
+                        shape={overlayShape}
+                        custom={overlaySvg}
+                        onShapeChange={setOverlayShape}
+                        onUpload={handleUploadSvg}
+                        onRemoveCustom={handleRemoveSvg}
+                      />
+                      {placementGrid()}
+                      <DialList dials={overlayDials} />
+                    </div>
+                  </Collapse>
+                </OverlaySection>
               </div>
 
               {/* Fixed Action Buttons - desktop sidebar only; mobile has icon buttons in the bottom bar */}
@@ -1996,6 +2243,16 @@ const GradientGenerator = () => {
                     effectDials={effectDials}
                     effect={effect}
                     onEffectChange={setEffect}
+                    ditherCharsInput={ditherCharsInput}
+                    overlay={overlay}
+                    onOverlayChange={setOverlay}
+                    overlayShape={overlayShape}
+                    onOverlayShapeChange={setOverlayShape}
+                    customShape={overlaySvg}
+                    onUploadSvg={handleUploadSvg}
+                    onRemoveSvg={handleRemoveSvg}
+                    overlayDials={overlayDials}
+                    placement={placementGrid("7rem")}
                     activeAdjustmentKey={activeAdjustmentKey}
                     onActiveAdjustmentChange={setActiveAdjustmentKey}
                     backgroundColor={normalizeHexColor(backgroundColor)}

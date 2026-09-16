@@ -1,4 +1,9 @@
-import type { GradientEffect, GradientStyle } from "./gradient-renderer";
+import {
+  OVERLAY_SHAPES,
+  type GradientEffect,
+  type GradientStyle,
+  type OverlayShape,
+} from "./gradient-renderer";
 
 // The collection: twelve named palettes, four per style, shown on the
 // landing page, offered in the studio's preset menu and (later) served at
@@ -217,6 +222,8 @@ export type StudioState = {
   name?: string;
   plan?: "year" | "week";
   effect?: GradientEffect;
+  // Built-in shape overlay; "custom" (an uploaded SVG) can't travel in a URL
+  overlay?: OverlayShape | "none";
 };
 
 const stripHash = (hex: string) => hex.replace(/^#/, "").toUpperCase();
@@ -233,6 +240,9 @@ export const buildStudioUrl = (state: StudioState): string => {
   if (state.name) params.set("name", state.name);
   if (state.plan) params.set("plan", state.plan);
   if (state.effect && state.effect !== "none") params.set("effect", state.effect);
+  if (state.overlay && state.overlay !== "none" && state.overlay !== "custom") {
+    params.set("overlay", state.overlay);
+  }
   const query = params.toString();
   return query ? `/app?${query}` : "/app";
 };
@@ -293,6 +303,11 @@ export const parseStudioParams = (search: string): StudioState => {
 
   const effect = params.get("effect");
   if (effect === "pixel" || effect === "dither") state.effect = effect;
+
+  const overlay = params.get("overlay");
+  if (overlay && overlay !== "custom" && (OVERLAY_SHAPES as readonly string[]).includes(overlay)) {
+    state.overlay = overlay as OverlayShape;
+  }
 
   return state;
 };

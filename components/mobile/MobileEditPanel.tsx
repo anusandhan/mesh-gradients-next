@@ -6,6 +6,7 @@ import {
   SlidersIcon,
   SwatchesIcon,
   SparkleIcon,
+  ShapesIcon,
   CropIcon,
   CirclesThreeIcon,
   WaveSineIcon,
@@ -34,7 +35,14 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { COLOR_FORMATS, type ColorFormat } from "@/lib/color-format";
-import type { GradientEffect, GradientStyle } from "@/lib/gradient-renderer";
+import type {
+  GradientEffect,
+  GradientOverlay,
+  GradientStyle,
+  OverlayShape,
+} from "@/lib/gradient-renderer";
+import { ShapePicker } from "@/components/ShapePicker";
+import type { Outline } from "@/lib/svg-outline";
 
 // Edit panel for small screens. Every change is live in the preview, so
 // there is nothing to confirm: the panel opens, you work, you close it.
@@ -44,7 +52,7 @@ import type { GradientEffect, GradientStyle } from "@/lib/gradient-renderer";
 // Tabs are grouped by intent: Style (which look, and its dials), Effects
 // (which finish, and its dials), Colors, Size.
 
-export type EditTab = "style" | "effects" | "colors" | "size";
+export type EditTab = "style" | "effects" | "overlay" | "colors" | "size";
 
 export type Adjustment = {
   key: string;
@@ -79,6 +87,7 @@ export type EditAspectRatio = {
 const TABS: { key: EditTab; label: string; icon: Icon }[] = [
   { key: "style", label: "Style", icon: SlidersIcon },
   { key: "effects", label: "Effects", icon: SparkleIcon },
+  { key: "overlay", label: "Overlay", icon: ShapesIcon },
   { key: "colors", label: "Colors", icon: SwatchesIcon },
   { key: "size", label: "Size", icon: CropIcon },
 ];
@@ -93,6 +102,11 @@ const EFFECTS: { value: GradientEffect; label: string; icon: Icon }[] = [
   { value: "none", label: "None", icon: ProhibitIcon },
   { value: "pixel", label: "Pixel", icon: GridFourIcon },
   { value: "dither", label: "Dither", icon: HashIcon },
+];
+
+const OVERLAYS: { value: GradientOverlay; label: string; icon: Icon }[] = [
+  { value: "none", label: "None", icon: ProhibitIcon },
+  { value: "shapes", label: "Shapes", icon: ShapesIcon },
 ];
 
 const tabLabel = (tab: EditTab) => TABS.find((t) => t.key === tab)?.label;
@@ -230,6 +244,19 @@ type MobileEditPanelProps = {
   onStyleChange: (style: GradientStyle) => void;
   effect: GradientEffect;
   onEffectChange: (effect: GradientEffect) => void;
+  /** Rendered above the dither dials; null unless the finish is Dither */
+  ditherCharsInput: React.ReactNode;
+
+  overlay: GradientOverlay;
+  onOverlayChange: (overlay: GradientOverlay) => void;
+  overlayShape: OverlayShape;
+  onOverlayShapeChange: (shape: OverlayShape) => void;
+  customShape: Outline | null;
+  onUploadSvg: (file: File) => void;
+  onRemoveSvg: () => void;
+  overlayDials: Adjustment[];
+  /** Placement grid, sized for the panel */
+  placement: React.ReactNode;
 
   aspectRatio: string;
   aspectRatioOptions: EditAspectRatio[];
@@ -260,6 +287,16 @@ export function MobileEditPanel({
   onStyleChange,
   effect,
   onEffectChange,
+  ditherCharsInput,
+  overlay,
+  onOverlayChange,
+  overlayShape,
+  onOverlayShapeChange,
+  customShape,
+  onUploadSvg,
+  onRemoveSvg,
+  overlayDials,
+  placement,
   aspectRatio,
   aspectRatioOptions,
   onAspectRatioChange,
@@ -301,8 +338,20 @@ export function MobileEditPanel({
         </div>
       </div>
 
-      {/* Fixed-height content area so the preview doesn't jump between tabs */}
-      <div className="relative h-56 overflow-hidden">
+      {/* Fixed-height content area so the preview doesn't jump between
+          tabs. Two tabs carry an extra row above their dials (the dither
+          character input, the overlay shape pills and placement grid) and get a taller box; the
+          height eases so the preview resizes rather than snapping. */}
+      <div
+        className={cn(
+          "relative overflow-hidden transition-[height] duration-200 ease-out",
+          tab === "effects" && ditherCharsInput
+            ? "h-[19rem]"
+            : tab === "overlay" && overlay !== "none"
+              ? "h-[26rem]"
+              : "h-56"
+        )}
+      >
         <AnimatePresence initial={false} mode="popLayout">
           <motion.div
             key={tab}
@@ -361,11 +410,67 @@ export function MobileEditPanel({
                         transition={{ duration: 0.18, ease: customEasing.easeOutQuad }}
                         className="absolute inset-0 flex flex-col"
                       >
+                        {ditherCharsInput && (
+                          <div className="px-5 pt-3">{ditherCharsInput}</div>
+                        )}
                         <DialPane
                           dials={effectDials}
                           activeKey={activeAdjustmentKey}
                           onActiveChange={onActiveAdjustmentChange}
                           stripKey={effect}
+                        />
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+              </div>
+            )}
+
+            {tab === "overlay" && (
+              <div className="flex h-full flex-col pt-3">
+                <SegmentedRow
+                  options={OVERLAYS}
+                  value={overlay}
+                  onChange={onOverlayChange}
+                  label="Overlay"
+                />
+                <div className="relative flex-1">
+                  <AnimatePresence initial={false} mode="popLayout">
+                    {overlay === "none" ? (
+                      <motion.p
+                        key="none"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        transition={{ duration: 0.15 }}
+                        className="absolute inset-0 flex items-center justify-center px-5 text-center text-xs text-neutral-500"
+                      >
+                        Pick Shapes to ring the gradient with concentric outlines.
+                      </motion.p>
+                    ) : (
+                      <motion.div
+                        key="dials"
+                        initial={{ opacity: 0, y: 6 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: 4 }}
+                        transition={{ duration: 0.18, ease: customEasing.easeOutQuad }}
+                        className="absolute inset-0 flex flex-col"
+                      >
+                        <ShapePicker
+                          shape={overlayShape}
+                          custom={customShape}
+                          onShapeChange={onOverlayShapeChange}
+                          onUpload={onUploadSvg}
+                          onRemoveCustom={onRemoveSvg}
+                          // One scrollable row, so the box height holds on narrow phones
+                          className="flex-nowrap overflow-x-auto px-5 pt-3 [justify-content:safe_center] [scrollbar-width:none]"
+                        />
+                        <div className="px-5 pt-3">{placement}</div>
+                        <DialPane
+                          dials={overlayDials}
+                          activeKey={activeAdjustmentKey}
+                          onActiveChange={onActiveAdjustmentChange}
+                          stripKey={overlayShape}
                         />
                       </motion.div>
                     )}

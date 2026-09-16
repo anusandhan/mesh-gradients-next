@@ -1,13 +1,27 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth, currentUser } from "@clerk/nextjs/server";
-import { createCanvas } from "@napi-rs/canvas";
+import { createCanvas, GlobalFonts, Path2D } from "@napi-rs/canvas";
+import { join } from "node:path";
 import { z } from "zod";
-import { renderGradient } from "@/lib/gradient-renderer";
+import {
+  renderGradient,
+  DITHER_FONT,
+  DITHER_CHARS_MAX,
+  OVERLAY_SHAPES,
+} from "@/lib/gradient-renderer";
+import { PATH_DATA } from "@/lib/svg-outline";
 import { STUDIO_ASPECT_RATIOS } from "@/lib/gallery";
 import { getOrCreateUser, isPro, tryConsumeExport, rateLimit } from "@/lib/db";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
+
+// Same face the browser preview loads, so character dither exports match.
+// The file is pulled into the function bundle by outputFileTracingIncludes.
+GlobalFonts.registerFromPath(
+  join(process.cwd(), "public", "fonts", "AzeretMono.ttf"),
+  DITHER_FONT
+);
 
 // Fixed aspect allowlist — the client never sends pixel dimensions.
 // Mirrors the UI: landscape at 3840 wide, portrait/square at 2160 tall.
@@ -43,6 +57,23 @@ const bodySchema = z.object({
   effect: z.enum(["none", "pixel", "dither"]).default("none"),
   effectSize: z.number().min(8).max(64).default(24),
   effectStrength: z.number().min(0).max(2).default(1),
+  effectOpacity: z.number().min(0).max(1).default(1),
+  ditherChars: z.string().max(DITHER_CHARS_MAX * 2).default(""),
+  overlay: z.enum(["none", "shapes"]).default("none"),
+  overlayShape: z.enum(OVERLAY_SHAPES).default("circle"),
+  overlayOpacity: z.number().min(0).max(1).default(0.4),
+  overlaySize: z.number().min(100).max(3000).default(800),
+  overlaySpacing: z.number().min(10).max(200).default(60),
+  overlayStroke: z.number().min(1).max(20).default(3),
+  overlayCenter: z.tuple([z.number().min(0).max(1), z.number().min(0).max(1)]).optional(),
+  // Uploaded SVG, already reduced to one path in its viewBox units
+  overlayPath: z
+    .object({
+      d: z.string().min(1).max(70_000).regex(PATH_DATA),
+      box: z.tuple([z.number(), z.number(), z.number().positive(), z.number().positive()]),
+    })
+    .strict()
+    .optional(),
   // JPEG default: the grain makes PNGs huge (~16MB at 4K) and slow to
   // encode/transfer; JPEG at q92 is visually identical here and ~8x smaller
   format: z.enum(["jpeg", "png"]).default("jpeg"),
@@ -107,6 +138,18 @@ export async function POST(request: NextRequest) {
     }
   }
 
+  const needsPath = input.overlay === "shapes" && input.overlayShape === "custom";
+  if (needsPath && !input.overlayPath) {
+    return NextResponse.json({ error: "Custom overlay needs an SVG" }, { status: 400 });
+  }
+  const overlayPath =
+    needsPath && input.overlayPath
+      ? {
+          path: new Path2D(input.overlayPath.d) as unknown as globalThis.Path2D,
+          box: input.overlayPath.box,
+        }
+      : undefined;
+
   const { width, height } = exportDimensions(input.aspectRatio);
   const canvas = createCanvas(width, height);
   const ctx = canvas.getContext("2d") as unknown as CanvasRenderingContext2D;
@@ -129,6 +172,16 @@ export async function POST(request: NextRequest) {
     effect: input.effect,
     effectSize: input.effectSize,
     effectStrength: input.effectStrength,
+    effectOpacity: input.effectOpacity,
+    ditherChars: input.ditherChars,
+    overlay: input.overlay,
+    overlayShape: input.overlayShape,
+    overlayOpacity: input.overlayOpacity,
+    overlaySize: input.overlaySize,
+    overlaySpacing: input.overlaySpacing,
+    overlayStroke: input.overlayStroke,
+    overlayCenter: input.overlayCenter,
+    overlayPath,
     blurScale: 1,
     createCanvas: nodeCreateCanvas,
   });

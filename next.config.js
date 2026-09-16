@@ -13,6 +13,8 @@ const posthogAssetsHost = posthogHost.replace(
 const nextConfig = {
   // Native addon: must be required at runtime, not bundled
   serverExternalPackages: ["@napi-rs/canvas"],
+  // The export route registers the dither font from disk at runtime
+  outputFileTracingIncludes: { "/api/export": ["./public/fonts/**"] },
   async rewrites() {
     return [
       {
