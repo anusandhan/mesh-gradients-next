@@ -257,4 +257,104 @@ describe("overlay path offset", () => {
     const scaled = 170 + 2 / Math.SQRT2;
     expect(bright(c + scaled, c + scaled)).toBe(false);
   });
+
+  test("custom path rings follow the same offset geometry as built-in shapes", () => {
+    const W = 400;
+    const H = 400;
+    const ctx = createCanvas(W, H).getContext("2d") as unknown as CanvasRenderingContext2D;
+    renderGradient(ctx, W, H, {
+      ...base,
+      colors: [],
+      backgroundColor: "#000000",
+      contrast: 100,
+      saturation: 100,
+      blurScale: 1,
+      overlay: "shapes",
+      overlayShape: "custom",
+      // Same 100px square as the built-in test, as an uploaded path
+      overlayPath: {
+        path: new Path2D("M0 0h100v100H0z") as unknown as globalThis.Path2D,
+        box: [0, 0, 100, 100],
+      },
+      overlaySize: 100,
+      overlaySpacing: 40,
+      overlayStroke: 4,
+      overlayOpacity: 1,
+      overlayCenter: [0.5, 0.5],
+    });
+    const red = (x: number, y: number) => ctx.getImageData(Math.round(x), Math.round(y), 1, 1).data[0];
+    const c = 200;
+    expect(red(c, c)).toBeLessThan(40); // inside the shape stays clear
+    expect(red(c + 52, c)).toBeGreaterThan(128);
+    expect(red(c + 92, c)).toBeGreaterThan(128);
+    expect(red(c + 172, c)).toBeGreaterThan(128);
+    expect(red(c + 72, c)).toBeLessThan(40);
+    const d3 = (50 * Math.SQRT2 + 122) / Math.SQRT2;
+    expect(red(c + d3, c + d3)).toBeGreaterThan(128);
+    const scaled = 170 + 2 / Math.SQRT2;
+    expect(red(c + scaled, c + scaled)).toBeLessThan(40);
+  });
+
+  test("custom rings survive a scratch canvas reused after a built-in shape", () => {
+    // The browser pools scratch canvases by size, so the overlay layer's
+    // context carries state from the previous frame
+    const pool = new Map<string, HTMLCanvasElement>();
+    const pooled = (w: number, h: number) => {
+      const key = `${w}x${h}`;
+      if (!pool.has(key)) pool.set(key, createCanvas(w, h) as unknown as HTMLCanvasElement);
+      return pool.get(key)!;
+    };
+    const W = 200;
+    const H = 200;
+    const ctx = createCanvas(W, H).getContext("2d") as unknown as CanvasRenderingContext2D;
+    const opts: RenderOptions = {
+      ...base,
+      colors: [],
+      backgroundColor: "#000000",
+      contrast: 100,
+      saturation: 100,
+      blurScale: 1,
+      createCanvas: pooled,
+      overlay: "shapes",
+      overlaySize: 100,
+      overlaySpacing: 40,
+      overlayStroke: 4,
+      overlayOpacity: 1,
+      overlayCenter: [0.5, 0.5],
+    };
+    renderGradient(ctx, W, H, { ...opts, overlayShape: "circle" });
+    renderGradient(ctx, W, H, {
+      ...opts,
+      overlayShape: "custom",
+      overlayPath: { path: new Path2D("M0 0h100v100H0z") as unknown as globalThis.Path2D, box: [0, 0, 100, 100] },
+    });
+    expect(ctx.getImageData(152, 100, 1, 1).data[0]).toBeGreaterThan(128);
+  });
+
+  test("stroke-only artwork (an open line) still gets rings", () => {
+    const W = 200;
+    const H = 200;
+    const ctx = createCanvas(W, H).getContext("2d") as unknown as CanvasRenderingContext2D;
+    renderGradient(ctx, W, H, {
+      ...base,
+      colors: [],
+      backgroundColor: "#000000",
+      contrast: 100,
+      saturation: 100,
+      blurScale: 1,
+      overlay: "shapes",
+      overlayShape: "custom",
+      overlayPath: { path: new Path2D("M0 50h100") as unknown as globalThis.Path2D, box: [0, 0, 100, 100] },
+      overlaySize: 100,
+      overlaySpacing: 40,
+      overlayStroke: 4,
+      overlayOpacity: 1,
+      overlayCenter: [0.5, 0.5],
+    });
+    // Ring 0 hugs the line: 1..4px above and below y = 100
+    expect(ctx.getImageData(100, 97, 1, 1).data[0]).toBeGreaterThan(128);
+    expect(ctx.getImageData(100, 103, 1, 1).data[0]).toBeGreaterThan(128);
+    // Ring 1 sits 40px out
+    expect(ctx.getImageData(100, 58, 1, 1).data[0]).toBeGreaterThan(128);
+  });
 });

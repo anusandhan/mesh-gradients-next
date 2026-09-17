@@ -1025,6 +1025,76 @@ export const overlayCenterFor = (seed: number): [number, number] => {
   return [0.3 + random() * 0.4, 0.3 + random() * 0.4];
 };
 
+// Felzenszwalb & Huttenlocher 1D squared distance transform of f into d.
+// v/z are scratch (length n, n+1). f holds 0 for "on" cells, INF otherwise.
+const INF = 1e10;
+const edt1d = (
+  f: Float32Array, d: Float32Array, v: Int32Array, z: Float32Array, n: number
+) => {
+  let k = 0;
+  v[0] = 0;
+  z[0] = -INF;
+  z[1] = INF;
+  for (let q = 1; q < n; q++) {
+    let s = (f[q] + q * q - (f[v[k]] + v[k] * v[k])) / (2 * q - 2 * v[k]);
+    while (s <= z[k]) {
+      k--;
+      s = (f[q] + q * q - (f[v[k]] + v[k] * v[k])) / (2 * q - 2 * v[k]);
+    }
+    k++;
+    v[k] = q;
+    z[k] = s;
+    z[k + 1] = INF;
+  }
+  k = 0;
+  for (let q = 0; q < n; q++) {
+    while (z[k + 1] < q) k++;
+    d[q] = (q - v[k]) * (q - v[k]) + f[v[k]];
+  }
+};
+
+// Replace the white shape on `l` with its offset rings: every pixel whose
+// Euclidean distance to the shape lies in (k*spacing, k*spacing + stroke].
+// Exact-EDT in two separable passes, so the cost is one pass over the
+// pixels however complex the shape. Ring edges are antialiased from the
+// fractional distance; the shape edge itself is pixel-quantized.
+const ringsFromDistance = (
+  l: CanvasRenderingContext2D, width: number, height: number, spacing: number, stroke: number
+) => {
+  const img = l.getImageData(0, 0, width, height);
+  const px = img.data;
+  const n = Math.max(width, height);
+  const f = new Float32Array(n);
+  const d = new Float32Array(n);
+  const v = new Int32Array(n);
+  const z = new Float32Array(n + 1);
+  const grid = new Float32Array(width * height);
+  // Columns: distance along y to the nearest covered pixel
+  for (let x = 0; x < width; x++) {
+    for (let y = 0; y < height; y++) f[y] = px[(y * width + x) * 4 + 3] >= 128 ? 0 : INF;
+    edt1d(f, d, v, z, height);
+    for (let y = 0; y < height; y++) grid[y * width + x] = d[y];
+  }
+  // Rows: combine into the full squared distance, then write the rings
+  for (let y = 0; y < height; y++) {
+    const row = y * width;
+    for (let x = 0; x < width; x++) f[x] = grid[row + x];
+    edt1d(f, d, v, z, width);
+    for (let x = 0; x < width; x++) {
+      const dist = Math.sqrt(d[x]);
+      const i = (row + x) * 4;
+      let a = 0;
+      if (dist > 0 && dist < INF) {
+        const r = dist - Math.floor(dist / spacing) * spacing;
+        a = Math.max(0, Math.min(1, r + 0.5, stroke - r + 0.5));
+      }
+      px[i] = px[i + 1] = px[i + 2] = 255;
+      px[i + 3] = Math.round(a * 255);
+    }
+  }
+  l.putImageData(img, 0, 0);
+};
+
 const applyOverlay = (
   ctx: CanvasRenderingContext2D,
   width: number,
@@ -1072,25 +1142,38 @@ const applyOverlay = (
     target.restore();
   };
 
-  // Rings are built on a scratch layer from the outside in: paint the ring's
-  // outer edge, knock out its inner edge, then the next ring in lands in the
-  // hole. One composite at the end carries the opacity.
-  // ponytail: ~2 full-frame fills per ring (~70 rings at 4K); cache the
-  // scratch between frames if the preview ever lags on the Size dial.
   const layer = opts.createCanvas(width, height);
-  const l = layer.getContext("2d")!;
+  // The browser pools this canvas by size, so its context keeps last
+  // frame's state: reset the composite mode the ring loop leaves behind,
+  // or a following custom path erases into an empty layer and vanishes.
+  // willReadFrequently only applies on the context's first creation.
+  const l = layer.getContext("2d", { willReadFrequently: true })!;
+  l.globalCompositeOperation = "source-over";
   l.clearRect(0, 0, width, height);
   l.fillStyle = "#ffffff";
   l.strokeStyle = "#ffffff";
   l.lineJoin = "round";
   l.lineCap = "round";
-  const rings = Math.ceil((maxR + size) / spacing);
-  for (let k = rings; k >= 0; k--) {
-    const offset = k * spacing;
-    l.globalCompositeOperation = "source-over";
-    paint(l, offset + stroke);
-    l.globalCompositeOperation = "destination-out";
-    paint(l, offset);
+  if (custom) {
+    // Uploaded paths can run to thousands of segments, and stroking one
+    // with a ring-wide line twice per ring took ~1s a frame. Fill it once
+    // and read the rings off a distance field instead: same offset-path
+    // geometry, cost independent of the path.
+    // Offset 0.5 adds a 1px hairline stroke, so artwork drawn as lines
+    // (no fill area) still lands in the mask
+    paint(l, 0.5);
+    ringsFromDistance(l, width, height, spacing, stroke);
+  } else {
+    // Rings are built from the outside in: paint the ring's outer edge,
+    // knock out its inner edge, then the next ring in lands in the hole.
+    const rings = Math.ceil((maxR + size) / spacing);
+    for (let k = rings; k >= 0; k--) {
+      const offset = k * spacing;
+      l.globalCompositeOperation = "source-over";
+      paint(l, offset + stroke);
+      l.globalCompositeOperation = "destination-out";
+      paint(l, offset);
+    }
   }
 
   ctx.save();

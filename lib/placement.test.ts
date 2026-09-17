@@ -3,10 +3,17 @@ import { placementGrid, snapPlacement } from "./placement";
 import { overlayCenterFor } from "./gradient-renderer";
 
 describe("placementGrid", () => {
-  it("keeps cells near square with 6 across the short side", () => {
-    expect(placementGrid(16 / 9)).toEqual({ cols: 11, rows: 6 });
+  it("keeps cells near square with 6 across the short side and even counts", () => {
+    expect(placementGrid(16 / 9)).toEqual({ cols: 10, rows: 6 });
     expect(placementGrid(1)).toEqual({ cols: 6, rows: 6 });
-    expect(placementGrid(9 / 16)).toEqual({ cols: 6, rows: 11 });
+    expect(placementGrid(9 / 16)).toEqual({ cols: 6, rows: 10 });
+    expect(placementGrid(5 / 2)).toEqual({ cols: 16, rows: 6 });
+  });
+
+  it("always has an intersection at the exact center", () => {
+    for (const ratio of [16 / 9, 16 / 10, 1.91, 5 / 2, 1, 4 / 3, 9 / 16, 3 / 4, 4 / 5]) {
+      expect(snapPlacement(0.5, 0.5, placementGrid(ratio))).toEqual([0.5, 0.5]);
+    }
   });
 });
 
