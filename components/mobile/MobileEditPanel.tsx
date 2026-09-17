@@ -462,8 +462,10 @@ export function MobileEditPanel({
                           onShapeChange={onOverlayShapeChange}
                           onUpload={onUploadSvg}
                           onRemoveCustom={onRemoveSvg}
-                          // One scrollable row, so the box height holds on narrow phones
-                          className="flex-nowrap overflow-x-auto px-5 pt-3 [justify-content:safe_center] [scrollbar-width:none]"
+                          // One scrollable row, so the box height holds on narrow phones.
+                          // pb/-mb: the scroller clips vertically too, so give the
+                          // pill shadows room without moving what follows
+                          className="-mb-2 flex-nowrap overflow-x-auto px-5 pb-2 pt-3 [justify-content:safe_center] [scrollbar-width:none]"
                         />
                         <div className="px-5 pt-3">{placement}</div>
                         <DialPane

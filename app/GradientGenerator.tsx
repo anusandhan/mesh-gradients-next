@@ -2130,7 +2130,10 @@ const GradientGenerator = () => {
                 {/* Overlay: concentric shapes above everything, stacking
                     with any finish. */}
                 <OverlaySection overlay={overlay} onChange={setOverlay}>
-                  <Collapse open={overlay !== "none"}>
+                  {/* Side slack so the placement card's shadow, its only edge
+                      against the white sidebar, survives the collapse's clip
+                      when the card spans the full width (5:2) */}
+                  <Collapse open={overlay !== "none"} className="-mx-2 px-2">
                     <div className="space-y-5 pt-1">
                       <ShapePicker
                         shape={overlayShape}

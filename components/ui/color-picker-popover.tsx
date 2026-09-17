@@ -47,7 +47,7 @@ const ColorPickerPopover = ({
           align="start"
           sideOffset={8}
           collisionPadding={12}
-          className="z-50 w-80 rounded-xl border border-neutral-200 bg-white p-4 shadow-lg"
+          className="z-50 w-[21rem] rounded-xl border border-neutral-200 bg-white p-4 shadow-lg"
         >
           <ChannelColorPicker
             value={value}

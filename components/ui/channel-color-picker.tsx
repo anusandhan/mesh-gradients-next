@@ -52,9 +52,12 @@ const ChannelNumberInput = ({
         if (e.key === "Enter") e.currentTarget.blur();
       }}
       className={cn(
-        "w-full min-w-0 bg-transparent font-azeret text-sm tabular-nums text-neutral-800 outline-none",
+        "shrink-0 bg-transparent font-azeret text-sm tabular-nums text-neutral-800 outline-none",
         className
       )}
+      // Monospace, so the widest value the channel can show sets the width
+      // exactly; sharing the row proportionally clipped "0.582" at 320px
+      style={{ width: `${def.max.toFixed(def.decimals).length}ch` }}
       aria-label={def.label}
     />
   );
@@ -167,11 +170,7 @@ const ChannelColorPicker = ({
         {defs.map((def, index) => (
           <div
             key={def.key}
-            className={cn(
-              "flex min-w-0 items-center gap-1 border-l border-neutral-200 px-2 py-2",
-              // hue values ("248.8°") need more room than L/C ("0.074")
-              def.key === "h" ? "flex-[1.3]" : "flex-1"
-            )}
+            className="flex flex-1 items-center justify-center gap-1 border-l border-neutral-200 px-2 py-2"
           >
             <span className="text-xs text-neutral-500">{def.label}</span>
             <ChannelNumberInput

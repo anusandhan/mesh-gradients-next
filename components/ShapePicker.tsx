@@ -103,18 +103,18 @@ export function ShapePicker({
             value={s.value}
             aria-label={s.label}
             title={s.label}
-            className="w-9 px-0"
+            className="w-9 shrink-0 px-0"
           >
             <s.icon size={16} weight="regular" />
           </ToggleGroupItem>
         ))}
         {custom ? (
-          <span className="flex items-center gap-0.5">
+          <span className="flex shrink-0 items-center gap-0.5">
             <ToggleGroupItem
               value="custom"
               aria-label="Your SVG"
               title="Your SVG"
-              className="w-9 px-0"
+              className="w-9 shrink-0 px-0"
             >
               <OutlinePreview outline={custom} />
             </ToggleGroupItem>
@@ -133,7 +133,7 @@ export function ShapePicker({
             value="custom"
             aria-label="Upload SVG"
             title="Upload an SVG; it's redrawn as white outlines"
-            className="px-3"
+            className="shrink-0 px-3"
           >
             <UploadSimpleIcon size={16} weight="regular" />
             Upload
