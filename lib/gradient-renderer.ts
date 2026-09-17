@@ -332,6 +332,8 @@ export type RenderOptions = {
   effectOpacity?: number;
   // Dither glyphs: empty keeps the bar/cross/ring/dot symbols
   ditherChars?: string;
+  // Draw only the glyphs over the smooth gradient; skip the cell quantizing
+  ditherGlyphsOnly?: boolean;
   overlay?: GradientOverlay;
   overlayShape?: OverlayShape;
   overlayOpacity?: number;
@@ -809,7 +811,8 @@ const applyDither = (
   cell: number,
   strength: number,
   palette: [number, number, number][],
-  chars: string[]
+  chars: string[],
+  glyphsOnly: boolean
 ) => {
   const src = ctx.getImageData(0, 0, width, height).data;
   const cols = Math.ceil(width / cell);
@@ -820,9 +823,12 @@ const applyDither = (
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
   }
-  // Fill with the background color, then only paint cells that differ
-  ctx.fillStyle = css[0];
-  ctx.fillRect(0, 0, width, height);
+  // Fill with the background color, then only paint cells that differ.
+  // Glyphs-only keeps the smooth gradient and just scatters glyphs on it.
+  if (!glyphsOnly) {
+    ctx.fillStyle = css[0];
+    ctx.fillRect(0, 0, width, height);
+  }
 
   const bar = Math.max(1, cell * 0.18);
   const arm = cell * 0.6;
@@ -858,7 +864,7 @@ const applyDither = (
       }
       const x0 = cx * cell;
       const y0 = cy * cell;
-      if (best !== 0) {
+      if (best !== 0 && !glyphsOnly) {
         ctx.fillStyle = css[best];
         ctx.fillRect(x0, y0, cell + 0.5, cell + 0.5);
       }
@@ -921,7 +927,8 @@ const applyEffect = (
       cell,
       strength,
       [opts.backgroundColor, ...opts.colors].map(hexToRgbTuple),
-      Array.from(opts.ditherChars ?? "").slice(0, DITHER_CHARS_MAX)
+      Array.from(opts.ditherChars ?? "").slice(0, DITHER_CHARS_MAX),
+      opts.ditherGlyphsOnly ?? false
     );
   }
   if (!smooth) return;

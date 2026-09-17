@@ -10,6 +10,7 @@ import {
 } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import Toggle from "@/components/ui/toggle";
 import { Kbd } from "@/components/ui/kbd";
 import { Label } from "@/components/ui/label";
 import { ColorPickerPopover } from "@/components/ui/color-picker-popover";
@@ -952,6 +953,7 @@ const GradientGenerator = () => {
   ]);
   const [effectOpacity, setEffectOpacity] = useState([1]);
   const [ditherChars, setDitherChars] = useState("");
+  const [ditherGlyphsOnly, setDitherGlyphsOnly] = useState(false);
   const [overlay, setOverlay] = useState<GradientOverlay>("none");
   const [overlayShape, setOverlayShape] = useState<OverlayShape>("circle");
   const [overlayOpacity, setOverlayOpacity] = useState([OVERLAY_OPACITY_DEFAULT]);
@@ -1214,6 +1216,7 @@ const GradientGenerator = () => {
       effectStrength: effectStrength[0],
       effectOpacity: effectOpacity[0],
       ditherChars,
+      ditherGlyphsOnly,
       overlay,
       overlayShape,
       overlayOpacity: overlayOpacity[0],
@@ -1245,6 +1248,7 @@ const GradientGenerator = () => {
       effectStrength,
       effectOpacity,
       ditherChars,
+      ditherGlyphsOnly,
       overlay,
       overlayShape,
       overlayOpacity,
@@ -1343,6 +1347,7 @@ const GradientGenerator = () => {
           effectStrength: effectStrength[0],
           effectOpacity: effectOpacity[0],
           ditherChars,
+          ditherGlyphsOnly,
           overlay,
           overlayShape,
           overlayOpacity: overlayOpacity[0],
@@ -1785,21 +1790,35 @@ const GradientGenerator = () => {
   // Dither character input, shared by the sidebar and the mobile Effects tab
   const ditherCharsInput =
     effect === "dither" ? (
-      <div className="space-y-1">
-        <Label htmlFor="dither-chars" className="text-sm">
-          Characters
-        </Label>
-        <Input
-          id="dither-chars"
-          value={ditherChars}
-          maxLength={DITHER_CHARS_MAX}
-          placeholder="e.g. @#%+ or 01"
-          aria-label="Dither characters"
-          spellCheck={false}
-          autoComplete="off"
-          className="w-full font-azeret text-sm"
-          onChange={(e) => setDitherChars(e.target.value)}
-        />
+      <div className="space-y-5">
+        <div className="space-y-1.5">
+          <Label htmlFor="dither-chars" className="text-sm">
+            Characters
+          </Label>
+          <Input
+            id="dither-chars"
+            value={ditherChars}
+            maxLength={DITHER_CHARS_MAX}
+            placeholder="e.g. @#%+ or 01"
+            aria-label="Dither characters"
+            spellCheck={false}
+            autoComplete="off"
+            className="w-full font-azeret text-sm"
+            onChange={(e) => setDitherChars(e.target.value)}
+          />
+        </div>
+        {/* Glyphs only: scatter the glyphs over the smooth gradient instead
+            of quantizing it to the palette. Own row in the dials' rhythm
+            (label left, control right); the whole row is the hit area. */}
+        <label className="-my-2 flex min-h-9 cursor-pointer select-none items-center justify-between py-2 text-sm font-medium text-neutral-500">
+          Only glyphs
+          <Toggle
+            size="sm"
+            isActive={ditherGlyphsOnly}
+            onToggle={setDitherGlyphsOnly}
+            ariaLabel="Only glyphs"
+          />
+        </label>
       </div>
     ) : null;
 

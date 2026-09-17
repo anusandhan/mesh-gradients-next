@@ -67,6 +67,18 @@ describe("dither characters", () => {
     const chars = pixels({ effect: "dither", effectSize: 64, ditherChars: "@#" });
     expect(differing(symbols, chars)).toBeGreaterThan(0);
   });
+
+  test("glyphs-only dither leaves the gradient smooth between glyphs", () => {
+    const smooth = pixels({ effect: "none" });
+    const dithered = pixels({ effect: "dither", effectSize: 64 });
+    const glyphs = pixels({ effect: "dither", effectSize: 64, ditherGlyphsOnly: true });
+    // Cell corners carry no glyph: untouched with glyphs only, quantized otherwise
+    const corner = (d: Uint8ClampedArray) => Array.from(d.slice(8, 12));
+    expect(corner(glyphs)).toEqual(corner(smooth));
+    expect(corner(dithered)).not.toEqual(corner(smooth));
+    // ...but the glyphs themselves are there
+    expect(differing(glyphs, smooth)).toBeGreaterThan(50);
+  });
 });
 
 describe("shapes overlay", () => {
