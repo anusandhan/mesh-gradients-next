@@ -1,12 +1,13 @@
 "use client";
 
 import * as React from "react";
-import type { Icon } from "@phosphor-icons/react";
+import type { Icon } from "@/components/icons/ui";
 import {
   SlidersIcon,
   SwatchesIcon,
   SparkleIcon,
   ShapesIcon,
+  RippleIcon,
   CropIcon,
   CirclesThreeIcon,
   WaveSineIcon,
@@ -17,7 +18,7 @@ import {
   ShuffleIcon,
   DownloadIcon,
   XIcon,
-} from "@phosphor-icons/react";
+} from "@/components/icons/ui";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { customEasing } from "@/lib/motion";
@@ -87,7 +88,7 @@ export type EditAspectRatio = {
 const TABS: { key: EditTab; label: string; icon: Icon }[] = [
   { key: "style", label: "Style", icon: SlidersIcon },
   { key: "effects", label: "Effects", icon: SparkleIcon },
-  { key: "overlay", label: "Overlay", icon: ShapesIcon },
+  { key: "overlay", label: "Overlay", icon: RippleIcon },
   { key: "colors", label: "Colors", icon: SwatchesIcon },
   { key: "size", label: "Size", icon: CropIcon },
 ];
@@ -138,7 +139,7 @@ function SegmentedRow<T extends string>({
     >
       {options.map((o) => (
         <ToggleGroupItem key={o.value} value={o.value} aria-label={o.label}>
-          <o.icon size={16} weight="fill" />
+          <o.icon size={16} />
           {o.label}
         </ToggleGroupItem>
       ))}

@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { Slider } from "radix-ui";
-import { EyedropperIcon } from "@phosphor-icons/react";
+import { EyedropperIcon } from "@/components/icons/ui";
 import {
   CHANNEL_DEFS,
   hexToChannels,

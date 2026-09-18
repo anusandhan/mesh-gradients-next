@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import type { Icon } from "@phosphor-icons/react";
+import type { Icon } from "@/components/icons/ui";
 import { cn } from "@/lib/utils";
 
 // Round tool button with a progress ring, in the spirit of the Photos app's

@@ -1,7 +1,7 @@
 "use client";
 
 import Color from "color";
-import { Eyedropper } from "@phosphor-icons/react";
+import { EyedropperIcon as Eyedropper } from "@/components/icons/ui";
 import { Slider } from "radix-ui";
 import {
   type ComponentProps,

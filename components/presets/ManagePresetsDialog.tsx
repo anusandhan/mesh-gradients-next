@@ -6,7 +6,7 @@ import {
   CaretDownIcon,
   CaretUpIcon,
   TrashIcon,
-} from "@phosphor-icons/react";
+} from "@/components/icons/ui";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";

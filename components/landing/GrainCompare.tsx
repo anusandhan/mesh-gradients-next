@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Image from "next/image";
-import { ArrowsOutLineHorizontalIcon } from "@phosphor-icons/react";
+import { ArrowsOutLineHorizontalIcon } from "@/components/icons/ui";
 
 // Before/after slider for the grain argument. Both crops are the same 4K
 // render at 100%, pushed through the same tone quantization; only grain

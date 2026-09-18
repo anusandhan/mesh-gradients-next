@@ -21,7 +21,7 @@ import {
   formatPrice,
   type PlanId,
 } from "@/lib/plans";
-import type { Icon } from "@phosphor-icons/react";
+import type { Icon } from "@/components/icons/ui";
 import { track } from "@/lib/analytics";
 import { GALLERY, parseStudioParams } from "@/lib/gallery";
 import { INSPIRED_PALETTES } from "@/lib/inspired";
@@ -63,6 +63,8 @@ import {
   TabsIcon,
   SlidersIcon,
   MonitorIcon,
+  LaptopIcon,
+  NotionLogoIcon,
   SquareIcon,
   YoutubeLogoIcon,
   DeviceMobileIcon,
@@ -85,8 +87,9 @@ import {
   HashIcon,
   ArrowsOutSimpleIcon,
   ShapesIcon,
+  RippleIcon,
   LineSegmentIcon,
-} from "@phosphor-icons/react";
+} from "@/components/icons/ui";
 import { RulerSlider } from "@/components/mobile/RulerSlider";
 import {
   MobileEditPanel,
@@ -346,7 +349,7 @@ const EffectSection = memo(function EffectSection({
       >
         {EFFECTS.map((item) => (
           <ToggleGroupItem key={item.value} value={item.value} aria-label={item.label}>
-            <item.icon size={16} weight="fill" />
+            <item.icon size={16} />
             {item.label}
           </ToggleGroupItem>
         ))}
@@ -377,7 +380,7 @@ const OverlaySection = memo(function OverlaySection({
   return (
     <div ref={sectionRef} className="select-none space-y-4 scroll-mb-6">
       <h3 className="flex items-center gap-2 text-base font-medium text-neutral-800">
-        <ShapesIcon className="w-6 h-6" />
+        <RippleIcon className="w-6 h-6" />
         Overlay
       </h3>
       <ToggleGroup
@@ -391,7 +394,7 @@ const OverlaySection = memo(function OverlaySection({
       >
         {OVERLAYS.map((item) => (
           <ToggleGroupItem key={item.value} value={item.value} aria-label={item.label}>
-            <item.icon size={16} weight="fill" />
+            <item.icon size={16} />
             {item.label}
           </ToggleGroupItem>
         ))}
@@ -405,9 +408,9 @@ const OverlaySection = memo(function OverlaySection({
 // the export API validates against.
 const aspectRatioOptions = [
   { value: "16:9", label: "Desktop", ratio: "16:9", icon: MonitorIcon },
-  { value: "16:10", label: "Mac", ratio: "16:10", icon: MonitorIcon },
+  { value: "16:10", label: "Mac", ratio: "16:10", icon: LaptopIcon },
   { value: "1.91:1", label: "Social card", ratio: "1.91:1", icon: TabsIcon },
-  { value: "5:2", label: "Notion cover", ratio: "5:2", icon: RowsIcon },
+  { value: "5:2", label: "Notion cover", ratio: "5:2", icon: NotionLogoIcon },
   { value: "1:1", label: "Square Post", ratio: "1:1", icon: SquareIcon },
   {
     value: "4:3",
@@ -464,15 +467,15 @@ const StyleSection = memo(function StyleSection({
             className="w-full"
           >
             <ToggleGroupItem value="blobs" aria-label="Blurred Blobs">
-              <CirclesThreeIcon size={16} weight="fill" />
+              <CirclesThreeIcon size={16} />
               Blobs
             </ToggleGroupItem>
             <ToggleGroupItem value="stripes" aria-label="Silk Stripes">
-              <WaveSineIcon size={16} weight="fill" />
+              <WaveSineIcon size={16} />
               Stripes
             </ToggleGroupItem>
             <ToggleGroupItem value="clouds" aria-label="Clouds">
-              <CloudIcon size={16} weight="fill" />
+              <CloudIcon size={16} />
               Clouds
             </ToggleGroupItem>
           </ToggleGroup>

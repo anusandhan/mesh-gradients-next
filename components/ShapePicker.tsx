@@ -14,8 +14,8 @@ import {
   HeartIcon,
   UploadSimpleIcon,
   XIcon,
-} from "@phosphor-icons/react";
-import type { Icon } from "@phosphor-icons/react";
+} from "@/components/icons/ui";
+import type { Icon } from "@/components/icons/ui";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { cn } from "@/lib/utils";
 import type { OverlayShape } from "@/lib/gradient-renderer";
